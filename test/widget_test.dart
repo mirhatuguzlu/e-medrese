@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
+import 'package:e_medrese/data/repositories/medrese_repository.dart';
 import 'package:e_medrese/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -66,7 +67,10 @@ void main() {
   Future<void> pumpApp(WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [authRepositoryProvider.overrideWithValue(auth)],
+        overrides: [
+          authRepositoryProvider.overrideWithValue(auth),
+          myMedresesProvider.overrideWith((ref) => const Ok([])),
+        ],
         child: const App(),
       ),
     );
@@ -82,7 +86,7 @@ void main() {
 
     auth.sessions.add(_session);
     await tester.pumpAndSettle();
-    expect(find.text('Hoş geldin'), findsOneWidget);
+    expect(find.text('Medreselerim'), findsOneWidget);
 
     expect(find.text('A'), findsOneWidget);
     await tester.tap(find.byTooltip('Profil'));
