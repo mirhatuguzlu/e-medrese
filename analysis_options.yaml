@@ -1,0 +1,88 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# analysis_options.yaml
+# Very Good Ventures kuralları üzerine inşa edilmiş katı analiz yapılandırması.
+# Kaynak: https://github.com/VeryGoodOpenSource/very_good_analysis
+# ─────────────────────────────────────────────────────────────────────────────
+
+include: package:very_good_analysis/analysis_options.yaml
+
+formatter:
+  # Formatlayıcı otomatik olarak trailing comma ekler/çıkarır.
+  trailing_commas: automate
+
+analyzer:
+  language:
+    # Implicit cast'leri yasakla — her tip dönüşümü açıkça yazılmalı.
+    strict-casts: true
+    # Tip çıkarımı başarısız olduğunda dynamic'e düşmeyi engelle.
+    strict-inference: true
+    # Ham generic tipleri (List, Map gibi) yasakla — List<String> zorunlu.
+    strict-raw-types: true
+
+  errors:
+    # ── Ölümcül hatalar (derleme engeli) ─────────────────────────────────────
+    missing_required_param: error
+    missing_return: error
+    invalid_annotation_target: error
+
+    # ── Happy-path tuzaklarını hata olarak işaretle ───────────────────────────
+    unawaited_futures: error          # fire-and-forget async yasak
+    cancel_subscriptions: error       # StreamSubscription leak yasak
+    close_sinks: error               # Sink leak yasak
+
+    # ── Kod kalitesi ─────────────────────────────────────────────────────────
+    avoid_dynamic_calls: error        # dynamic çağrılar yasak
+    avoid_print: error                # print() yasak — sadece logger kullan
+
+    # ── Üretilmiş dosyaları görmezden gel ─────────────────────────────────────
+    todo: ignore
+
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "lib/generated/**"
+    - "build/**"
+    - "test/**/*.mocks.dart"
+
+linter:
+  rules:
+    # ── very_good_analysis'dan gelenler korunuyor, üzerine eklenenler ─────────
+
+    # Async güvenliği
+    unawaited_futures: true
+    avoid_void_async: true
+    use_build_context_synchronously: true
+
+    # Tip güvenliği
+    avoid_dynamic_calls: true
+    only_throw_errors: true          # String/Object throw etmek yasak
+
+    # Kod temizliği
+    avoid_print: true
+    prefer_const_constructors: true
+    prefer_const_constructors_in_immutables: true
+    prefer_const_declarations: true
+    prefer_final_fields: true
+    prefer_final_locals: true
+    prefer_final_in_for_each: true
+    unnecessary_lambdas: true
+    unnecessary_null_checks: true
+    unnecessary_parenthesis: true
+    unnecessary_statements: true
+
+    # Okunabilirlik
+    require_trailing_commas: true
+    always_put_required_named_parameters_first: true
+    sort_constructors_first: true
+    sort_unnamed_constructors_first: true
+
+    # Güvenlik
+    avoid_catches_without_on_clauses: true  # catch (e) yerine on XyzException
+    avoid_catching_errors: true             # Error subclass'ları catch etme
+    literal_only_boolean_expressions: false
+
+    # ── very_good_analysis'dan proje için devre dışı bırakılanlar ─────────────
+    # public_member_api_docs: SDK bağımlılıklarının önce gelmesi zorunlu,
+    # bu nedenle sort_pub_dependencies devre dışı bırakıldı.
+    public_member_api_docs: false
+    sort_pub_dependencies: false
