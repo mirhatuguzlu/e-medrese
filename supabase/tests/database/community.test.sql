@@ -1,5 +1,8 @@
 begin;
+-- --linked çalıştırmada CLI giriş rolü extensions şemasını kullanamıyor.
+set local role postgres;
 create extension if not exists pgtap with schema extensions;
+set local search_path = public, extensions;
 select plan(18);
 
 -- hoca1 (sahip), hoca2, öğrenci1, öğrenci2, yabancı
@@ -31,7 +34,7 @@ select throws_ok($$ select add_member_by_email('10000000-0000-0000-0000-00000000
   'user not found');
 
 -- Davet koduyla katılma
-reset role;
+set local role postgres;
 create temp table code as select invite_code from medreses;
 grant select on code to authenticated;
 set local role authenticated;
@@ -61,7 +64,7 @@ select throws_ok($$ select add_member_by_email('10000000-0000-0000-0000-00000000
 
 -- Mesajlaşma ve çıkarılma
 select pg_temp.login('00000000-0000-0000-0000-000000000003');
-reset role;
+set local role postgres;
 create temp table conv (id uuid);
 grant all on conv to authenticated;
 set local role authenticated;
