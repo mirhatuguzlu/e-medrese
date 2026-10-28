@@ -1,24 +1,17 @@
-import 'package:e_medrese/data/repositories/auth_repository.dart';
+import 'package:e_medrese/presentation/widgets/profile_button.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Giriş sonrası ana ekran. Medrese listesi buraya gelecek.
-class HomePage extends ConsumerWidget {
+class HomePage extends StatelessWidget {
   /// Ana ekran.
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('e-Medrese'),
-        actions: [
-          IconButton(
-            tooltip: 'Çıkış yap',
-            icon: const Icon(Icons.logout),
-            onPressed: () => ref.read(authRepositoryProvider).signOut(),
-          ),
-        ],
+        actions: const [ProfileButton()],
       ),
       body: const Center(child: Text('Hoş geldin')),
     );

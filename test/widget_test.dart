@@ -50,7 +50,8 @@ final _session = Session(
   user: const User(
     id: 'u1',
     appMetadata: {},
-    userMetadata: {},
+    userMetadata: {'full_name': 'Ali Veli'},
+    email: 'ali@b.com',
     aud: 'authenticated',
     createdAt: '',
   ),
@@ -83,7 +84,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Hoş geldin'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Çıkış yap'));
+    expect(find.text('A'), findsOneWidget);
+    await tester.tap(find.byTooltip('Profil'));
+    await tester.pumpAndSettle();
+    expect(find.text('Ali Veli'), findsOneWidget);
+    expect(find.text('ali@b.com'), findsOneWidget);
+    await tester.tap(find.text('Çıkış yap'));
     await tester.pumpAndSettle();
     expect(find.text('Hesabına giriş yap'), findsOneWidget);
   });
