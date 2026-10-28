@@ -301,6 +301,18 @@ final List<TaskDefinition> testTasks = [
         'cap': 210,
       },
     },
+    {
+      'id': 'cevsen',
+      'title': 'Cevşen okuma',
+      'description': 'Haftada kaç kez bitirdiğini işaretle.',
+      'config': {'kind': 'weekly', 'target': 1, 'points': 25, 'cap': 3},
+    },
+    {
+      'id': 'uyum',
+      'title': 'Uyum',
+      'description': 'Hocanın haftalık değerlendirmesi.',
+      'config': {'kind': 'teacher', 'target': 25, 'points': 25, 'cap': 25},
+    },
   ])
     TaskDefinition.fromJson(json),
 ];
@@ -311,7 +323,30 @@ class FakeTaskRepository implements TaskRepository {
   TaskProgram? taskProgram;
   final entryList = <TaskEntry>[];
   final scoreList = <WeeklyScore>[];
+  final grades = <String, UyumGrade>{};
   final calls = <String>[];
+
+  @override
+  Future<Result<Map<String, UyumGrade>, AppFailure>> uyumGrades({
+    required String medreseId,
+    required DateTime periodStart,
+  }) async => Ok(Map.of(grades));
+
+  @override
+  Future<Result<void, AppFailure>> setUyum({
+    required String medreseId,
+    required String studentId,
+    required num points,
+    required String note,
+  }) async {
+    calls.add('uyum $studentId $points $note');
+    grades[studentId] = UyumGrade(
+      studentId: studentId,
+      points: points,
+      note: note,
+    );
+    return const Ok(null);
+  }
 
   @override
   Future<Result<List<WeeklyScore>, AppFailure>> weeklyScores(
@@ -333,6 +368,7 @@ class FakeTaskRepository implements TaskRepository {
       total: s.total,
       details: s.details,
       opened: true,
+      note: s.note,
     );
     return Ok(scoreList[i]);
   }

@@ -123,6 +123,9 @@ class _ChestPageState extends ConsumerState<ChestPage> {
           ListTile(
                 leading: Icon(taskIcon(t.id)),
                 title: Text(t.title),
+                subtitle: t.kind == TaskKind.teacher
+                    ? const Text('Hocan verdi')
+                    : null,
                 trailing: Text(
                   '+${formatPoints(score.details[t.id] ?? 0)}',
                   style: theme.textTheme.titleMedium,
@@ -148,7 +151,71 @@ class _ChestPageState extends ConsumerState<ChestPage> {
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium,
         ).animate(delay: step * (tasks.length + 2)).fadeIn(),
+        if (score.note.isNotEmpty)
+          _TeacherNote(points: score.details['uyum'] ?? 0, note: score.note)
+              .animate(delay: step * (tasks.length + 3))
+              .fadeIn()
+              .slideY(begin: 0.2),
       ],
+    );
+  }
+}
+
+/// Hocanın uyum puanı ve notu: mektup gibi bir kart.
+class _TeacherNote extends StatelessWidget {
+  const _TeacherNote({required this.points, required this.note});
+
+  final num points;
+  final String note;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(top: 24),
+      color: colors.secondaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.handshake_outlined, color: colors.secondary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Hocanın notu',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+                Text(
+                  '${formatPoints(points)} / ${UyumGrade.max}',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: colors.secondary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Hocan bu hafta sana ${formatPoints(points)} uyum puanı verdi.',
+              style: theme.textTheme.bodySmall,
+            ),
+            const Divider(height: 24),
+            Icon(Icons.format_quote, color: colors.secondary),
+            Text(
+              note,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontStyle: FontStyle.italic,
+                height: 1.5,
+                color: colors.onSecondaryContainer,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

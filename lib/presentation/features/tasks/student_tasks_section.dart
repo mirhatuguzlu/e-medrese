@@ -15,6 +15,8 @@ IconData taskIcon(String taskId) => switch (taskId) {
   'ders' => Icons.school_outlined,
   'cuz' => Icons.auto_stories_outlined,
   'kitap' => Icons.library_books_outlined,
+  'cevsen' => Icons.import_contacts_outlined,
+  'uyum' => Icons.handshake_outlined,
   _ => Icons.task_alt,
 };
 
@@ -81,14 +83,14 @@ class StudentTasksSection extends ConsumerWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             children: [
-              for (final t in tasks)
+              for (final t in tasks.where((t) => t.kind != TaskKind.teacher))
                 _TaskTile(
                   task: t,
-                  markedToday: entries.any(
+                  marked: entries.any(
                     (e) =>
                         e.taskId == t.id &&
                         e.studentId == myId &&
-                        e.day == today,
+                        (t.kind == TaskKind.weekly || e.day == today),
                   ),
                   onTap: () => context.push(
                     TaskPage(medrese: medrese, task: t, program: program),
@@ -168,12 +170,14 @@ class _ChestCard extends ConsumerWidget {
 class _TaskTile extends StatelessWidget {
   const _TaskTile({
     required this.task,
-    required this.markedToday,
+    required this.marked,
     required this.onTap,
   });
 
   final TaskDefinition task;
-  final bool markedToday;
+
+  /// Bugün (haftalık görevde bu hafta) işaretlendi mi.
+  final bool marked;
   final VoidCallback onTap;
 
   @override
@@ -205,16 +209,15 @@ class _TaskTile extends StatelessWidget {
               Row(
                 children: [
                   Icon(
-                    markedToday ? Icons.check_circle : Icons.circle_outlined,
+                    marked ? Icons.check_circle : Icons.circle_outlined,
                     size: 16,
-                    color: markedToday
-                        ? theme.colorScheme.primary
-                        : theme.hintColor,
+                    color: marked ? theme.colorScheme.primary : theme.hintColor,
                   ),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      markedToday ? 'Bugün yapıldı' : 'Bugün bekliyor',
+                      '${task.kind == TaskKind.weekly ? 'Bu hafta' : 'Bugün'} '
+                      '${marked ? 'yapıldı' : 'bekliyor'}',
                       style: theme.textTheme.bodySmall,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

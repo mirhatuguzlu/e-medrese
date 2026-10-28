@@ -32,7 +32,11 @@ class TaskPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final today = ref.watch(todayProvider);
-    final days = program.periodDays(today).where(task.isOn).toList();
+    final weekly = task.kind == TaskKind.weekly;
+    // Haftalık görev dönemin ilk gününe tek girdi olarak yazılır.
+    final days = weekly
+        ? [program.periodStart(today)]
+        : program.periodDays(today).where(task.isOn).toList();
     final myId = ref.watch(sessionProvider).valueOrNull?.user.id ?? '';
     final key = (
       medreseId: medrese.id,
@@ -101,12 +105,27 @@ class TaskPage extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            day == today
+                            weekly
+                                ? 'Bu hafta kaç kez bitirdin?'
+                                : day == today
                                 ? '${formatDay(day)} (bugün)'
                                 : formatDay(day),
                             style: theme.textTheme.titleSmall,
                           ),
-                          if (day.isAfter(today))
+                          if (weekly)
+                            Wrap(
+                              spacing: 8,
+                              children: [
+                                for (var n = 1; n <= task.cap; n++)
+                                  ChoiceChip(
+                                    label: Text('$n kez'),
+                                    selected: valueOf(day, 0) == n,
+                                    onSelected: (on) =>
+                                        save(day, 0, on ? n : null),
+                                  ),
+                              ],
+                            )
+                          else if (day.isAfter(today))
                             const Padding(
                               padding: EdgeInsets.only(top: 8),
                               child: Text('Bu gün henüz gelmedi.'),

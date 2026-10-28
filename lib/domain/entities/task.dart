@@ -7,6 +7,12 @@ enum TaskKind {
 
   /// Günlük sayfa sayısı (hazır seçenekler ya da elle).
   pages,
+
+  /// Haftada kaç kez yapıldığı (dönemin ilk gününe tek girdi).
+  weekly,
+
+  /// Hocanın verdiği puan; öğrenci işaretlemez.
+  teacher,
 }
 
 /// Sayfa görevinde hazır seçenek (ör. "1 cüz" = 20 sayfa).
@@ -185,6 +191,7 @@ final class WeeklyScore {
     required this.total,
     required this.details,
     required this.opened,
+    this.note = '',
   });
 
   /// `weekly_scores` satırından (`student:profiles(full_name)` ile) oluşturur.
@@ -197,6 +204,7 @@ final class WeeklyScore {
     total: json['total'] as num,
     details: (json['details'] as Map<String, dynamic>).cast<String, num>(),
     opened: json['opened_at'] != null,
+    note: json['note'] as String? ?? '',
   );
 
   /// Öğrenci.
@@ -216,4 +224,36 @@ final class WeeklyScore {
 
   /// Öğrenci sandığı açtı mı; açmadıysa puan otomatik aktarılmıştır.
   final bool opened;
+
+  /// Hocanın uyum notu; yoksa boş.
+  final String note;
+}
+
+/// Hocanın süren dönemde öğrenciye verdiği uyum puanı.
+final class UyumGrade {
+  /// Uyum puanı.
+  const UyumGrade({
+    required this.studentId,
+    required this.points,
+    required this.note,
+  });
+
+  /// `uyum_grades` satırından oluşturur.
+  factory UyumGrade.fromJson(Map<String, dynamic> json) => UyumGrade(
+    studentId: json['student_id'] as String,
+    points: json['points'] as num,
+    note: json['note'] as String,
+  );
+
+  /// En yüksek uyum puanı.
+  static const max = 25;
+
+  /// Öğrenci.
+  final String studentId;
+
+  /// 0–[max] puan.
+  final num points;
+
+  /// Öğrenciye not.
+  final String note;
 }

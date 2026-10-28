@@ -46,6 +46,17 @@ weeklyScoresProvider = FutureProvider.autoDispose.family(
   (ref, medreseId) => ref.watch(taskRepositoryProvider).weeklyScores(medreseId),
 );
 
+/// Hocanın bir dönemde verdiği uyum puanları (öğrenci -> puan).
+final AutoDisposeFutureProviderFamily<
+  Result<Map<String, UyumGrade>, AppFailure>,
+  ({String medreseId, DateTime periodStart})
+>
+uyumGradesProvider = FutureProvider.autoDispose.family(
+  (ref, key) => ref
+      .watch(taskRepositoryProvider)
+      .uyumGrades(medreseId: key.medreseId, periodStart: key.periodStart),
+);
+
 final _day = DateFormat('yyyy-MM-dd');
 
 /// Görev programı ve öğrenci girdileri.
@@ -141,7 +152,7 @@ class TaskRepository {
     final rows = await _client
         .from('weekly_scores')
         .select(
-          'student_id, period_start, total, details, opened_at, '
+          'student_id, period_start, total, details, opened_at, note, '
           'student:profiles(full_name)',
         )
         .eq('medrese_id', medreseId)
@@ -161,4 +172,30 @@ class TaskRepository {
     );
     return WeeklyScore.fromJson(row);
   });
+
+  /// [periodStart] döneminin uyum puanları (yalnızca hocalar okur).
+  Future<Result<Map<String, UyumGrade>, AppFailure>> uyumGrades({
+    required String medreseId,
+    required DateTime periodStart,
+  }) => guardSupabase(() async {
+    final rows = await _client
+        .from('uyum_grades')
+        .select('student_id, points, note')
+        .eq('medrese_id', medreseId)
+        .eq('period_start', _day.format(periodStart));
+    return {for (final g in rows.map(UyumGrade.fromJson)) g.studentId: g};
+  });
+
+  /// Süren dönem için [studentId]'ye uyum puanı ve not verir.
+  Future<Result<void, AppFailure>> setUyum({
+    required String medreseId,
+    required String studentId,
+    required num points,
+    required String note,
+  }) => guardSupabase(
+    () => _client.rpc<void>(
+      'set_uyum',
+      params: {'m': medreseId, 's': studentId, 'points': points, 'note': note},
+    ),
+  );
 }

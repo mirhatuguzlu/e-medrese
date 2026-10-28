@@ -6,6 +6,7 @@ import 'package:e_medrese/domain/entities/member.dart';
 import 'package:e_medrese/domain/entities/task.dart';
 import 'package:e_medrese/presentation/features/tasks/score_history_page.dart';
 import 'package:e_medrese/presentation/features/tasks/student_tasks_section.dart';
+import 'package:e_medrese/presentation/features/tasks/uyum_page.dart';
 import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
 import 'package:e_medrese/presentation/widgets/loading_button.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
@@ -82,7 +83,8 @@ class _TaskTrackingPageState extends ConsumerState<TaskTrackingPage> {
                 const Icon(Icons.task_alt, size: 64),
                 const SizedBox(height: 16),
                 const Text(
-                  'Haftalık görevler (namaz, Risale-i Nur, ders, cüz, kitap) '
+                  'Haftalık görevler (namaz, Risale-i Nur, ders, cüz, kitap, '
+                  'Cevşen, uyum) '
                   'başlatıldığı günden itibaren 7 günlük dönemlerle '
                   'öğrencilere açılır.',
                   textAlign: TextAlign.center,
@@ -115,6 +117,12 @@ class _Students extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final grades = switch (ref.watch(
+      uyumGradesProvider((medreseId: medrese.id, periodStart: periodStart)),
+    )) {
+      AsyncData(value: Ok(:final value)) => value,
+      _ => const <String, UyumGrade>{},
+    };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -122,7 +130,8 @@ class _Students extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           child: Text(
             'Bu dönem: ${periodLabel(periodStart)}\n'
-            'Puanlar dönem bitince açıklanır. Geçmiş için öğrenciye dokun.',
+            'Puanlar dönem bitince açıklanır. Geçmiş için öğrenciye, '
+            'uyum vermek için el sıkışma simgesine dokun.',
           ),
         ),
         const Divider(height: 1),
@@ -145,7 +154,23 @@ class _Students extends ConsumerWidget {
                 child: Text(displayName(s.name).characters.first),
               ),
               title: Text(displayName(s.name)),
-              trailing: const Icon(Icons.chevron_right),
+              subtitle: Text(switch (grades[s.userId]) {
+                final g? => 'Uyum: ${formatPoints(g.points)}/${UyumGrade.max}',
+                null => 'Uyum verilmedi',
+              }),
+              trailing: IconButton(
+                tooltip: 'Uyum puanı ver',
+                icon: const Icon(Icons.handshake_outlined),
+                onPressed: () => context.push(
+                  UyumPage(
+                    medrese: medrese,
+                    periodStart: periodStart,
+                    studentId: s.userId,
+                    studentName: s.name,
+                    grade: grades[s.userId],
+                  ),
+                ),
+              ),
               onTap: () => context.push(
                 ScoreHistoryPage(
                   medrese: medrese,
