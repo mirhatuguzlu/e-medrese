@@ -13,6 +13,7 @@ class ResultListView<T> extends StatelessWidget {
     required this.emptyText,
     required this.itemBuilder,
     this.separated = true,
+    this.header,
     super.key,
   });
 
@@ -34,6 +35,9 @@ class ResultListView<T> extends StatelessWidget {
   /// Satırlar arasında çizgi olsun mu.
   final bool separated;
 
+  /// Liste doluyken satırlardan önce çizilen içerik.
+  final Widget Function(List<T> items)? header;
+
   @override
   Widget build(BuildContext context) {
     return switch (value) {
@@ -42,10 +46,15 @@ class ResultListView<T> extends StatelessWidget {
           onRefresh: onRefresh,
           child: ListView.separated(
             padding: const EdgeInsets.only(bottom: 96),
-            itemCount: items.length,
-            separatorBuilder: (_, _) =>
-                separated ? const Divider(height: 1) : const SizedBox.shrink(),
-            itemBuilder: (context, i) => itemBuilder(context, items[i]),
+            itemCount: items.length + (header == null ? 0 : 1),
+            separatorBuilder: (_, i) => separated && (header == null || i > 0)
+                ? const Divider(height: 1)
+                : const SizedBox.shrink(),
+            itemBuilder: (context, i) => header == null
+                ? itemBuilder(context, items[i])
+                : i == 0
+                ? header!(items)
+                : itemBuilder(context, items[i - 1]),
           ),
         ),
       AsyncData(value: Ok()) => _Message(

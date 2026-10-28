@@ -86,7 +86,7 @@ void main() {
 
     auth.sessions.add(_session);
     await tester.pumpAndSettle();
-    expect(find.text('Medreselerim'), findsOneWidget);
+    expect(find.textContaining('Henüz bir medresen yok'), findsOneWidget);
 
     expect(find.text('A'), findsOneWidget);
     await tester.tap(find.byTooltip('Profil'));

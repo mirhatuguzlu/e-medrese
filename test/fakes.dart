@@ -1,9 +1,11 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/feed_repository.dart';
 import 'package:e_medrese/data/repositories/medrese_repository.dart';
+import 'package:e_medrese/data/repositories/task_repository.dart';
 import 'package:e_medrese/domain/entities/feed.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/member.dart';
+import 'package:e_medrese/domain/entities/task.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const testMedrese = Medrese(
@@ -225,6 +227,150 @@ class FakeFeedRepository implements FeedRepository {
         createdAt: DateTime(2026),
       ),
     );
+    return const Ok(null);
+  }
+}
+
+/// Migration'daki görev tanımlarının aynısı (JSON ayrıştırmasını da sınar).
+final List<TaskDefinition> testTasks = [
+  for (final json in [
+    {
+      'id': 'namaz',
+      'title': 'Namaz',
+      'description': 'Her vakit için işaretle.',
+      'config': {
+        'kind': 'checks',
+        'items': ['Sabah', 'Öğle', 'İkindi', 'Akşam', 'Yatsı'],
+        'target': 35,
+        'points': 25,
+        'cap': 35,
+      },
+    },
+    {
+      'id': 'risale',
+      'title': 'Risale-i Nur okuma',
+      'description': 'Günde 3 sayfa.',
+      'config': {
+        'kind': 'pages',
+        'presets': [
+          {'label': 'Okudum (3 sayfa)', 'pages': 3},
+        ],
+        'target': 21,
+        'points': 25,
+        'cap': 63,
+      },
+    },
+    {
+      'id': 'ders',
+      'title': 'Derse katılım',
+      'description': 'Salı ve Perşembe dersleri.',
+      'config': {
+        'kind': 'checks',
+        'items': ['Derse katıldım'],
+        'weekdays': [2, 4],
+        'target': 2,
+        'points': 30,
+        'cap': 2,
+      },
+    },
+    {
+      'id': 'cuz',
+      'title': "Kur'an-ı Kerim (cüz)",
+      'description': 'Haftada 1 cüz.',
+      'config': {
+        'kind': 'pages',
+        'presets': [
+          {'label': '1 cüz', 'pages': 20},
+          {'label': '2 cüz', 'pages': 40},
+          {'label': '3 cüz', 'pages': 60},
+        ],
+        'target': 20,
+        'points': 20,
+        'cap': 60,
+      },
+    },
+    {
+      'id': 'kitap',
+      'title': 'İslami kitap okuma',
+      'description': 'Günde 10 sayfa.',
+      'config': {
+        'kind': 'pages',
+        'presets': <Map<String, dynamic>>[],
+        'target': 70,
+        'points': 25,
+        'cap': 210,
+      },
+    },
+  ])
+    TaskDefinition.fromJson(json),
+];
+
+class FakeTaskRepository implements TaskRepository {
+  FakeTaskRepository({this.taskProgram});
+
+  TaskProgram? taskProgram;
+  final entryList = <TaskEntry>[];
+  final calls = <String>[];
+
+  @override
+  Future<Result<List<TaskDefinition>, AppFailure>> definitions() async =>
+      Ok(testTasks);
+
+  @override
+  Future<Result<TaskProgram?, AppFailure>> program(String medreseId) async =>
+      Ok(taskProgram);
+
+  @override
+  Future<Result<void, AppFailure>> start(
+    String medreseId,
+    DateTime today,
+  ) async {
+    calls.add('start');
+    taskProgram = TaskProgram(startDate: today, active: true);
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> stop(String medreseId) async {
+    calls.add('stop');
+    taskProgram = TaskProgram(startDate: taskProgram!.startDate, active: false);
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<List<TaskEntry>, AppFailure>> entries({
+    required String medreseId,
+    required DateTime periodStart,
+  }) async => Ok(List.of(entryList));
+
+  @override
+  Future<Result<void, AppFailure>> setEntry({
+    required String medreseId,
+    required String studentId,
+    required String taskId,
+    required DateTime day,
+    required int item,
+    required num? value,
+  }) async {
+    calls.add('$taskId ${day.day} $item $value');
+    entryList.removeWhere(
+      (e) =>
+          e.studentId == studentId &&
+          e.taskId == taskId &&
+          e.day == day &&
+          e.item == item,
+    );
+    if (value != null) {
+      entryList.add(
+        TaskEntry(
+          studentId: studentId,
+          taskId: taskId,
+          day: day,
+          item: item,
+          value: value,
+        ),
+      );
+    }
     return const Ok(null);
   }
 }

@@ -4,6 +4,7 @@ import 'package:e_medrese/presentation/features/announcements/announcements_page
 import 'package:e_medrese/presentation/features/medrese/invite_code_page.dart';
 import 'package:e_medrese/presentation/features/members/members_page.dart';
 import 'package:e_medrese/presentation/features/posts/posts_page.dart';
+import 'package:e_medrese/presentation/features/tasks/task_tracking_page.dart';
 import 'package:flutter/material.dart';
 
 /// Medresenin kapısı: her bölüm kendi sayfasında açılır.
@@ -55,6 +56,13 @@ class MedresePage extends StatelessWidget {
             subtitle: 'Hocalar ve öğrenciler',
             page: MembersPage(medrese: medrese),
           ),
+          if (medrese.myRole.isStaff)
+            _Entry(
+              icon: Icons.task_alt,
+              title: 'Görev takibi',
+              subtitle: 'Öğrencilerin haftalık görev puanları',
+              page: TaskTrackingPage(medrese: medrese),
+            ),
           if (medrese.myRole.isStaff)
             _Entry(
               icon: Icons.vpn_key_outlined,
