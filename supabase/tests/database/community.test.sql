@@ -3,7 +3,7 @@ begin;
 set local role postgres;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(18);
+select plan(20);
 
 -- hoca1 (sahip), hoca2, öğrenci1, öğrenci2, yabancı
 insert into auth.users (id, email) values
@@ -35,13 +35,18 @@ select throws_ok($$ select add_member_by_email('10000000-0000-0000-0000-00000000
 
 -- Davet koduyla katılma
 set local role postgres;
-create temp table code as select invite_code from medreses;
+create temp table code as select invite_code from medreses
+  where id = '10000000-0000-0000-0000-000000000001';
 grant select on code to authenticated;
 set local role authenticated;
+select pg_temp.login('00000000-0000-0000-0000-000000000001');
+select throws_ok($$ select join_medrese((select invite_code from code)) $$, 'already a member',
+  'kurucu kendi koduyla katılamaz');
 select pg_temp.login('00000000-0000-0000-0000-000000000004');
 select is(join_medrese(lower((select invite_code from code))), '10000000-0000-0000-0000-000000000001'::uuid,
   'öğrenci kodla katılır (büyük/küçük harf fark etmez)');
 select throws_ok($$ select join_medrese('YANLIS00') $$, 'invalid invite code');
+select throws_ok($$ select join_medrese((select invite_code from code)) $$, 'already a member', 'üye tekrar katılamaz');
 
 -- Öğrenci yetkileri
 select throws_ok($$ select add_member_by_email('10000000-0000-0000-0000-000000000001', 'yabanci@test.com') $$,
