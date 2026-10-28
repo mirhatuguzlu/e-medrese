@@ -18,10 +18,7 @@ abstract final class ExceptionMapper {
 
   /// [Object] hatasını [AppFailure]'a çevirir.
   static AppFailure fromException(Object error, [StackTrace? stackTrace]) {
-    return UnexpectedFailure(
-      error.toString(),
-      stackTrace: stackTrace,
-    );
+    return UnexpectedFailure(error.toString(), stackTrace: stackTrace);
   }
 
   /// Bilinmeyen / beklenmeyen hatalar için.

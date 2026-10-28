@@ -37,20 +37,17 @@ final class TimeoutFailure extends AppFailure {
 
 /// Oturum açılmamış.
 final class UnauthenticatedFailure extends AppFailure {
-  const UnauthenticatedFailure()
-    : super('Oturum açmanız gerekiyor.');
+  const UnauthenticatedFailure() : super('Oturum açmanız gerekiyor.');
 }
 
 /// Yetkisiz erişim.
 final class UnauthorizedFailure extends AppFailure {
-  const UnauthorizedFailure()
-    : super('Bu işlem için yetkiniz yok.');
+  const UnauthorizedFailure() : super('Bu işlem için yetkiniz yok.');
 }
 
 /// Geçersiz kimlik bilgileri.
 final class InvalidCredentialsFailure extends AppFailure {
-  const InvalidCredentialsFailure()
-    : super('Geçersiz e-posta veya şifre.');
+  const InvalidCredentialsFailure() : super('Geçersiz e-posta veya şifre.');
 }
 
 /// Kayıt bulunamadı.
