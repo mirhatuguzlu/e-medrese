@@ -21,7 +21,7 @@ insert into medreses (id, name) values ('20000000-0000-0000-0000-000000000001', 
 select add_member_by_email('20000000-0000-0000-0000-000000000001', 'g-ogrenci1@test.com');
 select add_member_by_email('20000000-0000-0000-0000-000000000001', 'g-ogrenci2@test.com');
 
-select is((select count(*)::int from task_definitions), 5, 'görev tanımları okunur');
+select is((select count(*)::int from task_definitions), 7, 'görev tanımları okunur');
 
 -- Program başlamadan
 select pg_temp.login('00000000-0000-0000-0000-0000000000a2');
