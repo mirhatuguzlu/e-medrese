@@ -53,6 +53,34 @@ begin
   do update set points = excluded.points, note = excluded.note;
 end $$;
 
+-- Öğrenci 'teacher' türü görevlere (uyum) girdi yazamaz.
+create function public.student_writable_task(t text) returns boolean
+language sql stable security definer set search_path = '' as $$
+  select exists (
+    select 1 from public.task_definitions
+    where id = t and config ->> 'kind' <> 'teacher'
+  )
+$$;
+
+drop policy "task_entries: student writes own" on public.task_entries;
+create policy "task_entries: student writes own" on public.task_entries
+for insert to authenticated with check (
+  student_id = auth.uid()
+  and public.my_role(medrese_id) = 'student'
+  and public.can_write_task_day(medrese_id, day)
+  and public.student_writable_task(task_id)
+);
+drop policy "task_entries: student updates own" on public.task_entries;
+create policy "task_entries: student updates own" on public.task_entries
+for update to authenticated
+using (student_id = auth.uid() and public.can_write_task_day(medrese_id, day))
+with check (
+  student_id = auth.uid()
+  and public.my_role(medrese_id) = 'student'
+  and public.can_write_task_day(medrese_id, day)
+  and public.student_writable_task(task_id)
+);
+
 alter table public.weekly_scores add column note text not null default '';
 
 -- Uyum puanı ve notu da hesaplanır. Öğrencinin 'teacher' türü görevlere

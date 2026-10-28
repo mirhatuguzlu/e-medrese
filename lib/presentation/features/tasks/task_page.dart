@@ -34,7 +34,10 @@ class TaskPage extends ConsumerWidget {
     final today = ref.watch(todayProvider);
     final weekly = task.kind == TaskKind.weekly;
     // Haftalık görev dönemin ilk gününe tek girdi olarak yazılır.
-    final days = weekly
+    final byTeacher = task.kind == TaskKind.teacher;
+    final days = byTeacher
+        ? const <DateTime>[]
+        : weekly
         ? [program.periodStart(today)]
         : program.periodDays(today).where(task.isOn).toList();
     final myId = ref.watch(sessionProvider).valueOrNull?.user.id ?? '';
@@ -90,7 +93,11 @@ class TaskPage extends ConsumerWidget {
                       Text(task.description),
                       const SizedBox(height: 8),
                       Text(
-                        'Puanın dönem bitince sandıkta açıklanır.',
+                        byTeacher
+                            ? 'Bu puanı hocan verir; sen işaretlemezsin. '
+                                  'Puanın ve hocanın notu dönem bitince '
+                                  'sandıkta açıklanır.'
+                            : 'Puanın dönem bitince sandıkta açıklanır.',
                         style: theme.textTheme.bodySmall,
                       ),
                     ],

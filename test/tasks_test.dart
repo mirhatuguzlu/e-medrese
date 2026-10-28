@@ -77,11 +77,7 @@ void main() {
     // Dönem sürerken puan gösterilmez.
     expect(find.textContaining('puan'), findsNothing);
     for (final t in testTasks) {
-      // Uyumu hoca verir; öğrenci işaretlemez.
-      expect(
-        find.text(t.title),
-        t.kind == TaskKind.teacher ? findsNothing : findsOneWidget,
-      );
+      expect(find.text(t.title), findsOneWidget);
     }
     expect(find.byType(GridView), findsOneWidget);
   });
@@ -163,6 +159,18 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.text('Bu hafta yapıldı'), findsOneWidget);
+  });
+
+  testWidgets('öğrenci uyum kartını görür ama işaretleyemez', (tester) async {
+    medreses.medreses.add(_medrese(MemberRole.student));
+    await pump(tester, const HomePage(), program: _program);
+    expect(find.text('Hocan değerlendirir'), findsOneWidget);
+    await openTask(tester, 'Uyum');
+
+    expect(find.textContaining('Bu puanı hocan verir'), findsOneWidget);
+    expect(find.byType(Card), findsNothing);
+    expect(find.byType(ChoiceChip), findsNothing);
+    expect(find.byType(TextField), findsNothing);
   });
 
   WeeklyScore score(

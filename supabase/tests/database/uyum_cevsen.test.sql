@@ -2,7 +2,7 @@ begin;
 set local role postgres;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(10);
+select plan(11);
 
 -- hoca, öğrenci1, öğrenci2
 insert into auth.users (id, email) values
@@ -37,9 +37,9 @@ select pg_temp.login('00000000-0000-0000-0000-0000000000c2');
 select throws_ok($$ select set_uyum('40000000-0000-0000-0000-000000000001',
   '00000000-0000-0000-0000-0000000000c2', 25, '') $$, 'not allowed', 'öğrenci kendine puan veremez');
 select is((select count(*)::int from uyum_grades), 0, 'öğrenci notu dönem içinde göremez');
--- Öğrencinin uyum için yazdığı girdi sayılmaz.
-insert into task_entries (medrese_id, task_id, day, value)
-  values ('40000000-0000-0000-0000-000000000001', 'uyum', today_tr(), 25);
+select throws_ok($$ insert into task_entries (medrese_id, task_id, day, value)
+  values ('40000000-0000-0000-0000-000000000001', 'uyum', today_tr(), 25) $$,
+  '42501', null, 'öğrenci uyuma yazamaz');
 insert into task_entries (medrese_id, task_id, day, value)
   values ('40000000-0000-0000-0000-000000000001', 'cevsen', today_tr(), 5);
 

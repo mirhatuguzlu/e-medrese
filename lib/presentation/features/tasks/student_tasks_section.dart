@@ -83,7 +83,7 @@ class StudentTasksSection extends ConsumerWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             children: [
-              for (final t in tasks.where((t) => t.kind != TaskKind.teacher))
+              for (final t in tasks)
                 _TaskTile(
                   task: t,
                   marked: entries.any(
@@ -209,15 +209,24 @@ class _TaskTile extends StatelessWidget {
               Row(
                 children: [
                   Icon(
-                    marked ? Icons.check_circle : Icons.circle_outlined,
+                    task.kind == TaskKind.teacher
+                        ? Icons.lock_outline
+                        : marked
+                        ? Icons.check_circle
+                        : Icons.circle_outlined,
                     size: 16,
                     color: marked ? theme.colorScheme.primary : theme.hintColor,
                   ),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      '${task.kind == TaskKind.weekly ? 'Bu hafta' : 'Bugün'} '
-                      '${marked ? 'yapıldı' : 'bekliyor'}',
+                      switch (task.kind) {
+                        TaskKind.teacher => 'Hocan değerlendirir',
+                        TaskKind.weekly when marked => 'Bu hafta yapıldı',
+                        TaskKind.weekly => 'Bu hafta bekliyor',
+                        _ when marked => 'Bugün yapıldı',
+                        _ => 'Bugün bekliyor',
+                      },
                       style: theme.textTheme.bodySmall,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
