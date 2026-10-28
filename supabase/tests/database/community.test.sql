@@ -3,7 +3,7 @@ begin;
 set local role postgres;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(20);
+select plan(27);
 
 -- hoca1 (sahip), hoca2, öğrenci1, öğrenci2, yabancı
 insert into auth.users (id, email) values
@@ -66,6 +66,12 @@ select lives_ok($$ insert into announcements (medrese_id, title) values ('100000
   'hoca duyuru yazar');
 select throws_ok($$ select add_member_by_email('10000000-0000-0000-0000-000000000001', 'yabanci@test.com', 'teacher') $$,
   'not allowed', 'hoca başka hoca ekleyemez');
+update medrese_members set role = 'teacher' where user_id = '00000000-0000-0000-0000-000000000003';
+select is((select role::text from medrese_members where user_id = '00000000-0000-0000-0000-000000000003'), 'student', 'hoca rol yükseltemez');
+update posts set body = 'değişti';
+select is((select body from posts), 'selam', 'başkasının paylaşımı düzenlenemez');
+update announcements set title = 'Ders ertelendi';
+select is((select title from announcements), 'Ders ertelendi', 'yazan duyurusunu düzenler');
 
 -- Mesajlaşma ve çıkarılma
 select pg_temp.login('00000000-0000-0000-0000-000000000003');
@@ -80,9 +86,19 @@ insert into messages (conversation_id, body) select id, 'merhaba' from conv;
 select pg_temp.login('00000000-0000-0000-0000-000000000002');
 select is((select count(*)::int from messages), 0, 'sohbete dahil olmayan mesajları göremez');
 delete from medrese_members where user_id = '00000000-0000-0000-0000-000000000004';
+select is((select count(*)::int from profiles where id = '00000000-0000-0000-0000-000000000004'), 1, 'çıkarılan öğrencinin adı paylaşımında görünür');
 
 select pg_temp.login('00000000-0000-0000-0000-000000000004');
 select is((select count(*)::int from messages), 0, 'çıkarılan öğrenci sohbeti artık göremez');
+
+-- Kurucu yetkileri
+select pg_temp.login('00000000-0000-0000-0000-000000000001');
+update medrese_members set role = 'teacher' where user_id = '00000000-0000-0000-0000-000000000003';
+select is((select role::text from medrese_members where user_id = '00000000-0000-0000-0000-000000000003'), 'teacher', 'kurucu öğrenciyi hocaya yükseltir');
+delete from posts;
+select is((select count(*)::int from posts), 0, 'kurucu paylaşım siler');
+delete from announcements;
+select is((select count(*)::int from announcements), 0, 'kurucu duyuru siler');
 
 -- Yabancı
 select pg_temp.login('00000000-0000-0000-0000-000000000005');

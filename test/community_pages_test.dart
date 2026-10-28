@@ -1,6 +1,7 @@
 import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:e_medrese/data/repositories/feed_repository.dart';
 import 'package:e_medrese/data/repositories/medrese_repository.dart';
+import 'package:e_medrese/domain/entities/feed.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/member.dart';
 import 'package:e_medrese/presentation/features/medrese/medrese_page.dart';
@@ -18,10 +19,27 @@ Medrese _as(MemberRole role) => Medrese(
   myRole: role,
 );
 
-const _members = [
-  Member(userId: 'u1', name: 'Kurucu Hoca', role: MemberRole.owner),
-  Member(userId: 'u2', name: 'Diğer Hoca', role: MemberRole.teacher),
-  Member(userId: 'u3', name: 'Öğrenci Ali', role: MemberRole.student),
+final _joined = DateTime(2026, 10, 28);
+
+final _members = [
+  Member(
+    userId: 'u1',
+    name: 'Kurucu Hoca',
+    role: MemberRole.owner,
+    joinedAt: _joined,
+  ),
+  Member(
+    userId: 'u2',
+    name: 'Diğer Hoca',
+    role: MemberRole.teacher,
+    joinedAt: _joined,
+  ),
+  Member(
+    userId: 'u3',
+    name: 'Öğrenci Ali',
+    role: MemberRole.student,
+    joinedAt: _joined,
+  ),
 ];
 
 void main() {
@@ -34,6 +52,7 @@ void main() {
     feed = FakeFeedRepository();
     await tester.pumpWidget(
       ProviderScope(
+        key: UniqueKey(),
         overrides: [
           sessionProvider.overrideWith((ref) => Stream.value(testSession)),
           medreseRepositoryProvider.overrideWithValue(medreses),
@@ -155,5 +174,154 @@ void main() {
 
     expect(feed.calls, ['post Selamün aleyküm', 'comment Aleyküm selam']);
     expect(find.text('Aleyküm selam'), findsOneWidget);
+  });
+
+  Post post(String id, String authorId, String name) => Post(
+    id: id,
+    body: '$name paylaşımı',
+    authorId: authorId,
+    authorName: name,
+    createdAt: DateTime(2026),
+    commentCount: 0,
+  );
+
+  Announcement announcement(String id, String authorId, String title) =>
+      Announcement(
+        id: id,
+        title: title,
+        body: '',
+        authorId: authorId,
+        authorName: 'Diğer Hoca',
+        createdAt: DateTime(2026),
+      );
+
+  testWidgets('kurucu öğrencinin sayfasından hocalığa yükseltir', (
+    tester,
+  ) async {
+    await pumpMedrese(tester, MemberRole.owner);
+    feed.postList.add(post('p1', 'u3', 'Öğrenci Ali'));
+    await open(tester, 'Üyeler');
+    await open(tester, 'Öğrenci Ali');
+
+    expect(find.text('Katılma tarihi'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+
+    await tester.tap(find.text('Hocalığa yükselt'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Yükselt'));
+    await tester.pumpAndSettle();
+
+    expect(medreses.calls, ['promote u3']);
+    expect(find.text('Öğrenci Ali artık hoca.'), findsOneWidget);
+    expect(find.text('Öğrenci'), findsNothing);
+  });
+
+  testWidgets('hoca sayfasında yükseltme yok, hoca üye sayfası açamaz', (
+    tester,
+  ) async {
+    await pumpMedrese(tester, MemberRole.owner);
+    await open(tester, 'Üyeler');
+    await open(tester, 'Diğer Hoca');
+    expect(find.text('Hocalığa yükselt'), findsNothing);
+
+    await pumpMedrese(tester, MemberRole.teacher);
+    await open(tester, 'Üyeler');
+    await open(tester, 'Öğrenci Ali');
+    expect(find.text('Katılma tarihi'), findsNothing);
+  });
+
+  testWidgets('ayrılan üyenin adı etiketle gösterilir', (tester) async {
+    await pumpMedrese(tester, MemberRole.student);
+    feed.postList.addAll([
+      post('p1', 'u3', 'Öğrenci Ali'),
+      post('p2', 'u9', 'Eski Öğrenci'),
+    ]);
+    await open(tester, 'Paylaşımlar');
+
+    expect(find.text('Öğrenci Ali'), findsOneWidget);
+    expect(
+      find.text('Eski Öğrenci (artık bu medresede değil)'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('kurucu başkasının duyurusunu siler ama düzenleyemez', (
+    tester,
+  ) async {
+    await pumpMedrese(tester, MemberRole.owner);
+    feed.announcementList.add(announcement('a1', 'u2', 'Sınav'));
+    await open(tester, 'Duyurular');
+
+    expect(find.byTooltip('Düzenle'), findsNothing);
+    await tester.tap(find.byTooltip('Sil'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Sil'));
+    await tester.pumpAndSettle();
+
+    expect(feed.calls, ['delete announcement a1']);
+    expect(find.text('Sınav'), findsNothing);
+  });
+
+  testWidgets('yazan duyurusunu düzenler, başka hoca silemez', (tester) async {
+    await pumpMedrese(tester, MemberRole.teacher);
+    feed.announcementList.addAll([
+      announcement('a1', 'u1', 'Ders iptal'),
+      announcement('a2', 'u2', 'Başkasının'),
+    ]);
+    await open(tester, 'Duyurular');
+
+    // Yalnızca kendi duyurusunda düzenle/sil var.
+    expect(find.byTooltip('Düzenle'), findsOneWidget);
+    expect(find.byTooltip('Sil'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Düzenle'));
+    await tester.pumpAndSettle();
+    expect(find.text('Duyuruyu düzenle'), findsOneWidget);
+    await tester.enterText(find.byType(TextFormField).first, 'Ders ertelendi');
+    await tester.tap(find.text('Kaydet'));
+    await tester.pumpAndSettle();
+
+    expect(feed.calls, ['edit announcement Ders ertelendi']);
+    expect(find.text('Ders ertelendi'), findsOneWidget);
+  });
+
+  testWidgets('yazan paylaşımını düzenler', (tester) async {
+    await pumpMedrese(tester, MemberRole.student);
+    feed.postList.add(post('p1', 'u1', 'Kurucu Hoca'));
+    await open(tester, 'Paylaşımlar');
+    await open(tester, 'Kurucu Hoca paylaşımı');
+
+    await tester.tap(find.byTooltip('Düzenle'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'Düzeltildi');
+    await tester.tap(find.text('Kaydet'));
+    await tester.pumpAndSettle();
+
+    expect(feed.calls, ['edit post Düzeltildi']);
+    expect(find.text('Düzeltildi'), findsOneWidget);
+  });
+
+  testWidgets('öğrenci başkasının paylaşımını silemez, hoca siler', (
+    tester,
+  ) async {
+    await pumpMedrese(tester, MemberRole.student);
+    feed.postList.add(post('p1', 'u3', 'Öğrenci Ali'));
+    await open(tester, 'Paylaşımlar');
+    await open(tester, 'Öğrenci Ali paylaşımı');
+    expect(find.byTooltip('Sil'), findsNothing);
+    expect(find.byTooltip('Düzenle'), findsNothing);
+
+    await pumpMedrese(tester, MemberRole.teacher);
+    feed.postList.add(post('p1', 'u3', 'Öğrenci Ali'));
+    await open(tester, 'Paylaşımlar');
+    await open(tester, 'Öğrenci Ali paylaşımı');
+    await tester.tap(find.byTooltip('Sil'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Sil'));
+    await tester.pumpAndSettle();
+
+    expect(feed.calls, ['delete post p1']);
+    expect(find.text('Paylaşım silindi.'), findsOneWidget);
+    expect(find.text('Öğrenci Ali paylaşımı'), findsNothing);
   });
 }

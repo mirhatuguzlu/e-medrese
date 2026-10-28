@@ -8,6 +8,7 @@ final class Announcement {
     required this.id,
     required this.title,
     required this.body,
+    required this.authorId,
     required this.authorName,
     required this.createdAt,
   });
@@ -17,6 +18,7 @@ final class Announcement {
     id: json['id'] as String,
     title: json['title'] as String,
     body: json['body'] as String,
+    authorId: json['author_id'] as String,
     authorName: _authorName(json),
     createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
   );
@@ -29,6 +31,9 @@ final class Announcement {
 
   /// Metin.
   final String body;
+
+  /// Yazanın kimliği.
+  final String authorId;
 
   /// Yazan.
   final String authorName;
@@ -43,6 +48,7 @@ final class Post {
   const Post({
     required this.id,
     required this.body,
+    required this.authorId,
     required this.authorName,
     required this.createdAt,
     required this.commentCount,
@@ -52,6 +58,7 @@ final class Post {
   factory Post.fromJson(Map<String, dynamic> json) => Post(
     id: json['id'] as String,
     body: json['body'] as String,
+    authorId: json['author_id'] as String,
     authorName: _authorName(json),
     createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
     commentCount:
@@ -67,6 +74,9 @@ final class Post {
   /// Metin.
   final String body;
 
+  /// Paylaşanın kimliği.
+  final String authorId;
+
   /// Paylaşan.
   final String authorName;
 
@@ -75,6 +85,16 @@ final class Post {
 
   /// Yorum sayısı.
   final int commentCount;
+
+  /// Metni değiştirilmiş kopya (düzenlemeden sonra).
+  Post withBody(String body) => Post(
+    id: id,
+    body: body,
+    authorId: authorId,
+    authorName: authorName,
+    createdAt: createdAt,
+    commentCount: commentCount,
+  );
 }
 
 /// Paylaşıma yapılan yorum.
@@ -83,6 +103,7 @@ final class Comment {
   const Comment({
     required this.id,
     required this.body,
+    required this.authorId,
     required this.authorName,
     required this.createdAt,
   });
@@ -91,6 +112,7 @@ final class Comment {
   factory Comment.fromJson(Map<String, dynamic> json) => Comment(
     id: json['id'] as String,
     body: json['body'] as String,
+    authorId: json['author_id'] as String,
     authorName: _authorName(json),
     createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
   );
@@ -100,6 +122,9 @@ final class Comment {
 
   /// Metin.
   final String body;
+
+  /// Yazanın kimliği.
+  final String authorId;
 
   /// Yazan.
   final String authorName;

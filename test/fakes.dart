@@ -44,6 +44,23 @@ class FakeMedreseRepository implements MedreseRepository {
   }
 
   @override
+  Future<Result<void, AppFailure>> promoteToTeacher({
+    required String medreseId,
+    required String userId,
+  }) async {
+    calls.add('promote $userId');
+    final i = memberList.indexWhere((m) => m.userId == userId);
+    final m = memberList[i];
+    memberList[i] = Member(
+      userId: m.userId,
+      name: m.name,
+      role: MemberRole.teacher,
+      joinedAt: m.joinedAt,
+    );
+    return const Ok(null);
+  }
+
+  @override
   Future<Result<List<Medrese>, AppFailure>> myMedreses(String userId) async =>
       Ok(List.of(medreses));
 
@@ -102,6 +119,7 @@ class FakeFeedRepository implements FeedRepository {
         id: 'a${announcementList.length}',
         title: title,
         body: body,
+        authorId: 'u1',
         authorName: 'Hoca',
         createdAt: DateTime(2026),
       ),
@@ -124,6 +142,7 @@ class FakeFeedRepository implements FeedRepository {
       Post(
         id: 'p${postList.length}',
         body: body,
+        authorId: 'u1',
         authorName: 'Ali',
         createdAt: DateTime(2026),
         commentCount: 0,
@@ -131,6 +150,57 @@ class FakeFeedRepository implements FeedRepository {
     );
     return const Ok(null);
   }
+
+  @override
+  Future<Result<void, AppFailure>> updateAnnouncement({
+    required String id,
+    required String title,
+    required String body,
+  }) async {
+    calls.add('edit announcement $title');
+    final i = announcementList.indexWhere((a) => a.id == id);
+    final a = announcementList[i];
+    announcementList[i] = Announcement(
+      id: a.id,
+      title: title,
+      body: body,
+      authorId: a.authorId,
+      authorName: a.authorName,
+      createdAt: a.createdAt,
+    );
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> deleteAnnouncement(String id) async {
+    calls.add('delete announcement $id');
+    announcementList.removeWhere((a) => a.id == id);
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> updatePost({
+    required String id,
+    required String body,
+  }) async {
+    calls.add('edit post $body');
+    final i = postList.indexWhere((p) => p.id == id);
+    postList[i] = postList[i].withBody(body);
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> deletePost(String id) async {
+    calls.add('delete post $id');
+    postList.removeWhere((p) => p.id == id);
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<int, AppFailure>> postCount({
+    required String medreseId,
+    required String userId,
+  }) async => Ok(postList.where((p) => p.authorId == userId).length);
 
   @override
   Future<Result<List<Comment>, AppFailure>> comments(String postId) async =>
@@ -146,6 +216,7 @@ class FakeFeedRepository implements FeedRepository {
       Comment(
         id: 'c${commentList.length}',
         body: body,
+        authorId: 'u1',
         authorName: 'Ali',
         createdAt: DateTime(2026),
       ),

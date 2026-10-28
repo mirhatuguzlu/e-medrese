@@ -1,8 +1,12 @@
 import 'package:e_medrese/core/core.dart';
+import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:e_medrese/data/repositories/feed_repository.dart';
 import 'package:e_medrese/domain/entities/feed.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
+import 'package:e_medrese/presentation/features/posts/new_post_page.dart';
 import 'package:e_medrese/presentation/features/posts/posts_page.dart';
+import 'package:e_medrese/presentation/widgets/author_label.dart';
+import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -23,6 +27,7 @@ class PostPage extends ConsumerStatefulWidget {
 
 class _PostPageState extends ConsumerState<PostPage> {
   final _comment = TextEditingController();
+  late Post _post = widget.post;
   bool _sending = false;
 
   @override
@@ -52,13 +57,69 @@ class _PostPageState extends ConsumerState<PostPage> {
     }
   }
 
+  Future<void> _edit() async {
+    final body = await Navigator.of(context).push<String>(
+      MaterialPageRoute(
+        builder: (_) => NewPostPage(medrese: widget.medrese, editing: _post),
+      ),
+    );
+    if (body != null && mounted) setState(() => _post = _post.withBody(body));
+  }
+
+  Future<void> _delete() async {
+    if (!await confirm(
+      context,
+      title: 'Paylaşımı sil',
+      message: 'Paylaşım ve yorumları silinsin mi?',
+      action: 'Sil',
+    )) {
+      return;
+    }
+    final result = await ref.read(feedRepositoryProvider).deletePost(_post.id);
+    if (!mounted) return;
+    switch (result) {
+      case Ok():
+        ref.invalidate(postsProvider(widget.medrese.id));
+        Navigator.of(context).pop();
+        context.showMessage('Paylaşım silindi.');
+      case Err(:final error):
+        context.showMessage(error.message);
+    }
+  }
+
+  String _author(String authorId, String name) => authorLabel(
+    ref,
+    medreseId: widget.medrese.id,
+    authorId: authorId,
+    name: name,
+  );
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final comments = ref.watch(commentsProvider(widget.post.id));
+    final isAuthor =
+        _post.authorId == ref.watch(sessionProvider).valueOrNull?.user.id;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Paylaşım')),
+      appBar: AppBar(
+        title: const Text('Paylaşım'),
+        actions: [
+          if (isAuthor)
+            IconButton(
+              tooltip: 'Düzenle',
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: _edit,
+            ),
+          // Veritabanı kuralıyla aynı: yazan ya da hocalar siler.
+          if (isAuthor || widget.medrese.myRole.isStaff)
+            IconButton(
+              tooltip: 'Sil',
+              icon: const Icon(Icons.delete_outline),
+              onPressed: _delete,
+            ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(
@@ -67,7 +128,10 @@ class _PostPageState extends ConsumerState<PostPage> {
                   ref.refresh(commentsProvider(widget.post.id).future),
               child: ListView(
                 children: [
-                  PostContent(post: widget.post),
+                  PostContent(
+                    post: _post,
+                    author: _author(_post.authorId, _post.authorName),
+                  ),
                   const Divider(height: 1),
                   ...switch (comments) {
                     AsyncData(value: Ok(value: final list)) when list.isEmpty =>
@@ -84,7 +148,7 @@ class _PostPageState extends ConsumerState<PostPage> {
                       for (final c in list)
                         ListTile(
                           title: Text(
-                            displayName(c.authorName),
+                            _author(c.authorId, c.authorName),
                             style: theme.textTheme.titleSmall,
                           ),
                           subtitle: Column(

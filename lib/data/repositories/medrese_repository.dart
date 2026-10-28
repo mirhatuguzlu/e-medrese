@@ -85,7 +85,7 @@ class MedreseRepository {
       guardSupabase(() async {
         final rows = await _client
             .from('medrese_members')
-            .select('user_id, role, profiles(full_name)')
+            .select('user_id, role, joined_at, profiles(full_name)')
             .eq('medrese_id', medreseId);
         return rows.map(Member.fromJson).toList()..sort(
           (a, b) => a.role != b.role
@@ -119,5 +119,21 @@ class MedreseRepository {
         .eq('user_id', userId)
         .select('user_id');
     if (deleted.isEmpty) throw const PostgrestException(message: 'not allowed');
+  });
+
+  /// Öğrenciyi hocalığa yükseltir (yalnızca kurucu).
+  Future<Result<void, AppFailure>> promoteToTeacher({
+    required String medreseId,
+    required String userId,
+  }) => guardSupabase(() async {
+    // RLS izin vermezse güncelleme hata vermez, 0 satır döner.
+    final updated = await _client
+        .from('medrese_members')
+        .update({'role': MemberRole.teacher.name})
+        .eq('medrese_id', medreseId)
+        .eq('user_id', userId)
+        .eq('role', MemberRole.student.name)
+        .select('user_id');
+    if (updated.isEmpty) throw const PostgrestException(message: 'not allowed');
   });
 }

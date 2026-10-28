@@ -4,6 +4,8 @@ import 'package:e_medrese/data/repositories/medrese_repository.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/member.dart';
 import 'package:e_medrese/presentation/features/members/add_member_page.dart';
+import 'package:e_medrese/presentation/features/members/member_page.dart';
+import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,27 +28,15 @@ class MembersPage extends ConsumerWidget {
       };
 
   Future<void> _remove(BuildContext context, WidgetRef ref, Member m) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Üyeyi çıkar'),
-        content: Text(
+    final confirmed = await confirm(
+      context,
+      title: 'Üyeyi çıkar',
+      message:
           '${displayName(m.name)} medreseden çıkarılsın mı? '
           'Medresenin sohbetlerinden de çıkarılır.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Vazgeç'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Çıkar'),
-          ),
-        ],
-      ),
+      action: 'Çıkar',
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     final result = await ref
         .read(medreseRepositoryProvider)
@@ -83,6 +73,10 @@ class MembersPage extends ConsumerWidget {
                 : displayName(m.name),
           ),
           subtitle: Text(m.role.label),
+          // Üye sayfasını yalnızca kurucu açar.
+          onTap: medrese.myRole == MemberRole.owner && m.userId != myId
+              ? () => context.push(MemberPage(medrese: medrese, member: m))
+              : null,
           trailing: _canRemove(m, myId)
               ? IconButton(
                   tooltip: 'Çıkar',

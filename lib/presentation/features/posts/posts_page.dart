@@ -4,6 +4,7 @@ import 'package:e_medrese/domain/entities/feed.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/presentation/features/posts/new_post_page.dart';
 import 'package:e_medrese/presentation/features/posts/post_page.dart';
+import 'package:e_medrese/presentation/widgets/author_label.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,7 +32,15 @@ class PostsPage extends ConsumerWidget {
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: () => context.push(PostPage(medrese: medrese, post: p)),
-            child: PostContent(post: p),
+            child: PostContent(
+              post: p,
+              author: authorLabel(
+                ref,
+                medreseId: medrese.id,
+                authorId: p.authorId,
+                name: p.authorName,
+              ),
+            ),
           ),
         ),
       ),
@@ -47,10 +56,13 @@ class PostsPage extends ConsumerWidget {
 /// Paylaşım kartının içeriği; akışta ve paylaşım sayfasında kullanılır.
 class PostContent extends StatelessWidget {
   /// [post] içeriği.
-  const PostContent({required this.post, super.key});
+  const PostContent({required this.post, required this.author, super.key});
 
   /// Paylaşım.
   final Post post;
+
+  /// Yazanın gösterilecek adı.
+  final String author;
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +72,7 @@ class PostContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(displayName(post.authorName), style: theme.textTheme.titleSmall),
+          Text(author, style: theme.textTheme.titleSmall),
           Text(
             formatDateTime(post.createdAt),
             style: theme.textTheme.bodySmall,

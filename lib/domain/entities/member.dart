@@ -3,7 +3,12 @@ import 'package:e_medrese/domain/entities/medrese.dart';
 /// Medrese üyesi.
 final class Member {
   /// Üye.
-  const Member({required this.userId, required this.name, required this.role});
+  const Member({
+    required this.userId,
+    required this.name,
+    required this.role,
+    required this.joinedAt,
+  });
 
   /// `medrese_members` satırından (`profiles(full_name)` ile) oluşturur.
   factory Member.fromJson(Map<String, dynamic> json) => Member(
@@ -12,6 +17,7 @@ final class Member {
         (json['profiles'] as Map<String, dynamic>?)?['full_name'] as String? ??
         '',
     role: MemberRole.values.byName(json['role'] as String),
+    joinedAt: DateTime.parse(json['joined_at'] as String).toLocal(),
   );
 
   /// Kullanıcı kimliği.
@@ -22,4 +28,7 @@ final class Member {
 
   /// Rol.
   final MemberRole role;
+
+  /// Medreseye katılma zamanı.
+  final DateTime joinedAt;
 }
