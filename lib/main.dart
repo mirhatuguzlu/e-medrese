@@ -22,6 +22,8 @@ class App extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(sessionProvider);
     return MaterialApp(
+      // Oturum değişince açık sayfa yığını (ör. Profil) sıfırlanır.
+      key: ValueKey(session.valueOrNull?.user.id),
       title: 'e-Medrese',
       home: switch (session) {
         AsyncData(value: Session()) => const HomePage(),

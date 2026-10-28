@@ -69,5 +69,6 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Layers: `lib/core`, `lib/data`, `lib/domain`, `lib/presentation`, `lib/services`. Keep new code in the matching layer.
 - State: Riverpod. Routing: go_router. Storage: hive_ce. Backend: Supabase (push: Firebase Messaging). Use these; don't add alternatives.
 - Before adding a package, check `pubspec.yaml` for one that already does the job.
+- UI: one page = one purpose. Every feature (except feeds) gets its own page; no menus, dialogs or tabs that bundle several features.
 - Verify with `flutter analyze` and `flutter test`.
 - After each completed change: commit with a short message and push to `origin main`.

@@ -92,6 +92,8 @@ void main() {
     await tester.tap(find.text('Çıkış yap'));
     await tester.pumpAndSettle();
     expect(find.text('Hesabına giriş yap'), findsOneWidget);
+    // Profil sayfası yığında kalmamalı.
+    expect(find.text('Profil'), findsNothing);
   });
 
   testWidgets('geçersiz form gönderilmez', (tester) async {
