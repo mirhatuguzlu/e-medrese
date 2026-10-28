@@ -100,6 +100,22 @@ class _PostPageState extends ConsumerState<PostPage> {
     final comments = ref.watch(commentsProvider(widget.post.id));
     final isAuthor =
         _post.authorId == ref.watch(sessionProvider).valueOrNull?.user.id;
+    // Veritabanı kuralı: yazan, kurucu ya da (öğrenci/ayrılmış üyenin
+    // paylaşımında) hoca siler.
+    final canDelete =
+        isAuthor ||
+        switch (widget.medrese.myRole) {
+          MemberRole.owner => true,
+          MemberRole.teacher =>
+            (authorRole(
+                      ref,
+                      medreseId: widget.medrese.id,
+                      authorId: _post.authorId,
+                    ) ??
+                    MemberRole.student) ==
+                MemberRole.student,
+          MemberRole.student => false,
+        };
 
     return Scaffold(
       appBar: AppBar(
@@ -111,8 +127,7 @@ class _PostPageState extends ConsumerState<PostPage> {
               icon: const Icon(Icons.edit_outlined),
               onPressed: _edit,
             ),
-          // Veritabanı kuralıyla aynı: yazan ya da hocalar siler.
-          if (isAuthor || widget.medrese.myRole.isStaff)
+          if (canDelete)
             IconButton(
               tooltip: 'Sil',
               icon: const Icon(Icons.delete_outline),

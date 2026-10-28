@@ -44,17 +44,18 @@ class FakeMedreseRepository implements MedreseRepository {
   }
 
   @override
-  Future<Result<void, AppFailure>> promoteToTeacher({
+  Future<Result<void, AppFailure>> changeRole({
     required String medreseId,
     required String userId,
+    required MemberRole role,
   }) async {
-    calls.add('promote $userId');
+    calls.add('role $userId ${role.name}');
     final i = memberList.indexWhere((m) => m.userId == userId);
     final m = memberList[i];
     memberList[i] = Member(
       userId: m.userId,
       name: m.name,
-      role: MemberRole.teacher,
+      role: role,
       joinedAt: m.joinedAt,
     );
     return const Ok(null);
@@ -122,6 +123,7 @@ class FakeFeedRepository implements FeedRepository {
         authorId: 'u1',
         authorName: 'Hoca',
         createdAt: DateTime(2026),
+        edited: false,
       ),
     );
     return const Ok(null);
@@ -145,6 +147,7 @@ class FakeFeedRepository implements FeedRepository {
         authorId: 'u1',
         authorName: 'Ali',
         createdAt: DateTime(2026),
+        edited: false,
         commentCount: 0,
       ),
     );
@@ -167,6 +170,7 @@ class FakeFeedRepository implements FeedRepository {
       authorId: a.authorId,
       authorName: a.authorName,
       createdAt: a.createdAt,
+      edited: true,
     );
     return const Ok(null);
   }

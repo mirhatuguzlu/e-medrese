@@ -67,6 +67,7 @@ class AnnouncementsPage extends ConsumerWidget {
             authorId: a.authorId,
             name: a.authorName,
           );
+          final date = postedAt(a.createdAt, edited: a.edited);
           return Card(
             margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Padding(
@@ -90,7 +91,7 @@ class AnnouncementsPage extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          '$author · ${formatDateTime(a.createdAt)}',
+                          '$author · $date',
                           style: theme.textTheme.bodySmall,
                         ),
                       ),

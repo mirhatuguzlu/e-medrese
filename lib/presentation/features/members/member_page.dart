@@ -8,7 +8,8 @@ import 'package:e_medrese/presentation/widgets/loading_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Bir üyenin bilgileri; kurucu buradan öğrenciyi hocalığa yükseltir.
+/// Bir üyenin bilgileri (kurucu ve hocalar görür); kurucu buradan rolünü
+/// değiştirir.
 class MemberPage extends ConsumerStatefulWidget {
   /// [member] sayfası.
   const MemberPage({required this.medrese, required this.member, super.key});
@@ -26,24 +27,30 @@ class MemberPage extends ConsumerStatefulWidget {
 class _MemberPageState extends ConsumerState<MemberPage> {
   bool _loading = false;
 
-  Future<void> _promote() async {
+  /// Öğrenciyi hoca, hocayı öğrenci yapar (yalnızca kurucu).
+  Future<void> _changeRole() async {
     final name = displayName(widget.member.name);
+    final promote = widget.member.role == MemberRole.student;
     final confirmed = await confirm(
       context,
-      title: 'Hocalığa yükselt',
-      message:
-          '$name hoca olsun mu? Duyuru yazabilir ve öğrenci ekleyip '
-          'çıkarabilir.',
-      action: 'Yükselt',
+      title: promote ? 'Hocalığa yükselt' : 'Öğrenciliğe düşür',
+      message: promote
+          ? '$name hoca olsun mu? Duyuru yazabilir ve öğrenci ekleyip '
+                'çıkarabilir.'
+          : '$name öğrenci olsun mu? Duyuru yazamaz, üye ekleyip '
+                'çıkaramaz.',
+      action: promote ? 'Yükselt' : 'Düşür',
     );
     if (!confirmed || !mounted) return;
 
+    final role = promote ? MemberRole.teacher : MemberRole.student;
     setState(() => _loading = true);
     final result = await ref
         .read(medreseRepositoryProvider)
-        .promoteToTeacher(
+        .changeRole(
           medreseId: widget.medrese.id,
           userId: widget.member.userId,
+          role: role,
         );
     if (!mounted) return;
     setState(() => _loading = false);
@@ -52,7 +59,7 @@ class _MemberPageState extends ConsumerState<MemberPage> {
       case Ok():
         ref.invalidate(membersProvider(widget.medrese.id));
         Navigator.of(context).pop();
-        context.showMessage('$name artık hoca.');
+        context.showMessage('$name artık ${role.label.toLowerCase()}.');
       case Err(:final error):
         context.showMessage(error.message);
     }
@@ -65,9 +72,8 @@ class _MemberPageState extends ConsumerState<MemberPage> {
     final postCount = ref.watch(
       postCountProvider((medreseId: widget.medrese.id, userId: m.userId)),
     );
-    final canPromote =
-        widget.medrese.myRole == MemberRole.owner &&
-        m.role == MemberRole.student;
+    final canChangeRole =
+        widget.medrese.myRole == MemberRole.owner && m.role != MemberRole.owner;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Üye')),
@@ -110,13 +116,15 @@ class _MemberPageState extends ConsumerState<MemberPage> {
               _ => '…',
             }),
           ),
-          if (canPromote)
+          if (canChangeRole)
             Padding(
               padding: const EdgeInsets.all(24),
               child: LoadingButton(
-                label: 'Hocalığa yükselt',
+                label: m.role == MemberRole.student
+                    ? 'Hocalığa yükselt'
+                    : 'Öğrenciliğe düşür',
                 loading: _loading,
-                onPressed: _promote,
+                onPressed: _changeRole,
               ),
             ),
         ],

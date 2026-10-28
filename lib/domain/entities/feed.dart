@@ -11,6 +11,7 @@ final class Announcement {
     required this.authorId,
     required this.authorName,
     required this.createdAt,
+    required this.edited,
   });
 
   /// `announcements` satırından (`author:profiles(full_name)` ile) oluşturur.
@@ -21,6 +22,7 @@ final class Announcement {
     authorId: json['author_id'] as String,
     authorName: _authorName(json),
     createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+    edited: json['edited_at'] != null,
   );
 
   /// Kimlik.
@@ -40,6 +42,9 @@ final class Announcement {
 
   /// Yazılma zamanı.
   final DateTime createdAt;
+
+  /// Yazıldıktan sonra düzenlendi mi.
+  final bool edited;
 }
 
 /// Medrese üyesinin paylaşımı.
@@ -51,6 +56,7 @@ final class Post {
     required this.authorId,
     required this.authorName,
     required this.createdAt,
+    required this.edited,
     required this.commentCount,
   });
 
@@ -61,6 +67,7 @@ final class Post {
     authorId: json['author_id'] as String,
     authorName: _authorName(json),
     createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+    edited: json['edited_at'] != null,
     commentCount:
         ((json['comments'] as List<dynamic>?)?.firstOrNull
                 as Map<String, dynamic>?)?['count']
@@ -83,6 +90,9 @@ final class Post {
   /// Paylaşılma zamanı.
   final DateTime createdAt;
 
+  /// Paylaşıldıktan sonra düzenlendi mi.
+  final bool edited;
+
   /// Yorum sayısı.
   final int commentCount;
 
@@ -93,6 +103,7 @@ final class Post {
     authorId: authorId,
     authorName: authorName,
     createdAt: createdAt,
+    edited: true,
     commentCount: commentCount,
   );
 }

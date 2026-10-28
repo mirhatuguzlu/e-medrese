@@ -182,6 +182,7 @@ void main() {
     authorId: authorId,
     authorName: name,
     createdAt: DateTime(2026),
+    edited: false,
     commentCount: 0,
   );
 
@@ -193,6 +194,7 @@ void main() {
         authorId: authorId,
         authorName: 'Diğer Hoca',
         createdAt: DateTime(2026),
+        edited: false,
       );
 
   testWidgets('kurucu öğrencinin sayfasından hocalığa yükseltir', (
@@ -211,23 +213,49 @@ void main() {
     await tester.tap(find.widgetWithText(TextButton, 'Yükselt'));
     await tester.pumpAndSettle();
 
-    expect(medreses.calls, ['promote u3']);
+    expect(medreses.calls, ['role u3 teacher']);
     expect(find.text('Öğrenci Ali artık hoca.'), findsOneWidget);
     expect(find.text('Öğrenci'), findsNothing);
   });
 
-  testWidgets('hoca sayfasında yükseltme yok, hoca üye sayfası açamaz', (
-    tester,
-  ) async {
+  testWidgets('kurucu hocayı öğrenciliğe düşürür', (tester) async {
     await pumpMedrese(tester, MemberRole.owner);
     await open(tester, 'Üyeler');
     await open(tester, 'Diğer Hoca');
     expect(find.text('Hocalığa yükselt'), findsNothing);
 
+    await tester.tap(find.text('Öğrenciliğe düşür'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Düşür'));
+    await tester.pumpAndSettle();
+
+    expect(medreses.calls, ['role u2 student']);
+    expect(find.text('Diğer Hoca artık öğrenci.'), findsOneWidget);
+  });
+
+  testWidgets('hoca üye sayfasını görür ama rol değiştiremez', (tester) async {
     await pumpMedrese(tester, MemberRole.teacher);
     await open(tester, 'Üyeler');
     await open(tester, 'Öğrenci Ali');
+    expect(find.text('Katılma tarihi'), findsOneWidget);
+    expect(find.text('Hocalığa yükselt'), findsNothing);
+  });
+
+  testWidgets('öğrenci üye sayfası açamaz', (tester) async {
+    await pumpMedrese(tester, MemberRole.student);
+    await open(tester, 'Üyeler');
+    await open(tester, 'Diğer Hoca');
     expect(find.text('Katılma tarihi'), findsNothing);
+  });
+
+  // testSession kullanıcısı u1 olduğu için başka hoca (u2) ile denenir;
+  // kurucu durumu veritabanı testinde.
+  testWidgets('hoca başka hocanın paylaşımını silemez', (tester) async {
+    await pumpMedrese(tester, MemberRole.teacher);
+    feed.postList.add(post('p1', 'u2', 'Diğer Hoca'));
+    await open(tester, 'Paylaşımlar');
+    await open(tester, 'Diğer Hoca paylaşımı');
+    expect(find.byTooltip('Sil'), findsNothing);
   });
 
   testWidgets('ayrılan üyenin adı etiketle gösterilir', (tester) async {
@@ -283,6 +311,7 @@ void main() {
 
     expect(feed.calls, ['edit announcement Ders ertelendi']);
     expect(find.text('Ders ertelendi'), findsOneWidget);
+    expect(find.textContaining('düzenlendi'), findsOneWidget);
   });
 
   testWidgets('yazan paylaşımını düzenler', (tester) async {
@@ -299,6 +328,7 @@ void main() {
 
     expect(feed.calls, ['edit post Düzeltildi']);
     expect(find.text('Düzeltildi'), findsOneWidget);
+    expect(find.textContaining('düzenlendi'), findsOneWidget);
   });
 
   testWidgets('öğrenci başkasının paylaşımını silemez, hoca siler', (

@@ -59,7 +59,8 @@ class FeedRepository {
     final rows = await _client
         .from('announcements')
         .select(
-          'id, title, body, author_id, created_at, author:profiles(full_name)',
+          'id, title, body, author_id, created_at, edited_at, '
+          'author:profiles(full_name)',
         )
         .eq('medrese_id', medreseId)
         .order('created_at', ascending: false)
@@ -103,7 +104,8 @@ class FeedRepository {
         final rows = await _client
             .from('posts')
             .select(
-              'id, body, author_id, created_at, author:profiles(full_name), '
+              'id, body, author_id, created_at, edited_at, '
+              'author:profiles(full_name), '
               'comments(count)',
             )
             .eq('medrese_id', medreseId)

@@ -74,7 +74,7 @@ class PostContent extends StatelessWidget {
         children: [
           Text(author, style: theme.textTheme.titleSmall),
           Text(
-            formatDateTime(post.createdAt),
+            postedAt(post.createdAt, edited: post.edited),
             style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: 12),

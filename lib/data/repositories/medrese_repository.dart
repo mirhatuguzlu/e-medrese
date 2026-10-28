@@ -121,18 +121,19 @@ class MedreseRepository {
     if (deleted.isEmpty) throw const PostgrestException(message: 'not allowed');
   });
 
-  /// Öğrenciyi hocalığa yükseltir (yalnızca kurucu).
-  Future<Result<void, AppFailure>> promoteToTeacher({
+  /// Üyenin rolünü hoca ya da öğrenci yapar (yalnızca kurucu).
+  Future<Result<void, AppFailure>> changeRole({
     required String medreseId,
     required String userId,
+    required MemberRole role,
   }) => guardSupabase(() async {
     // RLS izin vermezse güncelleme hata vermez, 0 satır döner.
     final updated = await _client
         .from('medrese_members')
-        .update({'role': MemberRole.teacher.name})
+        .update({'role': role.name})
         .eq('medrese_id', medreseId)
         .eq('user_id', userId)
-        .eq('role', MemberRole.student.name)
+        .neq('role', MemberRole.owner.name)
         .select('user_id');
     if (updated.isEmpty) throw const PostgrestException(message: 'not allowed');
   });

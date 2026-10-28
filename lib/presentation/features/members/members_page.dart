@@ -73,8 +73,8 @@ class MembersPage extends ConsumerWidget {
                 : displayName(m.name),
           ),
           subtitle: Text(m.role.label),
-          // Üye sayfasını yalnızca kurucu açar.
-          onTap: medrese.myRole == MemberRole.owner && m.userId != myId
+          // Üye sayfasını kurucu ve hocalar açar.
+          onTap: medrese.myRole.isStaff && m.userId != myId
               ? () => context.push(MemberPage(medrese: medrese, member: m))
               : null,
           trailing: _canRemove(m, myId)
