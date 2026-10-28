@@ -3,6 +3,7 @@ import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:e_medrese/data/repositories/task_repository.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/task.dart';
+import 'package:e_medrese/presentation/features/tasks/chest_page.dart';
 import 'package:e_medrese/presentation/features/tasks/task_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,10 +19,12 @@ IconData taskIcon(String taskId) => switch (taskId) {
 };
 
 /// Dönemin gün aralığı: `27.10 – 02.11`.
-String periodLabel(List<DateTime> days) =>
-    '${formatShortDate(days.first)} – ${formatShortDate(days.last)}';
+String periodLabel(DateTime periodStart) =>
+    '${formatShortDate(periodStart)} – '
+    '${formatShortDate(periodStart.add(const Duration(days: 6)))}';
 
 /// Öğrencinin bir medresedeki bu dönem görevleri: 2'li kare kartlar.
+/// Puanlar dönem bitince sandıkta açıklanır; burada gösterilmez.
 ///
 /// Program başlamadıysa ya da durdurulduysa hiçbir şey çizmez.
 class StudentTasksSection extends ConsumerWidget {
@@ -44,18 +47,14 @@ class StudentTasksSection extends ConsumerWidget {
     if (program == null || tasks == null) return const SizedBox.shrink();
 
     final today = ref.watch(todayProvider);
-    final days = program.periodDays(today);
+    final periodStart = program.periodStart(today);
     final myId = ref.watch(sessionProvider).valueOrNull?.user.id ?? '';
     final entries = switch (ref.watch(
-      periodEntriesProvider((medreseId: medrese.id, periodStart: days.first)),
+      periodEntriesProvider((medreseId: medrese.id, periodStart: periodStart)),
     )) {
       AsyncData(value: Ok(:final value)) => value,
       _ => const <TaskEntry>[],
     };
-    final total = tasks.fold<double>(
-      0,
-      (sum, t) => sum + t.score(taskTotal(t, myId, entries)),
-    );
     final theme = Theme.of(context);
 
     return Padding(
@@ -65,10 +64,16 @@ class StudentTasksSection extends ConsumerWidget {
         children: [
           Text(medrese.name, style: theme.textTheme.titleMedium),
           Text(
-            'Bu dönem (${periodLabel(days)}): ${formatPoints(total)} puan',
+            'Bu dönem: ${periodLabel(periodStart)}',
             style: theme.textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
+          // Dönem dün bittiyse sandık bugün açılır.
+          if (today == periodStart && periodStart != program.startDate)
+            _ChestCard(
+              medrese: medrese,
+              periodStart: periodStart.subtract(const Duration(days: 7)),
+            ),
           GridView.count(
             crossAxisCount: 2,
             mainAxisSpacing: 12,
@@ -79,7 +84,12 @@ class StudentTasksSection extends ConsumerWidget {
               for (final t in tasks)
                 _TaskTile(
                   task: t,
-                  score: t.score(taskTotal(t, myId, entries)),
+                  markedToday: entries.any(
+                    (e) =>
+                        e.taskId == t.id &&
+                        e.studentId == myId &&
+                        e.day == today,
+                  ),
                   onTap: () => context.push(
                     TaskPage(medrese: medrese, task: t, program: program),
                   ),
@@ -92,15 +102,78 @@ class StudentTasksSection extends ConsumerWidget {
   }
 }
 
+/// Biten dönemin sandığı açılmadıysa gösterilen kart.
+class _ChestCard extends ConsumerWidget {
+  const _ChestCard({required this.medrese, required this.periodStart});
+
+  final Medrese medrese;
+  final DateTime periodStart;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final myId = ref.watch(sessionProvider).valueOrNull?.user.id;
+    final unopened = switch (ref.watch(weeklyScoresProvider(medrese.id))) {
+      AsyncData(value: Ok(:final value)) => value.any(
+        (s) => s.studentId == myId && s.periodStart == periodStart && !s.opened,
+      ),
+      _ => false,
+    };
+    if (!unopened) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        color: theme.colorScheme.tertiaryContainer,
+        margin: EdgeInsets.zero,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => context.push(
+            ChestPage(medrese: medrese, periodStart: periodStart),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.redeem,
+                  size: 48,
+                  color: theme.colorScheme.onTertiaryContainer,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Haftalık sandığın hazır!',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      Text(
+                        '${periodLabel(periodStart)} dönemi. Bugün aç; '
+                        'açmazsan puanın yine kaydedilir.',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TaskTile extends StatelessWidget {
   const _TaskTile({
     required this.task,
-    required this.score,
+    required this.markedToday,
     required this.onTap,
   });
 
   final TaskDefinition task;
-  final double score;
+  final bool markedToday;
   final VoidCallback onTap;
 
   @override
@@ -129,13 +202,25 @@ class _TaskTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),
-              Text(
-                '${formatPoints(score)} / ${formatPoints(task.points)} puan',
-                style: theme.textTheme.bodySmall,
-              ),
-              const SizedBox(height: 8),
-              LinearProgressIndicator(
-                value: (score / task.points).clamp(0, 1).toDouble(),
+              Row(
+                children: [
+                  Icon(
+                    markedToday ? Icons.check_circle : Icons.circle_outlined,
+                    size: 16,
+                    color: markedToday
+                        ? theme.colorScheme.primary
+                        : theme.hintColor,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      markedToday ? 'Bugün yapıldı' : 'Bugün bekliyor',
+                      style: theme.textTheme.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

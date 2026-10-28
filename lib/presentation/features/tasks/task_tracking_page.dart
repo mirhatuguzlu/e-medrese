@@ -4,15 +4,16 @@ import 'package:e_medrese/data/repositories/task_repository.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/member.dart';
 import 'package:e_medrese/domain/entities/task.dart';
-import 'package:e_medrese/presentation/features/tasks/student_report_page.dart';
+import 'package:e_medrese/presentation/features/tasks/score_history_page.dart';
 import 'package:e_medrese/presentation/features/tasks/student_tasks_section.dart';
 import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
 import 'package:e_medrese/presentation/widgets/loading_button.dart';
+import 'package:e_medrese/presentation/widgets/result_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Hocaların görev takibi: programı başlatır/durdurur, öğrencilerin bu
-/// dönemki puanlarını görür.
+/// Hocaların görev takibi: programı başlatır/durdurur; öğrenciye dokununca
+/// puan geçmişi açılır. Süren dönemin puanları gösterilmez.
 class TaskTrackingPage extends ConsumerStatefulWidget {
   /// [medrese]'nin görev takibi.
   const TaskTrackingPage({required this.medrese, super.key});
@@ -34,7 +35,7 @@ class _TaskTrackingPageState extends ConsumerState<TaskTrackingPage> {
       message: active
           ? 'Görevler bugünden itibaren 7 günlük dönemlerle her hafta '
                 'öğrencilere açılır.'
-          : 'Öğrenciler görev işaretleyemez. Girilen puanlar silinmez.',
+          : 'Öğrenciler görev işaretleyemez. Kaydedilen puanlar silinmez.',
       action: active ? 'Başlat' : 'Durdur',
     )) {
       return;
@@ -68,9 +69,9 @@ class _TaskTrackingPageState extends ConsumerState<TaskTrackingPage> {
         ],
       ),
       body: switch (program) {
-        AsyncData(value: Ok(:final value?)) when value.active => _Scores(
+        AsyncData(value: Ok(:final value?)) when value.active => _Students(
           medrese: widget.medrese,
-          program: value,
+          periodStart: value.periodStart(ref.watch(todayProvider)),
         ),
         AsyncData(value: Ok()) => Center(
           child: Padding(
@@ -106,83 +107,56 @@ class _TaskTrackingPageState extends ConsumerState<TaskTrackingPage> {
   }
 }
 
-/// Öğrencilerin bu dönemki toplam puanları, yüksekten düşüğe.
-class _Scores extends ConsumerWidget {
-  const _Scores({required this.medrese, required this.program});
+class _Students extends ConsumerWidget {
+  const _Students({required this.medrese, required this.periodStart});
 
   final Medrese medrese;
-  final TaskProgram program;
+  final DateTime periodStart;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final days = program.periodDays(ref.watch(todayProvider));
-    final key = (medreseId: medrese.id, periodStart: days.first);
-    final data = (
-      ref.watch(membersProvider(medrese.id)),
-      ref.watch(taskDefinitionsProvider),
-      ref.watch(periodEntriesProvider(key)),
-    );
-    if (data case (
-      AsyncData(value: Ok(value: final members)),
-      AsyncData(value: Ok(value: final tasks)),
-      AsyncData(value: Ok(value: final entries)),
-    )) {
-      double total(Member m) => tasks.fold(
-        0,
-        (sum, t) => sum + t.score(taskTotal(t, m.userId, entries)),
-      );
-      final students =
-          members.where((m) => m.role == MemberRole.student).toList()
-            ..sort((a, b) => total(b).compareTo(total(a)));
-
-      return RefreshIndicator(
-        onRefresh: () => ref.refresh(periodEntriesProvider(key).future),
-        child: ListView(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'Bu dönem: ${periodLabel(days)}',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            if (students.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Text('Medresede henüz öğrenci yok.'),
-              ),
-            for (final s in students)
-              ListTile(
-                leading: CircleAvatar(
-                  child: Text(displayName(s.name).characters.first),
-                ),
-                title: Text(displayName(s.name)),
-                trailing: Text(
-                  '${formatPoints(total(s))} puan',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                onTap: () => context.push(
-                  StudentReportPage(
-                    student: s,
-                    tasks: tasks,
-                    entries: entries,
-                    days: days,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            'Bu dönem: ${periodLabel(periodStart)}\n'
+            'Puanlar dönem bitince açıklanır. Geçmiş için öğrenciye dokun.',
+          ),
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: ResultListView<Member>(
+            value: ref
+                .watch(membersProvider(medrese.id))
+                .whenData(
+                  (r) => r.map(
+                    (list) => list
+                        .where((m) => m.role == MemberRole.student)
+                        .toList(),
                   ),
                 ),
+            onRefresh: () => ref.refresh(membersProvider(medrese.id).future),
+            emptyIcon: Icons.groups_outlined,
+            emptyText: 'Medresede henüz öğrenci yok.',
+            itemBuilder: (context, s) => ListTile(
+              leading: CircleAvatar(
+                child: Text(displayName(s.name).characters.first),
               ),
-          ],
+              title: Text(displayName(s.name)),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => context.push(
+                ScoreHistoryPage(
+                  medrese: medrese,
+                  studentId: s.userId,
+                  studentName: s.name,
+                ),
+              ),
+            ),
+          ),
         ),
-      );
-    }
-    return switch (data) {
-      (AsyncData(value: Err(:final error)), _, _) ||
-      (_, AsyncData(value: Err(:final error)), _) ||
-      (
-        _,
-        _,
-        AsyncData(value: Err(:final error)),
-      ) => Center(child: Text(error.message)),
-      _ => const Center(child: CircularProgressIndicator()),
-    };
+      ],
+    );
   }
 }

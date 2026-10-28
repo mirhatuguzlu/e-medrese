@@ -71,8 +71,6 @@ class TaskPage extends ConsumerWidget {
         .firstOrNull
         ?.value;
 
-    final score = task.score(taskTotal(task, myId, entries ?? const []));
-
     return Scaffold(
       appBar: AppBar(title: Text(task.title)),
       body: entries == null
@@ -86,11 +84,10 @@ class TaskPage extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(task.description),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 8),
                       Text(
-                        'Bu dönem: ${formatPoints(score)} puan '
-                        '(en fazla ${formatPoints(task.maxScore)})',
-                        style: theme.textTheme.titleMedium,
+                        'Puanın dönem bitince sandıkta açıklanır.',
+                        style: theme.textTheme.bodySmall,
                       ),
                     ],
                   ),

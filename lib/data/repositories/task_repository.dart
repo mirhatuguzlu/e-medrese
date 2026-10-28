@@ -37,6 +37,15 @@ periodEntriesProvider = FutureProvider.autoDispose.family(
       .entries(medreseId: key.medreseId, periodStart: key.periodStart),
 );
 
+/// Medresenin biten dönemlerdeki bütün puanları (sıralama ve geçmiş için).
+final AutoDisposeFutureProviderFamily<
+  Result<List<WeeklyScore>, AppFailure>,
+  String
+>
+weeklyScoresProvider = FutureProvider.autoDispose.family(
+  (ref, medreseId) => ref.watch(taskRepositoryProvider).weeklyScores(medreseId),
+);
+
 final _day = DateFormat('yyyy-MM-dd');
 
 /// Görev programı ve öğrenci girdileri.
@@ -121,5 +130,35 @@ class TaskRepository {
     } else {
       await _client.from('task_entries').upsert({...key, 'value': value});
     }
+  });
+
+  /// Biten dönemleri kaydettirip medresenin bütün haftalık puanlarını döner;
+  /// en yeni dönem önce, dönem içinde puana göre.
+  Future<Result<List<WeeklyScore>, AppFailure>> weeklyScores(
+    String medreseId,
+  ) => guardSupabase(() async {
+    await _client.rpc<void>('finalize_task_scores', params: {'m': medreseId});
+    final rows = await _client
+        .from('weekly_scores')
+        .select(
+          'student_id, period_start, total, details, opened_at, '
+          'student:profiles(full_name)',
+        )
+        .eq('medrese_id', medreseId)
+        .order('period_start', ascending: false)
+        .order('total', ascending: false);
+    return rows.map(WeeklyScore.fromJson).toList();
+  });
+
+  /// [periodStart] döneminin sandığını açar; puanı döner.
+  Future<Result<WeeklyScore, AppFailure>> openChest({
+    required String medreseId,
+    required DateTime periodStart,
+  }) => guardSupabase(() async {
+    final row = await _client.rpc<Map<String, dynamic>>(
+      'open_chest',
+      params: {'m': medreseId, 'p': _day.format(periodStart)},
+    );
+    return WeeklyScore.fromJson(row);
   });
 }

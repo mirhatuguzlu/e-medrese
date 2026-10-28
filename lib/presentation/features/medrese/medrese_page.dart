@@ -4,6 +4,8 @@ import 'package:e_medrese/presentation/features/announcements/announcements_page
 import 'package:e_medrese/presentation/features/medrese/invite_code_page.dart';
 import 'package:e_medrese/presentation/features/members/members_page.dart';
 import 'package:e_medrese/presentation/features/posts/posts_page.dart';
+import 'package:e_medrese/presentation/features/tasks/ranking_page.dart';
+import 'package:e_medrese/presentation/features/tasks/score_history_page.dart';
 import 'package:e_medrese/presentation/features/tasks/task_tracking_page.dart';
 import 'package:flutter/material.dart';
 
@@ -56,11 +58,24 @@ class MedresePage extends StatelessWidget {
             subtitle: 'Hocalar ve öğrenciler',
             page: MembersPage(medrese: medrese),
           ),
+          _Entry(
+            icon: Icons.emoji_events_outlined,
+            title: 'Haftalık sıralama',
+            subtitle: 'Biten dönemlerin görev puanları',
+            page: RankingPage(medrese: medrese),
+          ),
+          if (!medrese.myRole.isStaff)
+            _Entry(
+              icon: Icons.history,
+              title: 'Puan geçmişim',
+              subtitle: 'Haftalık görev puanların',
+              page: ScoreHistoryPage(medrese: medrese),
+            ),
           if (medrese.myRole.isStaff)
             _Entry(
               icon: Icons.task_alt,
               title: 'Görev takibi',
-              subtitle: 'Öğrencilerin haftalık görev puanları',
+              subtitle: 'Görevleri başlat, öğrenci geçmişleri',
               page: TaskTrackingPage(medrese: medrese),
             ),
           if (medrese.myRole.isStaff)

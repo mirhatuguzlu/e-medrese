@@ -23,6 +23,9 @@ Future<Result<T, AppFailure>> guardSupabase<T>(
         'Bu e-postayla kayıtlı bir kullanıcı yok.',
         field: 'email',
       ),
+      (_, 'chest not available') => const ValidationFailure(
+        'Bu sandık artık açılamaz; puanın geçmişine aktarıldı.',
+      ),
       ('42501', _) || (_, 'not allowed') => const UnauthorizedFailure(),
       _ => UnexpectedFailure(e.message),
     });

@@ -6,6 +6,8 @@ import 'package:e_medrese/domain/entities/member.dart';
 import 'package:e_medrese/domain/entities/task.dart';
 import 'package:e_medrese/presentation/features/home/home_page.dart';
 import 'package:e_medrese/presentation/features/medrese/medrese_page.dart';
+import 'package:e_medrese/presentation/features/tasks/ranking_page.dart';
+import 'package:e_medrese/presentation/features/tasks/score_history_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -39,8 +41,9 @@ void main() {
     WidgetTester tester,
     Widget home, {
     TaskProgram? program,
+    List<WeeklyScore> scores = const [],
   }) async {
-    tasks = FakeTaskRepository(taskProgram: program);
+    tasks = FakeTaskRepository(taskProgram: program)..scoreList.addAll(scores);
     // Bütün kartlar ve günler ekrana sığsın.
     tester.view.physicalSize = const Size(1080, 4000);
     addTearDown(tester.view.reset);
@@ -70,7 +73,9 @@ void main() {
     medreses.medreses.add(_medrese(MemberRole.student));
     await pump(tester, const HomePage(), program: _program);
 
-    expect(find.text('Bu dönem (27.10 – 02.11): 0 puan'), findsOneWidget);
+    expect(find.text('Bu dönem: 27.10 – 02.11'), findsOneWidget);
+    // Dönem sürerken puan gösterilmez.
+    expect(find.textContaining('puan'), findsNothing);
     for (final t in testTasks) {
       expect(find.text(t.title), findsOneWidget);
     }
@@ -98,12 +103,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tasks.calls, ['namaz 28 0 1']);
-    expect(find.text('Bu dönem: 0,71 puan (en fazla 25)'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilterChip>(find.widgetWithText(FilterChip, 'Sabah').at(1))
+          .selected,
+      isTrue,
+    );
 
     await tester.tap(find.widgetWithText(FilterChip, 'Sabah').at(1));
     await tester.pumpAndSettle();
     expect(tasks.calls.last, 'namaz 28 0 null');
-    expect(find.text('Bu dönem: 0 puan (en fazla 25)'), findsOneWidget);
   });
 
   testWidgets('ders yalnızca Salı ve Perşembe', (tester) async {
@@ -130,11 +139,113 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tasks.calls.last, 'risale 28 0 10');
-    // 13 sayfa * 25 / 21
-    expect(find.text('Bu dönem: 15,48 puan (en fazla 75)'), findsOneWidget);
   });
 
-  testWidgets('hoca görevleri başlatır, öğrencileri puana göre görür', (
+  WeeklyScore score(
+    String id,
+    String name,
+    num total, {
+    bool opened = false,
+    int day = 21,
+  }) => WeeklyScore(
+    studentId: id,
+    studentName: name,
+    periodStart: DateTime.utc(2026, 10, day),
+    total: total,
+    details: {'namaz': 25, 'cuz': 60, 'kitap': total - 85},
+    opened: opened,
+  );
+
+  // Dönem 21.10'da başlamış: 21–27 bitti, sandık bugün (28.10) açılır.
+  final chestProgram = TaskProgram(
+    startDate: DateTime.utc(2026, 10, 21),
+    active: true,
+  );
+
+  testWidgets('dönem bitince sandık açılır, puanlar sayılır', (tester) async {
+    medreses.medreses.add(_medrese(MemberRole.student));
+    await pump(
+      tester,
+      const HomePage(),
+      program: chestProgram,
+      scores: [score('u1', 'Ben', 88.5714)],
+    );
+
+    await openTask(tester, 'Haftalık sandığın hazır!');
+    expect(find.text('Açmak için 3 kez dokun'), findsOneWidget);
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.byIcon(Icons.redeem));
+      await tester.pumpAndSettle();
+    }
+
+    expect(tasks.calls, ['open 21']);
+    expect(find.text('+25'), findsOneWidget);
+    expect(find.text('+60'), findsOneWidget);
+    expect(find.text('+3,57'), findsOneWidget);
+    expect(find.text('88,57 puan'), findsOneWidget);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    expect(find.text('Haftalık sandığın hazır!'), findsNothing);
+  });
+
+  testWidgets('açılmış sandık ve süren dönem kartı göstermez', (tester) async {
+    medreses.medreses.add(_medrese(MemberRole.student));
+    await pump(
+      tester,
+      const HomePage(),
+      program: chestProgram,
+      scores: [score('u1', 'Ben', 88.5714, opened: true)],
+    );
+    expect(find.text('Haftalık sandığın hazır!'), findsNothing);
+
+    // Dönemin ortası (27.10 başlangıçlı programda 28.10).
+    await pump(
+      tester,
+      const HomePage(),
+      program: _program,
+      scores: [score('u1', 'Ben', 88.5714)],
+    );
+    expect(find.text('Haftalık sandığın hazır!'), findsNothing);
+  });
+
+  testWidgets('sıralama dönem seçilerek görülür', (tester) async {
+    await pump(
+      tester,
+      RankingPage(medrese: _medrese(MemberRole.student)),
+      scores: [
+        score('s9', 'Veli', 95),
+        score('u1', 'Ben', 88.5714),
+        score('u1', 'Ben', 100, day: 14),
+      ],
+    );
+    final names = tester
+        .widgetList<ListTile>(find.byType(ListTile))
+        .map((t) => (t.title! as Text).data)
+        .toList();
+    expect(names, ['Veli', 'Ben (sen)']);
+    expect(find.text('88,57 puan'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('14.10 – 20.10'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('14.10 – 20.10'));
+    await tester.pumpAndSettle();
+    expect(find.text('100 puan'), findsOneWidget);
+    expect(find.text('Veli'), findsNothing);
+  });
+
+  testWidgets('geçmişte açılmayan sandık belirtilir', (tester) async {
+    await pump(
+      tester,
+      ScoreHistoryPage(medrese: _medrese(MemberRole.student)),
+      scores: [score('u1', 'Ben', 88.5714), score('s9', 'Veli', 95)],
+    );
+    expect(find.text('88,57 puan'), findsOneWidget);
+    expect(find.text('95 puan'), findsNothing);
+    expect(find.textContaining('otomatik aktarıldı'), findsOneWidget);
+  });
+
+  testWidgets('hoca görevleri başlatır, puanları dönem içinde görmez', (
     tester,
   ) async {
     medreses.memberList.addAll([
@@ -150,31 +261,8 @@ void main() {
         role: MemberRole.student,
         joinedAt: _today,
       ),
-      Member(
-        userId: 's2',
-        name: 'Veli',
-        role: MemberRole.student,
-        joinedAt: _today,
-      ),
     ]);
     await pump(tester, MedresePage(medrese: _medrese(MemberRole.owner)));
-    tasks.entryList.addAll([
-      for (var i = 0; i < 5; i++)
-        TaskEntry(
-          studentId: 's2',
-          taskId: 'namaz',
-          day: _today,
-          item: i,
-          value: 1,
-        ),
-      TaskEntry(
-        studentId: 's2',
-        taskId: 'cuz',
-        day: _today,
-        item: 0,
-        value: 80,
-      ),
-    ]);
     await openTask(tester, 'Görev takibi');
 
     await tester.tap(find.widgetWithText(FilledButton, 'Görevleri başlat'));
@@ -182,16 +270,7 @@ void main() {
     await tester.tap(find.widgetWithText(TextButton, 'Başlat'));
     await tester.pumpAndSettle();
     expect(tasks.calls, ['start']);
-
-    // Veli: 5 vakit (3,57) + 60 sayfa cüz (sınır) = 63,57; önce o gelir.
-    final tiles = tester.widgetList<ListTile>(find.byType(ListTile)).toList();
-    expect((tiles.first.title! as Text).data, 'Veli');
-    expect(find.text('63,57 puan'), findsOneWidget);
-
-    await tester.tap(find.text('Veli'));
-    await tester.pumpAndSettle();
-    expect(find.text('Toplam: 63,57 puan'), findsOneWidget);
-    expect(find.text('80 sayfa'), findsOneWidget);
-    expect(find.text('60 puan'), findsOneWidget);
+    expect(find.text('Ali'), findsOneWidget);
+    expect(find.textContaining(' puan'), findsNothing);
   });
 }

@@ -174,3 +174,46 @@ num taskTotal(TaskDefinition task, String student, List<TaskEntry> entries) =>
     entries
         .where((e) => e.taskId == task.id && e.studentId == student)
         .fold<num>(0, (sum, e) => sum + e.value);
+
+/// Öğrencinin biten bir dönemdeki puanı (sunucuda hesaplanır).
+final class WeeklyScore {
+  /// Haftalık puan.
+  const WeeklyScore({
+    required this.studentId,
+    required this.studentName,
+    required this.periodStart,
+    required this.total,
+    required this.details,
+    required this.opened,
+  });
+
+  /// `weekly_scores` satırından (`student:profiles(full_name)` ile) oluşturur.
+  factory WeeklyScore.fromJson(Map<String, dynamic> json) => WeeklyScore(
+    studentId: json['student_id'] as String,
+    studentName:
+        (json['student'] as Map<String, dynamic>?)?['full_name'] as String? ??
+        '',
+    periodStart: dateOnly(DateTime.parse(json['period_start'] as String)),
+    total: json['total'] as num,
+    details: (json['details'] as Map<String, dynamic>).cast<String, num>(),
+    opened: json['opened_at'] != null,
+  );
+
+  /// Öğrenci.
+  final String studentId;
+
+  /// Öğrencinin adı (boş olabilir).
+  final String studentName;
+
+  /// Dönemin ilk günü.
+  final DateTime periodStart;
+
+  /// Toplam puan.
+  final num total;
+
+  /// Görev kimliği -> puan.
+  final Map<String, num> details;
+
+  /// Öğrenci sandığı açtı mı; açmadıysa puan otomatik aktarılmıştır.
+  final bool opened;
+}

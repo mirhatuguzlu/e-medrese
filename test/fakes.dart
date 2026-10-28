@@ -310,7 +310,32 @@ class FakeTaskRepository implements TaskRepository {
 
   TaskProgram? taskProgram;
   final entryList = <TaskEntry>[];
+  final scoreList = <WeeklyScore>[];
   final calls = <String>[];
+
+  @override
+  Future<Result<List<WeeklyScore>, AppFailure>> weeklyScores(
+    String medreseId,
+  ) async => Ok(List.of(scoreList));
+
+  @override
+  Future<Result<WeeklyScore, AppFailure>> openChest({
+    required String medreseId,
+    required DateTime periodStart,
+  }) async {
+    calls.add('open ${periodStart.day}');
+    final i = scoreList.indexWhere((s) => s.periodStart == periodStart);
+    final s = scoreList[i];
+    scoreList[i] = WeeklyScore(
+      studentId: s.studentId,
+      studentName: s.studentName,
+      periodStart: s.periodStart,
+      total: s.total,
+      details: s.details,
+      opened: true,
+    );
+    return Ok(scoreList[i]);
+  }
 
   @override
   Future<Result<List<TaskDefinition>, AppFailure>> definitions() async =>
