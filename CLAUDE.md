@@ -72,3 +72,4 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - UI: one page = one purpose. Every feature (except feeds) gets its own page; no menus, dialogs or tabs that bundle several features.
 - Verify with `flutter analyze` and `flutter test`.
 - After each completed change: commit with a short message and push to `origin main`.
+- Versioning: every user-facing change bumps `version:` in `pubspec.yaml` (`x.y.z+build`, semver) in the same commit, and adds a line to `CHANGELOG.md`. `z`: bug fix / small tweak with no new feature. `y`: new feature, backward compatible (reset `z`). `x`: breaking change — old app versions stop working with the backend, data/migration that needs a fresh install, or a major redesign (reset `y`, `z`). Always increment `+build` by 1. Refactors, tests and docs alone don't bump.
