@@ -45,11 +45,6 @@ final class UnauthorizedFailure extends AppFailure {
   const UnauthorizedFailure() : super('Bu işlem için yetkiniz yok.');
 }
 
-/// Geçersiz kimlik bilgileri.
-final class InvalidCredentialsFailure extends AppFailure {
-  const InvalidCredentialsFailure() : super('Geçersiz e-posta veya şifre.');
-}
-
 /// Kayıt bulunamadı.
 final class NotFoundFailure extends AppFailure {
   const NotFoundFailure(super.message);

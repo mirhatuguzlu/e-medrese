@@ -2,6 +2,9 @@
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
 
+## 1.3.0+4 — 2026-10-31
+- Giriş yalnızca Google hesabıyla; e-posta/şifre ile giriş ve kayıt kaldırıldı.
+
 ## 1.2.0+3 — 2026-10-31
 - Google ile giriş: giriş ekranında "Google ile devam et"; hesap yoksa ilk girişte açılır.
 

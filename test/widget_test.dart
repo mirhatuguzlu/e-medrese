@@ -11,36 +11,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FakeAuthRepository implements AuthRepository {
   final sessions = StreamController<Session?>.broadcast();
-  Result<void, AppFailure> signInResult = const Ok(null);
-  Result<bool, AppFailure> signUpResult = const Ok(true);
+  Result<bool, AppFailure> googleResult = const Ok(true);
   final calls = <String>[];
 
   @override
   Stream<Session?> get sessionChanges => sessions.stream;
 
   @override
-  Future<Result<void, AppFailure>> signIn({
-    required String email,
-    required String password,
-  }) async {
-    calls.add('signIn $email');
-    return signInResult;
-  }
-
-  @override
-  Future<Result<bool, AppFailure>> signUp({
-    required String fullName,
-    required String email,
-    required String password,
-  }) async {
-    calls.add('signUp $fullName $email');
-    return signUpResult;
-  }
-
-  @override
   Future<Result<bool, AppFailure>> signInWithGoogle() async {
     calls.add('signInWithGoogle');
-    return const Ok(true);
+    return googleResult;
   }
 
   @override
@@ -106,47 +86,24 @@ void main() {
     expect(find.text('Profil'), findsNothing);
   });
 
-  testWidgets('geçersiz form gönderilmez', (tester) async {
-    await pumpApp(tester);
-    await tester.tap(find.text('Giriş yap'));
-    await tester.pumpAndSettle();
 
-    expect(find.text('Geçerli bir e-posta yaz.'), findsOneWidget);
-    expect(find.text('Şifre en az 6 karakter olmalı.'), findsOneWidget);
-    expect(auth.calls, isEmpty);
-  });
-
-  testWidgets('hatalı girişte hata mesajı gösterilir', (tester) async {
-    auth.signInResult = const Err(InvalidCredentialsFailure());
-    await pumpApp(tester);
-
-    await tester.enterText(find.byType(TextFormField).at(0), ' a@b.com');
-    await tester.enterText(find.byType(TextFormField).at(1), '123456');
-    await tester.tap(find.text('Giriş yap'));
-    await tester.pumpAndSettle();
-
-    expect(auth.calls, ['signIn  a@b.com']);
-    expect(find.text('Geçersiz e-posta veya şifre.'), findsOneWidget);
-  });
-
-  testWidgets('kayıtta e-posta onayı bekleniyorsa bilgi verilir', (
+  testWidgets('Google ile giriş düğmesi Google girişini başlatır', (
     tester,
   ) async {
-    auth.signUpResult = const Ok(false);
+    await pumpApp(tester);
+    expect(find.byType(TextFormField), findsNothing);
+
+    await tester.tap(find.text('Google ile devam et'));
+    await tester.pumpAndSettle();
+    expect(auth.calls, ['signInWithGoogle']);
+  });
+
+  testWidgets('Google girişi hata verirse mesaj gösterilir', (tester) async {
+    auth.googleResult = const Err(ConnectionFailure());
     await pumpApp(tester);
 
-    await tester.tap(find.text('Hesabın yok mu? Kayıt ol'));
+    await tester.tap(find.text('Google ile devam et'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField).at(0), 'Ali Veli');
-    await tester.enterText(find.byType(TextFormField).at(1), 'ali@b.com');
-    await tester.enterText(find.byType(TextFormField).at(2), '123456');
-    await tester.tap(find.text('Kayıt ol'));
-    await tester.pumpAndSettle();
-
-    expect(auth.calls, ['signUp Ali Veli ali@b.com']);
-    expect(
-      find.textContaining('E-postandaki bağlantıyla onayla'),
-      findsOneWidget,
-    );
+    expect(find.text('İnternet bağlantısı yok.'), findsOneWidget);
   });
 }
