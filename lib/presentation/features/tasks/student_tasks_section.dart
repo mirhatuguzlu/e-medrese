@@ -138,7 +138,7 @@ class _ChestCard extends ConsumerWidget {
             child: Row(
               children: [
                 Icon(
-                  Icons.redeem,
+                  Icons.star_rounded,
                   size: 48,
                   color: theme.colorScheme.onTertiaryContainer,
                 ),
@@ -148,7 +148,7 @@ class _ChestCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Haftalık sandığın hazır!',
+                        'Haftalık puanın hazır!',
                         style: theme.textTheme.titleMedium,
                       ),
                       Text(

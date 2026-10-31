@@ -8,6 +8,7 @@ import 'package:e_medrese/presentation/features/home/home_page.dart';
 import 'package:e_medrese/presentation/features/medrese/medrese_page.dart';
 import 'package:e_medrese/presentation/features/tasks/ranking_page.dart';
 import 'package:e_medrese/presentation/features/tasks/score_history_page.dart';
+import 'package:e_medrese/presentation/features/tasks/star_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -205,10 +206,10 @@ void main() {
       scores: [score('u1', 'Ben', 88.5714)],
     );
 
-    await openTask(tester, 'Haftalık sandığın hazır!');
+    await openTask(tester, 'Haftalık puanın hazır!');
     expect(find.text('Açmak için 3 kez dokun'), findsOneWidget);
     for (var i = 0; i < 3; i++) {
-      await tester.tap(find.byIcon(Icons.redeem));
+      await tester.tap(find.byType(StarView));
       await tester.pumpAndSettle();
     }
 
@@ -220,7 +221,7 @@ void main() {
 
     await tester.pageBack();
     await tester.pumpAndSettle();
-    expect(find.text('Haftalık sandığın hazır!'), findsNothing);
+    expect(find.text('Haftalık puanın hazır!'), findsNothing);
   });
 
   testWidgets('sandıkta hocanın uyum puanı ve notu gösterilir', (tester) async {
@@ -241,9 +242,9 @@ void main() {
       note: 'Bu hafta çok gayretliydin.',
     );
 
-    await openTask(tester, 'Haftalık sandığın hazır!');
+    await openTask(tester, 'Haftalık puanın hazır!');
     for (var i = 0; i < 3; i++) {
-      await tester.tap(find.byIcon(Icons.redeem));
+      await tester.tap(find.byType(StarView));
       await tester.pumpAndSettle();
     }
 
@@ -264,7 +265,7 @@ void main() {
       program: chestProgram,
       scores: [score('u1', 'Ben', 88.5714, opened: true)],
     );
-    expect(find.text('Haftalık sandığın hazır!'), findsNothing);
+    expect(find.text('Haftalık puanın hazır!'), findsNothing);
 
     // Dönemin ortası (27.10 başlangıçlı programda 28.10).
     await pump(
@@ -273,7 +274,7 @@ void main() {
       program: _program,
       scores: [score('u1', 'Ben', 88.5714)],
     );
-    expect(find.text('Haftalık sandığın hazır!'), findsNothing);
+    expect(find.text('Haftalık puanın hazır!'), findsNothing);
   });
 
   testWidgets('sıralama dönem seçilerek görülür', (tester) async {

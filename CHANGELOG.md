@@ -2,6 +2,9 @@
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
 
+## 1.4.0+5 — 2026-11-01
+- Haftalık sandık yerine yıldız: dokundukça büyüyüp parlar, ışık saçarak açılır. Puanlar tek tek sayılır, yıldız olup toplama düşer; kart "Haftalık puanın hazır!" yazar.
+
 ## 1.3.0+4 — 2026-10-31
 - Giriş yalnızca Google hesabıyla; e-posta/şifre ile giriş ve kayıt kaldırıldı.
 
