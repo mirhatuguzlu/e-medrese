@@ -148,12 +148,17 @@ DateTime dateOnly(DateTime d) => DateTime.utc(d.year, d.month, d.day);
 /// Medresenin görev programı: [startDate]'ten itibaren 7 günlük dönemler.
 final class TaskProgram {
   /// Program.
-  const TaskProgram({required this.startDate, required this.active});
+  const TaskProgram({
+    required this.startDate,
+    required this.active,
+    this.paused = false,
+  });
 
   /// `task_programs` satırından oluşturur.
   factory TaskProgram.fromJson(Map<String, dynamic> json) => TaskProgram(
     startDate: dateOnly(DateTime.parse(json['start_date'] as String)),
     active: json['active'] as bool,
+    paused: json['paused'] as bool,
   );
 
   /// Başlangıç günü.
@@ -161,6 +166,9 @@ final class TaskProgram {
 
   /// Sürüyor mu.
   final bool active;
+
+  /// Duraklatıldı mı; takvim akar, öğrenci işaretleyemez.
+  final bool paused;
 
   /// [today]'in içinde bulunduğu dönemin ilk günü.
   DateTime periodStart(DateTime today) {

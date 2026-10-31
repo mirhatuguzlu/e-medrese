@@ -392,8 +392,22 @@ class FakeTaskRepository implements TaskRepository {
   }
 
   @override
-  Future<Result<void, AppFailure>> stop(String medreseId) async {
-    calls.add('stop');
+  Future<Result<void, AppFailure>> setPaused(
+    String medreseId, {
+    required bool paused,
+  }) async {
+    calls.add(paused ? 'pause' : 'resume');
+    taskProgram = TaskProgram(
+      startDate: taskProgram!.startDate,
+      active: true,
+      paused: paused,
+    );
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> finish(String medreseId) async {
+    calls.add('finish');
     taskProgram = TaskProgram(startDate: taskProgram!.startDate, active: false);
     return const Ok(null);
   }

@@ -81,7 +81,7 @@ class TaskRepository {
       guardSupabase(() async {
         final row = await _client
             .from('task_programs')
-            .select('start_date, active')
+            .select('start_date, active, paused')
             .eq('medrese_id', medreseId)
             .maybeSingle();
         return row == null ? null : TaskProgram.fromJson(row);
@@ -94,15 +94,24 @@ class TaskRepository {
           'medrese_id': medreseId,
           'start_date': _day.format(today),
           'active': true,
+          'paused': false,
         }),
       );
 
-  /// Programı durdurur; girdiler silinmez.
-  Future<Result<void, AppFailure>> stop(String medreseId) => guardSupabase(
+  /// Programı duraklatır ya da devam ettirir; takvim akmaya devam eder.
+  Future<Result<void, AppFailure>> setPaused(
+    String medreseId, {
+    required bool paused,
+  }) => guardSupabase(
     () => _client
         .from('task_programs')
-        .update({'active': false})
+        .update({'paused': paused})
         .eq('medrese_id', medreseId),
+  );
+
+  /// Süren dönemi o ana kadarki girdilerle puanlayıp programı kapatır.
+  Future<Result<void, AppFailure>> finish(String medreseId) => guardSupabase(
+    () => _client.rpc<void>('finish_task_program', params: {'m': medreseId}),
   );
 
   /// [periodStart]'tan başlayan 7 günün girdileri.

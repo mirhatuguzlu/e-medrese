@@ -13,8 +13,8 @@ import 'package:e_medrese/presentation/widgets/result_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Hocaların görev takibi: programı başlatır/durdurur; öğrenciye dokununca
-/// puan geçmişi açılır. Süren dönemin puanları gösterilmez.
+/// Hocaların görev takibi: programı başlatır, durdurur, bitirir; öğrenciye
+/// dokununca puan geçmişi açılır. Süren dönemin puanları gösterilmez.
 class TaskTrackingPage extends ConsumerStatefulWidget {
   /// [medrese]'nin görev takibi.
   const TaskTrackingPage({required this.medrese, super.key});
@@ -29,50 +29,87 @@ class TaskTrackingPage extends ConsumerStatefulWidget {
 class _TaskTrackingPageState extends ConsumerState<TaskTrackingPage> {
   bool _loading = false;
 
-  Future<void> _setActive({required bool active}) async {
+  Future<void> _run({
+    required String title,
+    required String message,
+    required String action,
+    required Future<Result<void, AppFailure>> Function(TaskRepository) call,
+  }) async {
     if (!await confirm(
       context,
-      title: active ? 'Görevleri başlat' : 'Görevleri durdur',
-      message: active
-          ? 'Görevler bugünden itibaren 7 günlük dönemlerle her hafta '
-                'öğrencilere açılır.'
-          : 'Öğrenciler görev işaretleyemez. Kaydedilen puanlar silinmez.',
-      action: active ? 'Başlat' : 'Durdur',
+      title: title,
+      message: message,
+      action: action,
     )) {
       return;
     }
     setState(() => _loading = true);
-    final repo = ref.read(taskRepositoryProvider);
-    final result = active
-        ? await repo.start(widget.medrese.id, ref.read(todayProvider))
-        : await repo.stop(widget.medrese.id);
+    final result = await call(ref.read(taskRepositoryProvider));
     if (!mounted) return;
     setState(() => _loading = false);
-    ref.invalidate(taskProgramProvider(widget.medrese.id));
+    ref
+      ..invalidate(taskProgramProvider(widget.medrese.id))
+      ..invalidate(weeklyScoresProvider(widget.medrese.id));
     if (result case Err(:final error)) context.showMessage(error.message);
   }
 
   @override
   Widget build(BuildContext context) {
-    final program = ref.watch(taskProgramProvider(widget.medrese.id));
+    final id = widget.medrese.id;
+    final program = ref.watch(taskProgramProvider(id));
     return Scaffold(
       appBar: AppBar(
         title: const Text('Görev takibi'),
         actions: [
           if (program case AsyncData(
-            value: Ok(value: TaskProgram(active: true)),
-          ))
+            value: Ok(value: TaskProgram(active: true, :final paused)),
+          )) ...[
+            if (paused)
+              IconButton(
+                tooltip: 'Görevlere devam et',
+                icon: const Icon(Icons.play_circle_outline),
+                onPressed: () => _run(
+                  title: 'Görevlere devam et',
+                  message: 'Öğrenciler süren dönemde yeniden işaretleyebilir.',
+                  action: 'Devam et',
+                  call: (r) => r.setPaused(id, paused: false),
+                ),
+              )
+            else
+              IconButton(
+                tooltip: 'Görevleri durdur',
+                icon: const Icon(Icons.pause_circle_outline),
+                onPressed: () => _run(
+                  title: 'Görevleri durdur',
+                  message:
+                      'Öğrenciler devam edene kadar görev işaretleyemez. '
+                      'Dönemler akmaya devam eder; kaydedilen puanlar '
+                      'silinmez.',
+                  action: 'Durdur',
+                  call: (r) => r.setPaused(id, paused: true),
+                ),
+              ),
             IconButton(
-              tooltip: 'Görevleri durdur',
+              tooltip: 'Görevleri bitir',
               icon: const Icon(Icons.stop_circle_outlined),
-              onPressed: () => _setActive(active: false),
+              onPressed: () => _run(
+                title: 'Görevleri bitir',
+                message:
+                    'Süren dönem şimdiye kadarki girdilerle puanlanır ve '
+                    'program kapanır. Yeniden başlatınca dönemler o günden '
+                    'başlar.',
+                action: 'Bitir',
+                call: (r) => r.finish(id),
+              ),
             ),
+          ],
         ],
       ),
       body: switch (program) {
         AsyncData(value: Ok(:final value?)) when value.active => _Students(
           medrese: widget.medrese,
           periodStart: value.periodStart(ref.watch(todayProvider)),
+          paused: value.paused,
         ),
         AsyncData(value: Ok()) => Center(
           child: Padding(
@@ -93,7 +130,14 @@ class _TaskTrackingPageState extends ConsumerState<TaskTrackingPage> {
                 LoadingButton(
                   label: 'Görevleri başlat',
                   loading: _loading,
-                  onPressed: () => _setActive(active: true),
+                  onPressed: () => _run(
+                    title: 'Görevleri başlat',
+                    message:
+                        'Görevler bugünden itibaren 7 günlük dönemlerle her '
+                        'hafta öğrencilere açılır.',
+                    action: 'Başlat',
+                    call: (r) => r.start(id, ref.read(todayProvider)),
+                  ),
                 ),
               ],
             ),
@@ -110,10 +154,15 @@ class _TaskTrackingPageState extends ConsumerState<TaskTrackingPage> {
 }
 
 class _Students extends ConsumerWidget {
-  const _Students({required this.medrese, required this.periodStart});
+  const _Students({
+    required this.medrese,
+    required this.periodStart,
+    required this.paused,
+  });
 
   final Medrese medrese;
   final DateTime periodStart;
+  final bool paused;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -129,6 +178,8 @@ class _Students extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
+            '${paused ? 'Görevler durduruldu; öğrenciler '
+                      'işaretleyemez.\n' : ''}'
             'Bu dönem: ${periodLabel(periodStart)}\n'
             'Puanlar dönem bitince açıklanır. Geçmiş için öğrenciye, '
             'uyum vermek için el sıkışma simgesine dokun.',

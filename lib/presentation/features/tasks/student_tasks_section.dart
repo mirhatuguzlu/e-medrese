@@ -76,28 +76,31 @@ class StudentTasksSection extends ConsumerWidget {
               medrese: medrese,
               periodStart: periodStart.subtract(const Duration(days: 7)),
             ),
-          GridView.count(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              for (final t in tasks)
-                _TaskTile(
-                  task: t,
-                  marked: entries.any(
-                    (e) =>
-                        e.taskId == t.id &&
-                        e.studentId == myId &&
-                        (t.kind == TaskKind.weekly || e.day == today),
+          if (program.paused)
+            const Text('Hocan görevleri durdurdu; şimdilik işaretleyemezsin.')
+          else
+            GridView.count(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                for (final t in tasks)
+                  _TaskTile(
+                    task: t,
+                    marked: entries.any(
+                      (e) =>
+                          e.taskId == t.id &&
+                          e.studentId == myId &&
+                          (t.kind == TaskKind.weekly || e.day == today),
+                    ),
+                    onTap: () => context.push(
+                      TaskPage(medrese: medrese, task: t, program: program),
+                    ),
                   ),
-                  onTap: () => context.push(
-                    TaskPage(medrese: medrese, task: t, program: program),
-                  ),
-                ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );

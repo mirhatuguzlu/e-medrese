@@ -9,6 +9,7 @@ import 'package:e_medrese/presentation/features/medrese/medrese_page.dart';
 import 'package:e_medrese/presentation/features/tasks/ranking_page.dart';
 import 'package:e_medrese/presentation/features/tasks/score_history_page.dart';
 import 'package:e_medrese/presentation/features/tasks/star_view.dart';
+import 'package:e_medrese/presentation/features/tasks/task_tracking_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -353,5 +354,36 @@ void main() {
 
     expect(tasks.calls.last, 'uyum s1 20 Aferin');
     expect(find.text('Uyum: 20/25'), findsOneWidget);
+  });
+
+  testWidgets('hoca görevleri durdurur, devam ettirir ve bitirir', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      TaskTrackingPage(medrese: _medrese(MemberRole.teacher)),
+      program: _program,
+    );
+
+    Future<void> press(String tooltip, String action) async {
+      await tester.tap(find.byTooltip(tooltip));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(TextButton, action));
+      await tester.pumpAndSettle();
+    }
+
+    await press('Görevleri durdur', 'Durdur');
+    expect(find.textContaining('Görevler durduruldu'), findsOneWidget);
+    expect(find.byTooltip('Görevleri bitir'), findsOneWidget);
+
+    await press('Görevlere devam et', 'Devam et');
+    expect(find.textContaining('Görevler durduruldu'), findsNothing);
+
+    await press('Görevleri bitir', 'Bitir');
+    expect(tasks.calls, ['pause', 'resume', 'finish']);
+    expect(
+      find.widgetWithText(FilledButton, 'Görevleri başlat'),
+      findsOneWidget,
+    );
   });
 }

@@ -2,6 +2,9 @@
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
 
+## 1.5.0+6 — 2026-11-01
+- Görev takibinde hoca ve kurucu için iki tuş: Durdur (öğrenciler işaretleyemez, Devam et ile sürer) ve Bitir (süren dönem o ana kadarki girdilerle puanlanır, program kapanır).
+
 ## 1.4.0+5 — 2026-11-01
 - Haftalık sandık yerine yıldız: dokundukça büyüyüp parlar, ışık saçarak açılır. Puanlar tek tek sayılır, yıldız olup toplama düşer; kart "Haftalık puanın hazır!" yazar.
 

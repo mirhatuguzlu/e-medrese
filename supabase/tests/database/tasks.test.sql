@@ -3,7 +3,7 @@ begin;
 set local role postgres;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(15);
+select plan(20);
 
 -- hoca, öğrenci1, öğrenci2
 insert into auth.users (id, email) values
@@ -70,6 +70,25 @@ select is((select count(*)::int from task_entries), 0, 'öğrenci başkasının 
 select pg_temp.login('00000000-0000-0000-0000-0000000000a1');
 select is((select count(*)::int from task_entries
   where medrese_id = '20000000-0000-0000-0000-000000000001'), 2, 'hoca öğrencilerin girdilerini görür');
+
+-- Duraklatılınca
+update task_programs set paused = true where medrese_id = '20000000-0000-0000-0000-000000000001';
+select pg_temp.login('00000000-0000-0000-0000-0000000000a2');
+select throws_ok($$ insert into task_entries (medrese_id, task_id, day, value)
+  values ('20000000-0000-0000-0000-000000000001', 'risale', today_tr(), 3) $$,
+  '42501', null, 'duraklatılan programa yazılamaz');
+select throws_ok($$ select finish_task_program('20000000-0000-0000-0000-000000000001') $$,
+  'P0001', 'not allowed', 'öğrenci programı bitiremez');
+
+-- Bitirilince süren dönem (dün başladı) puanlanır
+select pg_temp.login('00000000-0000-0000-0000-0000000000a1');
+select lives_ok($$ select finish_task_program('20000000-0000-0000-0000-000000000001') $$,
+  'hoca programı bitirir');
+select is((select count(*)::int from weekly_scores
+  where medrese_id = '20000000-0000-0000-0000-000000000001' and period_start = today_tr() - 1),
+  2, 'süren yarım dönem puanlanır');
+select ok((select not active and not paused from task_programs
+  where medrese_id = '20000000-0000-0000-0000-000000000001'), 'bitirilen program kapanır');
 
 -- Program durdurulunca
 update task_programs set active = false where medrese_id = '20000000-0000-0000-0000-000000000001';
