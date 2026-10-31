@@ -38,6 +38,12 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<Result<bool, AppFailure>> signInWithGoogle() async {
+    calls.add('signInWithGoogle');
+    return const Ok(true);
+  }
+
+  @override
   Future<Result<void, AppFailure>> signOut() async {
     calls.add('signOut');
     sessions.add(null);

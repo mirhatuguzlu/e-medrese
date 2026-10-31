@@ -1,3 +1,4 @@
+import 'package:e_medrese/core/constants/supabase_config.dart';
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:flutter/material.dart';
@@ -55,6 +56,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       message = result.errorOrNull?.message;
     }
 
+    _finish(message);
+  }
+
+  Future<void> _google() async {
+    setState(() => _loading = true);
+    final result = await ref.read(authRepositoryProvider).signInWithGoogle();
+    _finish(result.errorOrNull?.message);
+  }
+
+  void _finish(String? message) {
     // Başarılı girişte oturum akışı bu sayfayı ağaçtan kaldırır.
     if (!mounted) return;
     setState(() => _loading = false);
@@ -145,6 +156,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                               )
                             : Text(_isSignUp ? 'Kayıt ol' : 'Giriş yap'),
                       ),
+                      if (SupabaseConfig.googleWebClientId.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        OutlinedButton(
+                          onPressed: _loading ? null : _google,
+                          child: const Text('Google ile devam et'),
+                        ),
+                      ],
                       TextButton(
                         onPressed: _loading
                             ? null

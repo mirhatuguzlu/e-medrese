@@ -1,10 +1,20 @@
+import 'package:e_medrese/core/constants/supabase_config.dart';
 import 'package:e_medrese/core/core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Uygulama genelindeki [AuthRepository].
 final authRepositoryProvider = Provider<AuthRepository>(
-  (ref) => AuthRepository(Supabase.instance.client.auth),
+  (ref) => AuthRepository(
+    Supabase.instance.client.auth,
+    GoogleSignIn(
+      serverClientId: SupabaseConfig.googleWebClientId,
+      clientId: SupabaseConfig.googleIosClientId.isEmpty
+          ? null
+          : SupabaseConfig.googleIosClientId,
+    ),
+  ),
 );
 
 /// Oturum değişiklikleri; `null` = giriş yapılmamış.
@@ -15,9 +25,10 @@ final sessionProvider = StreamProvider<Session?>(
 /// E-posta/şifre ile giriş, kayıt ve çıkış.
 class AuthRepository {
   /// Supabase auth istemcisiyle oluşturur.
-  AuthRepository(this._auth);
+  AuthRepository(this._auth, this._google);
 
   final GoTrueClient _auth;
+  final GoogleSignIn _google;
 
   /// Açılışta mevcut oturumu, sonra her değişikliği yayar.
   Stream<Session?> get sessionChanges =>
@@ -45,8 +56,30 @@ class AuthRepository {
     return response.session != null;
   });
 
-  /// Oturumu kapatır.
-  Future<Result<void, AppFailure>> signOut() => _guard(_auth.signOut);
+  /// Google hesabıyla giriş yapar; hesap yoksa açılır. Değer `false` ise
+  /// kullanıcı hesap seçmeden vazgeçmiştir.
+  Future<Result<bool, AppFailure>> signInWithGoogle() => _guard(() async {
+    final account = await _google.signIn();
+    if (account == null) return false;
+    final tokens = await account.authentication;
+    final idToken = tokens.idToken;
+    if (idToken == null) {
+      throw const AuthException('Google kimlik belirteci alınamadı.');
+    }
+    await _auth.signInWithIdToken(
+      provider: OAuthProvider.google,
+      idToken: idToken,
+      accessToken: tokens.accessToken,
+    );
+    return true;
+  });
+
+  /// Oturumu kapatır. Google oturumu da kapanır ki sonraki girişte hesap
+  /// seçilebilsin.
+  Future<Result<void, AppFailure>> signOut() => _guard(() async {
+    if (await _google.isSignedIn()) await _google.signOut();
+    await _auth.signOut();
+  });
 
   Future<Result<T, AppFailure>> _guard<T>(Future<T> Function() action) async {
     try {
