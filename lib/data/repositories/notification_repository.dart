@@ -33,7 +33,9 @@ class NotificationRepository {
       guardSupabase(() async {
         final rows = await _client
             .from('notifications')
-            .select('id, title, body, created_at, read_at, medrese_id, post_id')
+            .select(
+              'id, kind, title, body, created_at, read_at, medrese_id, post_id',
+            )
             .order('created_at', ascending: false)
             .limit(50);
         return rows.map(AppNotification.fromJson).toList();

@@ -2,6 +2,9 @@
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
 
+## 1.9.0+11 — 2026-11-01
+- Bütün bildirimler tıklanabilir: görev bildirimleri ana ekrandaki görevlere, duyuru duyurulara, "Yıldızların hazır" yıldız sayfasına (gün geçtiyse puan geçmişine), yorum paylaşıma götürür. Telefondaki bildirime dokununca da doğrudan ilgili sayfa açılır.
+
 ## 1.8.0+10 — 2026-11-01
 - Paylaşımına başkası yorum yazınca bildirim gelir; Bildirimler sayfasında dokununca paylaşım ve yorumları açılır.
 

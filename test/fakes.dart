@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/feed_repository.dart';
 import 'package:e_medrese/data/repositories/medrese_repository.dart';
@@ -489,6 +491,9 @@ class FakeNotificationRepository implements NotificationRepository {
 class FakePushService implements PushService {
   final calls = <String>[];
 
+  /// Telefondaki bildirime dokunmayı taklit eder.
+  final taps = StreamController<AppNotification>.broadcast();
+
   @override
   Future<void> register() async => calls.add('register');
 
@@ -499,12 +504,15 @@ class FakePushService implements PushService {
   Stream<void> get received => const Stream.empty();
 
   @override
-  Stream<void> get opened => const Stream.empty();
+  Stream<AppNotification> get opened => taps.stream;
 }
 
 /// Ana ekranı açan testler için bildirim sağlayıcıları.
-List<Override> pushOverrides({FakeNotificationRepository? notifications}) => [
-  pushServiceProvider.overrideWithValue(FakePushService()),
+List<Override> pushOverrides({
+  FakeNotificationRepository? notifications,
+  FakePushService? push,
+}) => [
+  pushServiceProvider.overrideWithValue(push ?? FakePushService()),
   notificationRepositoryProvider.overrideWithValue(
     notifications ?? FakeNotificationRepository(),
   ),

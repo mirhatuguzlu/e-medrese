@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:e_medrese/data/repositories/notification_repository.dart';
+import 'package:e_medrese/domain/entities/app_notification.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,7 +29,7 @@ class PushService {
 
   final NotificationRepository _repo;
   final _local = FlutterLocalNotificationsPlugin();
-  final _taps = StreamController<void>.broadcast();
+  final _taps = StreamController<AppNotification>.broadcast();
   StreamSubscription<String>? _tokenRefresh;
   bool _started = false;
 
@@ -53,7 +55,12 @@ class PushService {
       const InitializationSettings(
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
       ),
-      onDidReceiveNotificationResponse: (_) => _taps.add(null),
+      // Uygulama açıkken gösterilenin yükü mesaj verisidir (_show).
+      onDidReceiveNotificationResponse: (r) => _taps.add(
+        AppNotification.fromPush(
+          jsonDecode(r.payload ?? '{}') as Map<String, dynamic>,
+        ),
+      ),
     );
     await _local
         .resolvePlatformSpecificImplementation<
@@ -61,8 +68,11 @@ class PushService {
         >()
         ?.createNotificationChannel(_channel);
     FirebaseMessaging.onMessage.listen(_show);
-    FirebaseMessaging.onMessageOpenedApp.listen((_) => _taps.add(null));
-    if (await _messaging.getInitialMessage() != null) _taps.add(null);
+    FirebaseMessaging.onMessageOpenedApp.listen(
+      (m) => _taps.add(AppNotification.fromPush(m.data)),
+    );
+    final initial = await _messaging.getInitialMessage();
+    if (initial != null) _taps.add(AppNotification.fromPush(initial.data));
   }
 
   /// Uygulama açıkken Android bildirimi kendisi göstermez; biz gösteririz.
@@ -81,6 +91,7 @@ class PushService {
           priority: Priority.high,
         ),
       ),
+      payload: jsonEncode(message.data),
     );
   }
 
@@ -98,5 +109,5 @@ class PushService {
   Stream<void> get received => FirebaseMessaging.onMessage;
 
   /// Kullanıcının dokunduğu bildirimler; uygulamayı başlatan dahil.
-  Stream<void> get opened => _taps.stream;
+  Stream<AppNotification> get opened => _taps.stream;
 }

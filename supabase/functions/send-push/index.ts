@@ -30,7 +30,15 @@ async function accessToken(): Promise<string> {
   return (await res.json()).access_token;
 }
 
-type Pending = { kind: string; title: string; body: string; tokens: string[] };
+type Pending = {
+  kind: string;
+  title: string;
+  body: string;
+  tokens: string[];
+  medrese_id: string | null;
+  post_id: string | null;
+  created_at: string;
+};
 
 Deno.serve(async (req) => {
   const key = req.headers.get('Authorization')?.replace(/^Bearer /, '') ?? '';
@@ -62,7 +70,13 @@ Deno.serve(async (req) => {
           message: {
             token,
             notification: { title: p.title, body: p.body },
-            data: { kind: p.kind },
+            // Uygulama dokununca ilgili sayfayı açar; FCM yalnız metin alır.
+            data: {
+              kind: p.kind,
+              medrese_id: p.medrese_id ?? '',
+              post_id: p.post_id ?? '',
+              created_at: p.created_at,
+            },
           },
         }),
       });
