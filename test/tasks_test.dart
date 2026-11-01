@@ -133,15 +133,46 @@ void main() {
     await pump(tester, const HomePage(), program: _program);
     await openTask(tester, 'Risale-i Nur okuma');
 
+    // Dün (27.10) geçti: salt okunur.
+    expect(find.text('Bu gün geçti; değiştirilemez.'), findsOneWidget);
     await tester.tap(find.text('Okudum (3 sayfa)').first);
     await tester.pumpAndSettle();
-    expect(tasks.calls, ['risale 27 0 3']);
+    expect(tasks.calls, isEmpty);
+
+    await tester.tap(find.text('Okudum (3 sayfa)').last);
+    await tester.pumpAndSettle();
+    expect(tasks.calls, ['risale 28 0 3']);
 
     await tester.enterText(find.byType(TextField).at(1), '10');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
 
     expect(tasks.calls.last, 'risale 28 0 10');
+  });
+
+  testWidgets('hoca öğrencinin geçmiş gününü düzeltir', (tester) async {
+    medreses.memberList.add(
+      Member(
+        userId: 's1',
+        name: 'Ali',
+        role: MemberRole.student,
+        joinedAt: _today,
+      ),
+    );
+    await pump(
+      tester,
+      TaskTrackingPage(medrese: _medrese(MemberRole.teacher)),
+      program: _program,
+    );
+    await tester.tap(find.byTooltip('İşaretleri düzelt'));
+    await tester.pumpAndSettle();
+    await openTask(tester, 'Risale-i Nur okuma');
+
+    expect(find.text('Bu gün geçti; değiştirilemez.'), findsNothing);
+    await tester.tap(find.text('Okudum (3 sayfa)').first);
+    await tester.pumpAndSettle();
+    expect(tasks.calls, ['risale 27 0 3']);
+    expect(tasks.entryList.single.studentId, 's1');
   });
 
   testWidgets('cevşen haftada bir kez kaç kez bitirildiği işaretlenir', (

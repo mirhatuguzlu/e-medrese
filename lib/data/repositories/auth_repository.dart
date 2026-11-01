@@ -72,8 +72,9 @@ class AuthRepository {
   }
 
   static AppFailure _mapAuthException(AuthException e) => switch (e.code) {
-    'over_request_rate_limit' =>
-      const ValidationFailure('Çok fazla deneme yapıldı, biraz bekle.'),
+    'over_request_rate_limit' => const ValidationFailure(
+      'Çok fazla deneme yapıldı, biraz bekle.',
+    ),
     _ => UnexpectedFailure(e.message),
   };
 }

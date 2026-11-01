@@ -3,7 +3,7 @@ begin;
 set local role postgres;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(20);
+select plan(24);
 
 -- hoca, öğrenci1, öğrenci2
 insert into auth.users (id, email) values
@@ -47,9 +47,23 @@ select throws_ok($$ insert into task_entries (medrese_id, task_id, day, value)
 select pg_temp.login('00000000-0000-0000-0000-0000000000a2');
 select lives_ok($$ insert into task_entries (medrese_id, task_id, day, value)
   values ('20000000-0000-0000-0000-000000000001', 'kitap', today_tr(), 10) $$, 'öğrenci bugünü işaretler');
-select lives_ok($$ insert into task_entries (medrese_id, task_id, day, item, value)
-  values ('20000000-0000-0000-0000-000000000001', 'namaz', today_tr() - 1, 2, 1) $$,
-  'öğrenci dönemin geçmiş gününü işaretler');
+select is(can_write_task_entry('20000000-0000-0000-0000-000000000001', 'namaz', today_tr() - 1),
+  (now() at time zone 'Europe/Istanbul')::time < '04:00', 'öğrenci dünü yalnızca 04:00''e kadar işaretler');
+select ok(can_write_task_entry('20000000-0000-0000-0000-000000000001', 'cevsen', today_tr() - 1),
+  'haftalık görev dönemin ilk gününe dönem boyunca yazılır');
+
+-- Hoca öğrencinin süren dönemdeki geçmiş gününü düzeltir.
+select pg_temp.login('00000000-0000-0000-0000-0000000000a1');
+select lives_ok($$ insert into task_entries (medrese_id, student_id, task_id, day, item, value)
+  values ('20000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a2',
+  'namaz', today_tr() - 1, 2, 1) $$, 'hoca öğrencinin geçmiş gününü işaretler');
+select throws_ok($$ insert into task_entries (medrese_id, student_id, task_id, day, item, value)
+  values ('20000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a2',
+  'namaz', today_tr() - 2, 2, 1) $$, '42501', null, 'hoca önceki dönemi değiştiremez');
+select throws_ok($$ insert into task_entries (medrese_id, student_id, task_id, day, value)
+  values ('20000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a1',
+  'kitap', today_tr(), 10) $$, '42501', null, 'hoca kendine yazamaz');
+select pg_temp.login('00000000-0000-0000-0000-0000000000a2');
 insert into task_entries (medrese_id, student_id, task_id, day, item, value)
   values ('20000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a2', 'kitap', today_tr(), 0, 15)
   on conflict (medrese_id, student_id, task_id, day, item) do update

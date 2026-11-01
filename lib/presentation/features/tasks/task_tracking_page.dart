@@ -5,6 +5,7 @@ import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/member.dart';
 import 'package:e_medrese/domain/entities/task.dart';
 import 'package:e_medrese/presentation/features/tasks/score_history_page.dart';
+import 'package:e_medrese/presentation/features/tasks/student_entries_page.dart';
 import 'package:e_medrese/presentation/features/tasks/student_tasks_section.dart';
 import 'package:e_medrese/presentation/features/tasks/uyum_page.dart';
 import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
@@ -108,8 +109,8 @@ class _TaskTrackingPageState extends ConsumerState<TaskTrackingPage> {
       body: switch (program) {
         AsyncData(value: Ok(:final value?)) when value.active => _Students(
           medrese: widget.medrese,
+          program: value,
           periodStart: value.periodStart(ref.watch(todayProvider)),
-          paused: value.paused,
         ),
         AsyncData(value: Ok()) => Center(
           child: Padding(
@@ -156,13 +157,13 @@ class _TaskTrackingPageState extends ConsumerState<TaskTrackingPage> {
 class _Students extends ConsumerWidget {
   const _Students({
     required this.medrese,
+    required this.program,
     required this.periodStart,
-    required this.paused,
   });
 
   final Medrese medrese;
+  final TaskProgram program;
   final DateTime periodStart;
-  final bool paused;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -178,11 +179,12 @@ class _Students extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            '${paused ? 'Görevler durduruldu; öğrenciler '
+            '${program.paused ? 'Görevler durduruldu; öğrenciler '
                       'işaretleyemez.\n' : ''}'
             'Bu dönem: ${periodLabel(periodStart)}\n'
             'Puanlar dönem bitince açıklanır. Geçmiş için öğrenciye, '
-            'uyum vermek için el sıkışma simgesine dokun.',
+            'işaretleri düzeltmek için takvim, uyum vermek için el sıkışma '
+            'simgesine dokun.',
           ),
         ),
         const Divider(height: 1),
@@ -209,18 +211,35 @@ class _Students extends ConsumerWidget {
                 final g? => 'Uyum: ${formatPoints(g.points)}/${UyumGrade.max}',
                 null => 'Uyum verilmedi',
               }),
-              trailing: IconButton(
-                tooltip: 'Uyum puanı ver',
-                icon: const Icon(Icons.handshake_outlined),
-                onPressed: () => context.push(
-                  UyumPage(
-                    medrese: medrese,
-                    periodStart: periodStart,
-                    studentId: s.userId,
-                    studentName: s.name,
-                    grade: grades[s.userId],
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: 'İşaretleri düzelt',
+                    icon: const Icon(Icons.edit_calendar_outlined),
+                    onPressed: () => context.push(
+                      StudentEntriesPage(
+                        medrese: medrese,
+                        program: program,
+                        studentId: s.userId,
+                        studentName: s.name,
+                      ),
+                    ),
                   ),
-                ),
+                  IconButton(
+                    tooltip: 'Uyum puanı ver',
+                    icon: const Icon(Icons.handshake_outlined),
+                    onPressed: () => context.push(
+                      UyumPage(
+                        medrese: medrese,
+                        periodStart: periodStart,
+                        studentId: s.userId,
+                        studentName: s.name,
+                        grade: grades[s.userId],
+                      ),
+                    ),
+                  ),
+                ],
               ),
               onTap: () => context.push(
                 ScoreHistoryPage(

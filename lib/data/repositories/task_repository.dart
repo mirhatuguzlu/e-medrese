@@ -13,6 +13,12 @@ final taskRepositoryProvider = Provider<TaskRepository>(
 /// Bugün (saat olmadan). Testlerde sabitlenir.
 final todayProvider = Provider<DateTime>((ref) => dateOnly(DateTime.now()));
 
+/// Öğrencinin işaretleyebileceği en eski gün: bugün, gece 04:00'e kadar dün.
+/// Kural sunucuda da var (can_write_task_entry).
+final firstWritableDayProvider = Provider<DateTime>(
+  (ref) => dateOnly(DateTime.now().subtract(const Duration(hours: 4))),
+);
+
 /// Görev tanımları.
 final taskDefinitionsProvider =
     FutureProvider<Result<List<TaskDefinition>, AppFailure>>(

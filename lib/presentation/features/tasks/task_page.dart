@@ -9,13 +9,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Öğrencinin bir görevi bu dönemin günlerinde işaretlediği sayfa.
 ///
-/// Bugünden sonraki günler kapalı; işaretlenmeyen gün puan getirmez.
+/// Öğrenci yalnızca bugünü (gece 04:00'e kadar dünü de) değiştirir; geçen
+/// günler salt okunur. Hoca [studentId] ile açınca dönemin bugüne kadarki
+/// bütün günlerini düzeltir. İşaretlenmeyen gün puan getirmez.
 class TaskPage extends ConsumerWidget {
   /// [task] sayfası.
   const TaskPage({
     required this.medrese,
     required this.task,
     required this.program,
+    this.studentId,
     super.key,
   });
 
@@ -27,6 +30,9 @@ class TaskPage extends ConsumerWidget {
 
   /// Medresenin programı.
   final TaskProgram program;
+
+  /// Hoca düzeltirken öğrencinin kimliği; `null` ise giriş yapan öğrenci.
+  final String? studentId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -40,7 +46,13 @@ class TaskPage extends ConsumerWidget {
         : weekly
         ? [program.periodStart(today)]
         : program.periodDays(today).where(task.isOn).toList();
-    final myId = ref.watch(sessionProvider).valueOrNull?.user.id ?? '';
+    final myId =
+        studentId ?? ref.watch(sessionProvider).valueOrNull?.user.id ?? '';
+    final firstWritable = ref.watch(firstWritableDayProvider);
+    bool canEdit(DateTime day) =>
+        weekly ||
+        studentId != null ||
+        !day.isBefore(firstWritable.isAfter(today) ? today : firstWritable);
     final key = (
       medreseId: medrese.id,
       periodStart: program.periodStart(today),
@@ -137,27 +149,36 @@ class TaskPage extends ConsumerWidget {
                               padding: EdgeInsets.only(top: 8),
                               child: Text('Bu gün henüz gelmedi.'),
                             )
-                          else if (task.kind == TaskKind.checks)
-                            Wrap(
-                              spacing: 8,
-                              children: [
-                                for (var i = 0; i < task.items.length; i++)
-                                  FilterChip(
-                                    label: Text(task.items[i]),
-                                    selected: valueOf(day, i) != null,
-                                    onSelected: (on) =>
-                                        save(day, i, on ? 1 : null),
-                                  ),
-                              ],
-                            )
-                          else
-                            _PagesInput(
-                              // Değer değişince alan yeniden kurulsun.
-                              key: ValueKey('$day-${valueOf(day, 0)}'),
-                              presets: task.presets,
-                              value: valueOf(day, 0),
-                              onChanged: (pages) => save(day, 0, pages),
-                            ),
+                          else ...[
+                            if (!canEdit(day))
+                              const Padding(
+                                padding: EdgeInsets.only(top: 4),
+                                child: Text('Bu gün geçti; değiştirilemez.'),
+                              ),
+                            if (task.kind == TaskKind.checks)
+                              Wrap(
+                                spacing: 8,
+                                children: [
+                                  for (var i = 0; i < task.items.length; i++)
+                                    FilterChip(
+                                      label: Text(task.items[i]),
+                                      selected: valueOf(day, i) != null,
+                                      onSelected: canEdit(day)
+                                          ? (on) => save(day, i, on ? 1 : null)
+                                          : null,
+                                    ),
+                                ],
+                              )
+                            else
+                              _PagesInput(
+                                // Değer değişince alan yeniden kurulsun.
+                                key: ValueKey('$day-${valueOf(day, 0)}'),
+                                presets: task.presets,
+                                value: valueOf(day, 0),
+                                enabled: canEdit(day),
+                                onChanged: (pages) => save(day, 0, pages),
+                              ),
+                          ],
                         ],
                       ),
                     ),
@@ -174,12 +195,14 @@ class _PagesInput extends StatefulWidget {
   const _PagesInput({
     required this.presets,
     required this.value,
+    required this.enabled,
     required this.onChanged,
     super.key,
   });
 
   final List<TaskPreset> presets;
   final num? value;
+  final bool enabled;
   final ValueChanged<num?> onChanged;
 
   @override
@@ -226,12 +249,15 @@ class _PagesInputState extends State<_PagesInput> {
                 ChoiceChip(
                   label: Text(p.label),
                   selected: widget.value == p.pages,
-                  onSelected: (on) => widget.onChanged(on ? p.pages : null),
+                  onSelected: widget.enabled
+                      ? (on) => widget.onChanged(on ? p.pages : null)
+                      : null,
                 ),
             ],
           ),
         TextField(
           controller: _pages,
+          enabled: widget.enabled,
           keyboardType: TextInputType.number,
           inputFormatters: [
             FilteringTextInputFormatter.digitsOnly,

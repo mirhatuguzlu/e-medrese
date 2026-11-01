@@ -2,6 +2,10 @@
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
 
+## 1.7.0+9 — 2026-11-01
+- Geçmiş günler kilitli: öğrenci yalnızca bugünü, gece 04:00'e kadar dünü de işaretleyebilir; geçen günler salt okunur görünür. Haftalık Cevşen dönem boyunca açık kalır.
+- Hoca ve kurucu, Görev takibinde öğrencinin yanındaki takvim simgesiyle süren dönemin geçmiş günlerini düzeltebilir.
+
 ## 1.6.1+8 — 2026-11-01
 - Bildirimler telefona düşmüyordu: sunucu çağrısındaki anahtar temizleniyor. Uygulama açıkken de bildirim sesli olarak görünür; kapalıyken gelenler aynı sesli kanala düşer.
 
