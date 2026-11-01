@@ -2,12 +2,15 @@ import 'package:e_medrese/core/constants/supabase_config.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:e_medrese/presentation/features/auth/login_page.dart';
 import 'package:e_medrese/presentation/features/home/home_page.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Ayarlar android/app/google-services.json'dan gelir.
+  await Firebase.initializeApp();
   await Supabase.initialize(
     url: SupabaseConfig.url,
     publishableKey: SupabaseConfig.publishableKey,

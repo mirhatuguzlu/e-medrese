@@ -14,6 +14,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ...pushOverrides(),
           sessionProvider.overrideWith((ref) => Stream.value(testSession)),
           medreseRepositoryProvider.overrideWithValue(repo),
         ],

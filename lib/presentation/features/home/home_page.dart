@@ -6,6 +6,7 @@ import 'package:e_medrese/presentation/features/medrese/create_medrese_page.dart
 import 'package:e_medrese/presentation/features/medrese/join_medrese_page.dart';
 import 'package:e_medrese/presentation/features/medrese/medrese_page.dart';
 import 'package:e_medrese/presentation/features/tasks/student_tasks_section.dart';
+import 'package:e_medrese/presentation/widgets/notifications_button.dart';
 import 'package:e_medrese/presentation/widgets/profile_button.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,7 @@ class HomePage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('e-Medrese'),
-        actions: const [ProfileButton()],
+        actions: const [NotificationsButton(), ProfileButton()],
       ),
       body: ResultListView<Medrese>(
         value: ref.watch(myMedresesProvider),

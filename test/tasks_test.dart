@@ -53,6 +53,7 @@ void main() {
       ProviderScope(
         key: UniqueKey(),
         overrides: [
+          ...pushOverrides(),
           sessionProvider.overrideWith((ref) => Stream.value(testSession)),
           medreseRepositoryProvider.overrideWithValue(medreses),
           taskRepositoryProvider.overrideWithValue(tasks),

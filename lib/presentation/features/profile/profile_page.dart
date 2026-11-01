@@ -1,5 +1,6 @@
 import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:e_medrese/presentation/widgets/user_avatar.dart';
+import 'package:e_medrese/services/push_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -40,7 +41,11 @@ class ProfilePage extends ConsumerWidget {
               'Çıkış yap',
               style: TextStyle(color: theme.colorScheme.error),
             ),
-            onTap: () => ref.read(authRepositoryProvider).signOut(),
+            onTap: () async {
+              // Çıkıştan önce: token silmek için oturum gerekiyor.
+              await ref.read(pushServiceProvider).unregister();
+              await ref.read(authRepositoryProvider).signOut();
+            },
           ),
         ],
       ),

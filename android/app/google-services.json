@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "901923986402",
+    "project_id": "e-medrese-513320",
+    "storage_bucket": "e-medrese-513320.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:901923986402:android:75531c92f8e92c31fbf7bb",
+        "android_client_info": {
+          "package_name": "com.emedrese.e_medrese"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "901923986402-ksaftj7dvjftl91f30bp3tueglvolo7s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAX-Uhx6TKdjSZJfTxZQQIn8UvOHYqms1c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "901923986402-ksaftj7dvjftl91f30bp3tueglvolo7s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

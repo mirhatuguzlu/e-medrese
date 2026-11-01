@@ -2,6 +2,9 @@
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
 
+## 1.6.0+7 — 2026-11-01
+- Bildirimler: görev başlatma, durdurma, devam ve bitişte öğrencilere; yeni duyuruda medresedeki herkese; dönem bitince "Yıldızların hazır"; 21:00'de o gün işaretleme yapmayan öğrenciye hatırlatma. Ana ekrandaki zil okunmamış sayısını gösterir ve Bildirimler sayfasını açar.
+
 ## 1.5.0+6 — 2026-11-01
 - Görev takibinde hoca ve kurucu için iki tuş: Durdur (öğrenciler işaretleyemez, Devam et ile sürer) ve Bitir (süren dönem o ana kadarki girdilerle puanlanır, program kapanır).
 

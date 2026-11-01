@@ -1,11 +1,15 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/feed_repository.dart';
 import 'package:e_medrese/data/repositories/medrese_repository.dart';
+import 'package:e_medrese/data/repositories/notification_repository.dart';
 import 'package:e_medrese/data/repositories/task_repository.dart';
+import 'package:e_medrese/domain/entities/app_notification.dart';
 import 'package:e_medrese/domain/entities/feed.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/member.dart';
 import 'package:e_medrese/domain/entities/task.dart';
+import 'package:e_medrese/services/push_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const testMedrese = Medrese(
@@ -449,3 +453,55 @@ class FakeTaskRepository implements TaskRepository {
     return const Ok(null);
   }
 }
+
+class FakeNotificationRepository implements NotificationRepository {
+  final list = <AppNotification>[];
+  final calls = <String>[];
+
+  @override
+  Future<Result<List<AppNotification>, AppFailure>> notifications() async =>
+      Ok(List.of(list));
+
+  @override
+  Future<Result<int, AppFailure>> unreadCount() async =>
+      Ok(list.where((n) => !n.read).length);
+
+  @override
+  Future<Result<void, AppFailure>> markAllRead() async {
+    calls.add('markAllRead');
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> registerToken(String token) async =>
+      const Ok(null);
+
+  @override
+  Future<Result<void, AppFailure>> deleteToken(String token) async =>
+      const Ok(null);
+}
+
+/// Firebase'e dokunmayan push servisi.
+class FakePushService implements PushService {
+  final calls = <String>[];
+
+  @override
+  Future<void> register() async => calls.add('register');
+
+  @override
+  Future<void> unregister() async => calls.add('unregister');
+
+  @override
+  Stream<void> get received => const Stream.empty();
+
+  @override
+  Stream<void> get opened => const Stream.empty();
+}
+
+/// Ana ekranı açan testler için bildirim sağlayıcıları.
+List<Override> pushOverrides({FakeNotificationRepository? notifications}) => [
+  pushServiceProvider.overrideWithValue(FakePushService()),
+  notificationRepositoryProvider.overrideWithValue(
+    notifications ?? FakeNotificationRepository(),
+  ),
+];

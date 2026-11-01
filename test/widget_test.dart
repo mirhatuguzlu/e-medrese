@@ -9,6 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'fakes.dart';
+
 class FakeAuthRepository implements AuthRepository {
   final sessions = StreamController<Session?>.broadcast();
   Result<bool, AppFailure> googleResult = const Ok(true);
@@ -54,6 +56,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ...pushOverrides(),
           authRepositoryProvider.overrideWithValue(auth),
           myMedresesProvider.overrideWith((ref) => const Ok([])),
         ],
@@ -85,7 +88,6 @@ void main() {
     // Profil sayfası yığında kalmamalı.
     expect(find.text('Profil'), findsNothing);
   });
-
 
   testWidgets('Google ile giriş düğmesi Google girişini başlatır', (
     tester,
