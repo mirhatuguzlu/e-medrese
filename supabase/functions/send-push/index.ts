@@ -1,14 +1,11 @@
 // Gönderilmemiş bildirimleri FCM ile telefonlara yollar.
 // notifications tablosuna satır eklenince veritabanı bu fonksiyonu
-// service_role anahtarıyla çağırır; yalnızca o anahtar kabul edilir.
+// service_role anahtarıyla çağırır. İmzayı Supabase doğrular (verify_jwt);
+// burada yalnızca rolün service_role olduğuna bakılır.
 import { createClient } from 'npm:@supabase/supabase-js@2.49.4';
-import { importPKCS8, SignJWT } from 'npm:jose@5.9.6';
+import { decodeJwt, importPKCS8, SignJWT } from 'npm:jose@5.9.6';
 
 const account = JSON.parse(Deno.env.get('FCM_SERVICE_ACCOUNT')!);
-const db = createClient(
-  Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-);
 
 // Service account ile 1 saatlik Google erişim belirteci alır.
 async function accessToken(): Promise<string> {
@@ -36,10 +33,17 @@ async function accessToken(): Promise<string> {
 type Pending = { kind: string; title: string; body: string; tokens: string[] };
 
 Deno.serve(async (req) => {
-  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  if (req.headers.get('Authorization') !== `Bearer ${key}`) {
+  const key = req.headers.get('Authorization')?.replace(/^Bearer /, '') ?? '';
+  let role: unknown;
+  try {
+    role = decodeJwt(key).role;
+  } catch {
+    // Biçimi bozuk anahtar: aşağıda reddedilir.
+  }
+  if (role !== 'service_role') {
     return new Response('forbidden', { status: 403 });
   }
+  const db = createClient(Deno.env.get('SUPABASE_URL')!, key);
   const { data, error } = await db.rpc('claim_pending_pushes');
   if (error) return new Response(error.message, { status: 500 });
   const pending = data as Pending[];
