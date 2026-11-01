@@ -6,8 +6,6 @@ import 'package:e_medrese/presentation/features/medrese/create_medrese_page.dart
 import 'package:e_medrese/presentation/features/medrese/join_medrese_page.dart';
 import 'package:e_medrese/presentation/features/medrese/medrese_page.dart';
 import 'package:e_medrese/presentation/features/tasks/student_tasks_section.dart';
-import 'package:e_medrese/presentation/widgets/notifications_button.dart';
-import 'package:e_medrese/presentation/widgets/profile_button.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,7 +20,19 @@ class HomePage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('e-Medrese'),
-        actions: const [NotificationsButton(), ProfileButton()],
+        // Liste boşken de görünsün diye üst çubukta.
+        actions: [
+          IconButton(
+            tooltip: 'Koda katıl',
+            icon: const Icon(Icons.vpn_key_outlined),
+            onPressed: () => context.push(const JoinMedresePage()),
+          ),
+          IconButton(
+            tooltip: 'Medrese kur',
+            icon: const Icon(Icons.add),
+            onPressed: () => context.push(const CreateMedresePage()),
+          ),
+        ],
       ),
       body: ResultListView<Medrese>(
         value: ref.watch(myMedresesProvider),
@@ -59,30 +69,6 @@ class HomePage extends ConsumerWidget {
           subtitle: Text(m.myRole.label),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => context.push(MedresePage(medrese: m)),
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.vpn_key_outlined),
-                  label: const Text('Koda katıl'),
-                  onPressed: () => context.push(const JoinMedresePage()),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton.icon(
-                  icon: const Icon(Icons.add),
-                  label: const Text('Medrese kur'),
-                  onPressed: () => context.push(const CreateMedresePage()),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

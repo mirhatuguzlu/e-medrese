@@ -31,7 +31,7 @@ void main() {
 
   testWidgets('koda katılınca liste yenilenir', (tester) async {
     await pumpHome(tester);
-    await tester.tap(find.text('Koda katıl'));
+    await tester.tap(find.byTooltip('Koda katıl'));
     await tester.pumpAndSettle();
 
     await tester.enterText(find.byType(TextFormField), 'KISA');
@@ -53,7 +53,7 @@ void main() {
 
   testWidgets('medrese kurulunca davet kodu sayfası açılır', (tester) async {
     await pumpHome(tester);
-    await tester.tap(find.text('Medrese kur'));
+    await tester.tap(find.byTooltip('Medrese kur'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Kur'));

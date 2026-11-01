@@ -2,6 +2,9 @@
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
 
+## 1.10.0+12 — 2026-11-01
+- Ekranın altında havada duran menü: Medreselerim, Online Medrese (çok yakında), Bildirimler (okunmamış sayısıyla) ve Profil. "Koda katıl" ve "Medrese kur" üst çubuğa taşındı.
+
 ## 1.9.0+11 — 2026-11-01
 - Bütün bildirimler tıklanabilir: görev bildirimleri ana ekrandaki görevlere, duyuru duyurulara, "Yıldızların hazır" yıldız sayfasına (gün geçtiyse puan geçmişine), yorum paylaşıma götürür. Telefondaki bildirime dokununca da doğrudan ilgili sayfa açılır.
 

@@ -1,7 +1,7 @@
 import 'package:e_medrese/core/constants/supabase_config.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:e_medrese/presentation/features/auth/login_page.dart';
-import 'package:e_medrese/presentation/features/home/home_page.dart';
+import 'package:e_medrese/presentation/features/shell/main_shell.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,7 +29,7 @@ class App extends ConsumerWidget {
       key: ValueKey(session.valueOrNull?.user.id),
       title: 'e-Medrese',
       home: switch (session) {
-        AsyncData(value: Session()) => const HomePage(),
+        AsyncData(value: Session()) => const MainShell(),
         AsyncLoading() => const Scaffold(
           body: Center(child: CircularProgressIndicator()),
         ),

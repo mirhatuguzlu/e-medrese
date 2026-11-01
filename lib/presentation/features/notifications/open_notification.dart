@@ -6,6 +6,7 @@ import 'package:e_medrese/domain/entities/app_notification.dart';
 import 'package:e_medrese/domain/entities/task.dart';
 import 'package:e_medrese/presentation/features/announcements/announcements_page.dart';
 import 'package:e_medrese/presentation/features/posts/post_page.dart';
+import 'package:e_medrese/presentation/features/shell/main_shell.dart';
 import 'package:e_medrese/presentation/features/tasks/chest_page.dart';
 import 'package:e_medrese/presentation/features/tasks/score_history_page.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +28,7 @@ Future<void> openNotification(
           'reminder') {
     // Öğrencinin görev kartları ana ekranda.
     Navigator.of(context).popUntil((route) => route.isFirst);
+    ref.read(mainTabProvider.notifier).state = MainTab.medreses;
     ref
       ..invalidate(taskProgramProvider)
       ..invalidate(periodEntriesProvider);

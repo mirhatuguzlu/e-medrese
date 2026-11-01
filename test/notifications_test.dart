@@ -4,8 +4,8 @@ import 'package:e_medrese/data/repositories/feed_repository.dart';
 import 'package:e_medrese/data/repositories/medrese_repository.dart';
 import 'package:e_medrese/domain/entities/app_notification.dart';
 import 'package:e_medrese/domain/entities/feed.dart';
-import 'package:e_medrese/presentation/features/home/home_page.dart';
 import 'package:e_medrese/presentation/features/notifications/notifications_page.dart';
+import 'package:e_medrese/presentation/features/shell/main_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -42,7 +42,7 @@ void main() {
           sessionProvider.overrideWith((ref) => Stream.value(testSession)),
           medreseRepositoryProvider.overrideWithValue(FakeMedreseRepository()),
         ],
-        child: const MaterialApp(home: HomePage()),
+        child: const MaterialApp(home: MainShell()),
       ),
     );
     await tester.pumpAndSettle();
@@ -58,7 +58,7 @@ void main() {
     await tester.tap(find.text('Görevler başladı'));
     await tester.pumpAndSettle();
     expect(find.text('e-Medrese'), findsOneWidget);
-    expect(find.text('Bildirimler'), findsNothing);
+    expect(find.text('Görevler başladı'), findsNothing);
   });
 
   testWidgets('telefondaki duyuru bildirimine dokununca duyurular açılır', (
@@ -74,7 +74,7 @@ void main() {
           myMedresesProvider.overrideWith((ref) => const Ok([testMedrese])),
           feedRepositoryProvider.overrideWithValue(FakeFeedRepository()),
         ],
-        child: const MaterialApp(home: HomePage()),
+        child: const MaterialApp(home: MainShell()),
       ),
     );
     await tester.pumpAndSettle();
