@@ -7,6 +7,8 @@ final class AppNotification {
     required this.body,
     required this.createdAt,
     required this.read,
+    this.medreseId,
+    this.postId,
   });
 
   /// `notifications` satırından oluşturur.
@@ -17,6 +19,8 @@ final class AppNotification {
         body: json['body'] as String,
         createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
         read: json['read_at'] != null,
+        medreseId: json['medrese_id'] as String?,
+        postId: json['post_id'] as String?,
       );
 
   /// Kimlik.
@@ -33,4 +37,10 @@ final class AppNotification {
 
   /// Okundu mu.
   final bool read;
+
+  /// İlgili medrese.
+  final String? medreseId;
+
+  /// Yorum bildiriminde paylaşım; dokununca açılır.
+  final String? postId;
 }

@@ -140,6 +140,10 @@ class FakeFeedRepository implements FeedRepository {
       Ok(List.of(postList));
 
   @override
+  Future<Result<Post?, AppFailure>> post(String id) async =>
+      Ok(postList.where((p) => p.id == id).firstOrNull);
+
+  @override
   Future<Result<void, AppFailure>> createPost({
     required String medreseId,
     required String body,

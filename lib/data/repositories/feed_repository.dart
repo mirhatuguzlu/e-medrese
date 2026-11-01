@@ -114,6 +114,20 @@ class FeedRepository {
         return rows.map(Post.fromJson).toList();
       });
 
+  /// Tek paylaşım; silinmişse `null`.
+  Future<Result<Post?, AppFailure>> post(String id) => guardSupabase(() async {
+    final row = await _client
+        .from('posts')
+        .select(
+          'id, body, author_id, created_at, edited_at, '
+          'author:profiles(full_name), '
+          'comments(count)',
+        )
+        .eq('id', id)
+        .maybeSingle();
+    return row == null ? null : Post.fromJson(row);
+  });
+
   /// Paylaşım yapar.
   Future<Result<void, AppFailure>> createPost({
     required String medreseId,

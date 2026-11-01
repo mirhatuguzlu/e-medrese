@@ -3,7 +3,7 @@ begin;
 set local role postgres;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(12);
+select plan(14);
 
 -- hoca, öğrenci1, öğrenci2
 insert into auth.users (id, email) values
@@ -50,6 +50,18 @@ update notifications set read_at = now();
 select is((select count(*)::int from notifications where read_at is null), 0, 'okundu işaretlenir');
 select throws_ok($$ insert into notifications (user_id, kind, title)
   values (auth.uid(), 'x', 'x') $$, '42501', null, 'bildirim elle yazılamaz');
+
+-- Yorumlar: yalnız paylaşım sahibine, kendi yorumu hariç.
+insert into posts (id, medrese_id, body)
+values ('30000000-0000-0000-0000-0000000000f1', '30000000-0000-0000-0000-000000000001', 'Selam');
+insert into comments (post_id, body) values ('30000000-0000-0000-0000-0000000000f1', 'Kendi yorumum');
+select pg_temp.login('00000000-0000-0000-0000-0000000000b3');
+insert into comments (post_id, body) values ('30000000-0000-0000-0000-0000000000f1', 'Güzel');
+select is(pg_temp.mine('comment'), 0, 'yorum yazana bildirim gitmez');
+select pg_temp.login('00000000-0000-0000-0000-0000000000b2');
+select is((select count(*)::int from notifications
+  where kind = 'comment' and post_id = '30000000-0000-0000-0000-0000000000f1'), 1,
+  'paylaşım sahibine yalnız başkasının yorumu bildirilir');
 
 -- Öğrenci1 bugün işaretledi, öğrenci2 işaretlemedi.
 insert into task_entries (medrese_id, task_id, day, value)
