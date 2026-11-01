@@ -2,6 +2,11 @@
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
 
+## 1.11.0+13 — 2026-11-01
+- Ana sayfa artık Görev takibi: menünün ortasında büyük yuvarlak düğme, uygulama bununla açılır. Öğrenci görev kartlarını, hoca görev takibini görür; görevler başlamadıysa öğrenciye yazılır.
+- Medreselerim'de tek medrese varsa doğrudan o medresenin sayfası açılır.
+- Menüde "Online Medrese" yerine "Online" yazar.
+
 ## 1.10.0+12 — 2026-11-01
 - Ekranın altında havada duran menü: Medreselerim, Online Medrese (çok yakında), Bildirimler (okunmamış sayısıyla) ve Profil. "Koda katıl" ve "Medrese kur" üst çubuğa taşındı.
 

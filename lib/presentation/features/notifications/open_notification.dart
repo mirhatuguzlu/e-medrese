@@ -28,7 +28,7 @@ Future<void> openNotification(
           'reminder') {
     // Öğrencinin görev kartları ana ekranda.
     Navigator.of(context).popUntil((route) => route.isFirst);
-    ref.read(mainTabProvider.notifier).state = MainTab.medreses;
+    ref.read(mainTabProvider.notifier).state = MainTab.tasks;
     ref
       ..invalidate(taskProgramProvider)
       ..invalidate(periodEntriesProvider);

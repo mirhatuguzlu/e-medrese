@@ -54,10 +54,10 @@ void main() {
     expect(find.text('Yeni duyuru: Ders yok'), findsOneWidget);
     expect(notifications.calls, ['markAllRead']);
 
-    // Görev bildirimi ana ekrandaki görevlere döndürür.
+    // Görev bildirimi Görev takibi sekmesine döndürür.
     await tester.tap(find.text('Görevler başladı'));
     await tester.pumpAndSettle();
-    expect(find.text('e-Medrese'), findsOneWidget);
+    expect(find.textContaining('Henüz bir medresen yok'), findsOneWidget);
     expect(find.text('Görevler başladı'), findsNothing);
   });
 

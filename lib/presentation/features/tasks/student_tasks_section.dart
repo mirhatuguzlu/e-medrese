@@ -28,7 +28,7 @@ String periodLabel(DateTime periodStart) =>
 /// Öğrencinin bir medresedeki bu dönem görevleri: 2'li kare kartlar.
 /// Puanlar dönem bitince sandıkta açıklanır; burada gösterilmez.
 ///
-/// Program başlamadıysa ya da durdurulduysa hiçbir şey çizmez.
+/// Program başlamadıysa ya da bittiyse bunu yazar.
 class StudentTasksSection extends ConsumerWidget {
   /// [medrese] için görevler.
   const StudentTasksSection({required this.medrese, super.key});
@@ -38,7 +38,8 @@ class StudentTasksSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final program = switch (ref.watch(taskProgramProvider(medrese.id))) {
+    final programValue = ref.watch(taskProgramProvider(medrese.id));
+    final program = switch (programValue) {
       AsyncData(value: Ok(:final value?)) when value.active => value,
       _ => null,
     };
@@ -46,6 +47,12 @@ class StudentTasksSection extends ConsumerWidget {
       AsyncData(value: Ok(:final value)) => value,
       _ => null,
     };
+    if (programValue case AsyncData(value: Ok()) when program == null) {
+      return ListTile(
+        title: Text(medrese.name),
+        subtitle: const Text('Hocan henüz görevleri başlatmadı.'),
+      );
+    }
     if (program == null || tasks == null) return const SizedBox.shrink();
 
     final today = ref.watch(todayProvider);

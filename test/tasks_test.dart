@@ -4,12 +4,12 @@ import 'package:e_medrese/data/repositories/task_repository.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/member.dart';
 import 'package:e_medrese/domain/entities/task.dart';
-import 'package:e_medrese/presentation/features/home/home_page.dart';
 import 'package:e_medrese/presentation/features/medrese/medrese_page.dart';
 import 'package:e_medrese/presentation/features/tasks/ranking_page.dart';
 import 'package:e_medrese/presentation/features/tasks/score_history_page.dart';
 import 'package:e_medrese/presentation/features/tasks/star_view.dart';
 import 'package:e_medrese/presentation/features/tasks/task_tracking_page.dart';
+import 'package:e_medrese/presentation/features/tasks/tasks_tab_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -72,9 +72,23 @@ void main() {
 
   setUp(() => medreses = FakeMedreseRepository());
 
+  testWidgets('tek medresenin hocasına görev takibi doğrudan açılır', (
+    tester,
+  ) async {
+    medreses.medreses.add(_medrese(MemberRole.teacher));
+    await pump(tester, const TasksTabPage(), program: _program);
+    expect(find.byTooltip('Görevleri durdur'), findsOneWidget);
+  });
+
+  testWidgets('başlatılmamış görevler öğrenciye yazılır', (tester) async {
+    medreses.medreses.add(_medrese(MemberRole.student));
+    await pump(tester, const TasksTabPage());
+    expect(find.text('Hocan henüz görevleri başlatmadı.'), findsOneWidget);
+  });
+
   testWidgets('öğrenci ana sayfasında görevler kare kartlar', (tester) async {
     medreses.medreses.add(_medrese(MemberRole.student));
-    await pump(tester, const HomePage(), program: _program);
+    await pump(tester, const TasksTabPage(), program: _program);
 
     expect(find.text('Bu dönem: 27.10 – 02.11'), findsOneWidget);
     // Dönem sürerken puan gösterilmez.
@@ -87,18 +101,18 @@ void main() {
 
   testWidgets('program yoksa ya da hocaysa görev kartı yok', (tester) async {
     medreses.medreses.add(_medrese(MemberRole.student));
-    await pump(tester, const HomePage());
+    await pump(tester, const TasksTabPage());
     expect(find.byType(GridView), findsNothing);
 
     medreses = FakeMedreseRepository()
       ..medreses.add(_medrese(MemberRole.teacher));
-    await pump(tester, const HomePage(), program: _program);
+    await pump(tester, const TasksTabPage(), program: _program);
     expect(find.byType(GridView), findsNothing);
   });
 
   testWidgets('namaz vakti işaretlenir, gelecek günler kapalı', (tester) async {
     medreses.medreses.add(_medrese(MemberRole.student));
-    await pump(tester, const HomePage(), program: _program);
+    await pump(tester, const TasksTabPage(), program: _program);
     await openTask(tester, 'Namaz');
 
     expect(find.text('Bu gün henüz gelmedi.'), findsNWidgets(5));
@@ -120,7 +134,7 @@ void main() {
 
   testWidgets('ders yalnızca Salı ve Perşembe', (tester) async {
     medreses.medreses.add(_medrese(MemberRole.student));
-    await pump(tester, const HomePage(), program: _program);
+    await pump(tester, const TasksTabPage(), program: _program);
     await openTask(tester, 'Derse katılım');
 
     expect(find.text('27.10 Salı'), findsOneWidget);
@@ -130,7 +144,7 @@ void main() {
 
   testWidgets('risale hazır seçenek ve elle sayfa', (tester) async {
     medreses.medreses.add(_medrese(MemberRole.student));
-    await pump(tester, const HomePage(), program: _program);
+    await pump(tester, const TasksTabPage(), program: _program);
     await openTask(tester, 'Risale-i Nur okuma');
 
     // Dün (27.10) geçti: salt okunur.
@@ -179,7 +193,7 @@ void main() {
     tester,
   ) async {
     medreses.medreses.add(_medrese(MemberRole.student));
-    await pump(tester, const HomePage(), program: _program);
+    await pump(tester, const TasksTabPage(), program: _program);
     expect(find.text('Bu hafta bekliyor'), findsOneWidget);
     await openTask(tester, 'Cevşen okuma');
 
@@ -197,7 +211,7 @@ void main() {
 
   testWidgets('öğrenci uyum kartını görür ama işaretleyemez', (tester) async {
     medreses.medreses.add(_medrese(MemberRole.student));
-    await pump(tester, const HomePage(), program: _program);
+    await pump(tester, const TasksTabPage(), program: _program);
     expect(find.text('Hocan değerlendirir'), findsOneWidget);
     await openTask(tester, 'Uyum');
 
@@ -234,7 +248,7 @@ void main() {
     medreses.medreses.add(_medrese(MemberRole.student));
     await pump(
       tester,
-      const HomePage(),
+      const TasksTabPage(),
       program: chestProgram,
       scores: [score('u1', 'Ben', 88.5714)],
     );
@@ -261,7 +275,7 @@ void main() {
     medreses.medreses.add(_medrese(MemberRole.student));
     await pump(
       tester,
-      const HomePage(),
+      const TasksTabPage(),
       program: chestProgram,
       scores: [score('u1', 'Ben', 105, note: 'Bu hafta çok gayretliydin.')],
     );
@@ -294,7 +308,7 @@ void main() {
     medreses.medreses.add(_medrese(MemberRole.student));
     await pump(
       tester,
-      const HomePage(),
+      const TasksTabPage(),
       program: chestProgram,
       scores: [score('u1', 'Ben', 88.5714, opened: true)],
     );
@@ -303,7 +317,7 @@ void main() {
     // Dönemin ortası (27.10 başlangıçlı programda 28.10).
     await pump(
       tester,
-      const HomePage(),
+      const TasksTabPage(),
       program: _program,
       scores: [score('u1', 'Ben', 88.5714)],
     );

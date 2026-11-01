@@ -47,7 +47,8 @@ void main() {
     await tester.enterText(find.byType(TextFormField), 'AB12CD34');
     await tester.tap(find.text('Katıl'));
     await tester.pumpAndSettle();
-    expect(find.text('Medreselerim'), findsOneWidget);
+    // Tek medrese: Medreselerim doğrudan medrese sayfasını açar.
+    expect(find.text('Duyurular'), findsOneWidget);
     expect(find.text('Süleymaniye'), findsOneWidget);
   });
 
@@ -69,6 +70,6 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
     expect(find.text('Süleymaniye'), findsOneWidget);
-    expect(find.text('Kurucu'), findsOneWidget);
+    expect(find.text('Rolün: Kurucu'), findsOneWidget);
   });
 }

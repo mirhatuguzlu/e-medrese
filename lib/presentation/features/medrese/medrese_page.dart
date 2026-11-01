@@ -12,17 +12,22 @@ import 'package:flutter/material.dart';
 /// Medresenin kapısı: her bölüm kendi sayfasında açılır.
 class MedresePage extends StatelessWidget {
   /// [medrese] sayfası.
-  const MedresePage({required this.medrese, super.key});
+  const MedresePage({required this.medrese, this.actions, super.key});
 
   /// Açılan medrese.
   final Medrese medrese;
+
+  /// Üst çubuk düğmeleri (Medreselerim sekmesinde koda katıl, medrese kur).
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(medrese.name)),
+      appBar: AppBar(title: Text(medrese.name), actions: actions),
       body: ListView(
+        // Alttaki menünün arkasında kalmasın.
+        padding: const EdgeInsets.only(bottom: 96),
         children: [
           if (medrese.description.isNotEmpty)
             Padding(

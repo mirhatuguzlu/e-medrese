@@ -8,17 +8,21 @@ import 'package:e_medrese/presentation/features/home/home_page.dart';
 import 'package:e_medrese/presentation/features/notifications/notifications_page.dart';
 import 'package:e_medrese/presentation/features/notifications/open_notification.dart';
 import 'package:e_medrese/presentation/features/profile/profile_page.dart';
+import 'package:e_medrese/presentation/features/tasks/tasks_tab_page.dart';
 import 'package:e_medrese/services/push_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Ana sekmeler.
+/// Ana sekmeler, menüdeki sırasıyla.
 enum MainTab {
-  /// Medreselerim (ana ekran).
+  /// Medreselerim.
   medreses,
 
   /// Online Medrese (kurslar).
   online,
+
+  /// Görev takibi (ana sayfa, ortadaki büyük düğme).
+  tasks,
 
   /// Bildirimler.
   notifications,
@@ -28,10 +32,10 @@ enum MainTab {
 }
 
 /// Seçili ana sekme; bildirimler de değiştirir (bkz. openNotification).
-/// Kullanıcı değişince Medreselerim'e döner.
+/// Kullanıcı değişince Görev takibi'ne döner.
 final mainTabProvider = StateProvider<MainTab>((ref) {
   ref.watch(sessionProvider.select((s) => s.valueOrNull?.user.id));
-  return MainTab.medreses;
+  return MainTab.tasks;
 });
 
 /// Giriş yapılmışken açılan iskelet: sekmeler ve altta havada duran menü.
@@ -102,6 +106,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         children: const [
           HomePage(),
           OnlineMedresePage(),
+          TasksTabPage(),
           NotificationsPage(),
           ProfilePage(),
         ],
@@ -109,46 +114,112 @@ class _MainShellState extends ConsumerState<MainShell> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: Material(
-            elevation: 8,
-            shadowColor: Colors.black26,
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(32),
-            clipBehavior: Clip.antiAlias,
-            child: NavigationBar(
-              height: 68,
-              elevation: 0,
-              backgroundColor: Colors.transparent,
-              indicatorColor: Colors.transparent,
-              selectedIndex: tab.index,
-              onDestinationSelected: (i) => _select(MainTab.values[i]),
-              destinations: [
-                const NavigationDestination(
-                  icon: Icon(Icons.mosque_outlined),
-                  selectedIcon: Icon(Icons.mosque),
-                  label: 'Medreselerim',
-                ),
-                const NavigationDestination(
-                  icon: Icon(Icons.school_outlined),
-                  selectedIcon: Icon(Icons.school),
-                  label: 'Online Medrese',
-                ),
-                NavigationDestination(
-                  icon: Badge(
-                    isLabelVisible: unread > 0,
-                    label: Text('$unread'),
-                    child: const Icon(Icons.notifications_outlined),
+          // Ortadaki düğme şeritten taşar; dokunulabilsin diye yükseklik
+          // taşan kısmı da kapsar.
+          child: SizedBox(
+            height: _barHeight + _lift,
+            child: Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                Material(
+                  elevation: 8,
+                  shadowColor: Colors.black26,
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(32),
+                  child: SizedBox(
+                    height: _barHeight,
+                    child: Row(
+                      children: [
+                        _item(
+                          MainTab.medreses,
+                          Icons.mosque_outlined,
+                          'Medreselerim',
+                        ),
+                        _item(
+                          MainTab.online,
+                          Icons.school_outlined,
+                          'Online',
+                        ),
+                        _item(MainTab.tasks, null, 'Görev takibi'),
+                        _item(
+                          MainTab.notifications,
+                          Icons.notifications_outlined,
+                          'Bildirimler',
+                          badge: unread,
+                        ),
+                        _item(MainTab.profile, Icons.person_outline, 'Profil'),
+                      ],
+                    ),
                   ),
-                  selectedIcon: const Icon(Icons.notifications),
-                  label: 'Bildirimler',
                 ),
-                const NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person),
-                  label: 'Profil',
+                Positioned(
+                  top: 0,
+                  child: Material(
+                    elevation: 6,
+                    shape: const CircleBorder(),
+                    color: theme.colorScheme.primary,
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () => _select(MainTab.tasks),
+                      child: SizedBox.square(
+                        dimension: 64,
+                        child: Icon(
+                          tab == MainTab.tasks
+                              ? Icons.task_alt
+                              : Icons.task_alt_outlined,
+                          size: 32,
+                          color: theme.colorScheme.onPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static const double _barHeight = 68;
+  static const double _lift = 22;
+
+  /// Menüdeki bir sekme: simge ve altında yazı, seçiliyse renkli.
+  /// [icon] `null` ise ortadaki büyük düğmenin yeri; yalnız yazı çizilir.
+  Widget _item(MainTab tab, IconData? icon, String label, {int badge = 0}) {
+    final theme = Theme.of(context);
+    final selected = ref.watch(mainTabProvider) == tab;
+    final color = selected
+        ? theme.colorScheme.primary
+        : theme.colorScheme.onSurfaceVariant;
+    return Expanded(
+      child: Tooltip(
+        message: label,
+        child: InkWell(
+          onTap: () => _select(tab),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (icon != null)
+                Badge(
+                  isLabelVisible: badge > 0,
+                  label: Text('$badge'),
+                  child: Icon(icon, color: color),
+                ),
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: color,
+                    fontWeight: selected ? FontWeight.bold : null,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
           ),
         ),
       ),
