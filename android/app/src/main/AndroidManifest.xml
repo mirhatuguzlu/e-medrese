@@ -31,6 +31,11 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Uygulama kapalıyken gelen bildirimler de sesli, üstten açılan
+             kanala düşsün; kanal PushService'te oluşturulur. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="bildirimler" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

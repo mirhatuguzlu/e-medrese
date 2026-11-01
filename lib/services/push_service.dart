@@ -2,11 +2,19 @@ import 'dart:async';
 
 import 'package:e_medrese/data/repositories/notification_repository.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Uygulama genelindeki [PushService].
 final pushServiceProvider = Provider<PushService>(
   (ref) => PushService(ref.watch(notificationRepositoryProvider)),
+);
+
+/// Sesli, üstten açılan bildirim kanalı. Kimliği AndroidManifest'te de var.
+const _channel = AndroidNotificationChannel(
+  'bildirimler',
+  'Bildirimler',
+  importance: Importance.high,
 );
 
 /// Firebase push bildirimleri: izin, cihaz adresi ve gelen mesajlar.
@@ -18,7 +26,10 @@ class PushService {
   PushService(this._repo);
 
   final NotificationRepository _repo;
+  final _local = FlutterLocalNotificationsPlugin();
+  final _taps = StreamController<void>.broadcast();
   StreamSubscription<String>? _tokenRefresh;
+  bool _started = false;
 
   FirebaseMessaging get _messaging => FirebaseMessaging.instance;
 
@@ -26,11 +37,51 @@ class PushService {
   /// Adres yenilenince yeniden kaydeder.
   Future<void> register() async {
     try {
+      await _start();
       await _messaging.requestPermission();
       _tokenRefresh ??= _messaging.onTokenRefresh.listen(_repo.registerToken);
       final token = await _messaging.getToken();
       if (token != null) await _repo.registerToken(token);
     } on Exception catch (_) {}
+  }
+
+  /// Kanalı kurar, dokunulan bildirimleri [opened]'a aktarır.
+  Future<void> _start() async {
+    if (_started) return;
+    _started = true;
+    await _local.initialize(
+      const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      ),
+      onDidReceiveNotificationResponse: (_) => _taps.add(null),
+    );
+    await _local
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(_channel);
+    FirebaseMessaging.onMessage.listen(_show);
+    FirebaseMessaging.onMessageOpenedApp.listen((_) => _taps.add(null));
+    if (await _messaging.getInitialMessage() != null) _taps.add(null);
+  }
+
+  /// Uygulama açıkken Android bildirimi kendisi göstermez; biz gösteririz.
+  Future<void> _show(RemoteMessage message) async {
+    final n = message.notification;
+    if (n == null) return;
+    await _local.show(
+      message.hashCode,
+      n.title,
+      n.body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channel.id,
+          _channel.name,
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+    );
   }
 
   /// Çıkıştan önce: bu cihaza artık bildirim gelmesin.
@@ -47,8 +98,5 @@ class PushService {
   Stream<void> get received => FirebaseMessaging.onMessage;
 
   /// Kullanıcının dokunduğu bildirimler; uygulamayı başlatan dahil.
-  Stream<void> get opened async* {
-    if (await _messaging.getInitialMessage() != null) yield null;
-    yield* FirebaseMessaging.onMessageOpenedApp;
-  }
+  Stream<void> get opened => _taps.stream;
 }
