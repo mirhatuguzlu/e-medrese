@@ -135,11 +135,7 @@ class _MainShellState extends ConsumerState<MainShell> {
                           Icons.mosque_outlined,
                           'Medreselerim',
                         ),
-                        _item(
-                          MainTab.online,
-                          Icons.school_outlined,
-                          'Online',
-                        ),
+                        _item(MainTab.online, Icons.school_outlined, 'Online'),
                         _item(MainTab.tasks, null, 'Görev takibi'),
                         _item(
                           MainTab.notifications,

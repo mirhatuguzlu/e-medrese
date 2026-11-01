@@ -2,6 +2,9 @@
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
 
+## 1.11.1+14 — 2026-11-01
+- Medreselerim ve medrese sayfasındaki bölümler (Duyurular, Paylaşımlar, …) kart oldu: büyük simge, altında yazı; telefonda yan yana 2, geniş ekranda 3–4 kart.
+
 ## 1.11.0+13 — 2026-11-01
 - Ana sayfa artık Görev takibi: menünün ortasında büyük yuvarlak düğme, uygulama bununla açılır. Öğrenci görev kartlarını, hoca görev takibini görür; görevler başlamadıysa öğrenciye yazılır.
 - Medreselerim'de tek medrese varsa doğrudan o medresenin sayfası açılır.

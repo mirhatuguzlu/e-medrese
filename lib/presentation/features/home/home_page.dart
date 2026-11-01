@@ -5,6 +5,7 @@ import 'package:e_medrese/presentation/features/medrese/create_medrese_page.dart
 import 'package:e_medrese/presentation/features/medrese/join_medrese_page.dart';
 import 'package:e_medrese/presentation/features/medrese/medrese_page.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
+import 'package:e_medrese/presentation/widgets/tile_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -42,14 +43,18 @@ class HomePage extends ConsumerWidget {
         emptyText:
             'Henüz bir medresen yok.\n'
             'Hocandan aldığın kodla katıl ya da kendi medreseni kur.',
-        itemBuilder: (context, m) => ListTile(
-          leading: CircleAvatar(
-            child: Text(m.name.characters.first.toUpperCase()),
+        grid: true,
+        itemBuilder: (context, m) => TileCard.page(
+          icon: CircleAvatar(
+            radius: 28,
+            child: Text(
+              m.name.characters.first.toUpperCase(),
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
           ),
-          title: Text(m.name),
-          subtitle: Text(m.myRole.label),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => context.push(MedresePage(medrese: m)),
+          title: m.name,
+          subtitle: m.myRole.label,
+          page: MedresePage(medrese: m),
         ),
       ),
     );

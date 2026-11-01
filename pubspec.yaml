@@ -2,7 +2,7 @@ name: e_medrese
 description: "E-Medrese - İslami eğitim ve öğrenim platformu."
 publish_to: 'none'
 
-version: 1.11.0+13
+version: 1.11.1+14
 
 environment:
   sdk: ^3.12.2

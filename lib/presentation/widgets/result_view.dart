@@ -1,4 +1,5 @@
 import 'package:e_medrese/core/core.dart';
+import 'package:e_medrese/presentation/widgets/tile_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,6 +15,7 @@ class ResultListView<T> extends StatelessWidget {
     required this.itemBuilder,
     this.separated = true,
     this.header,
+    this.grid = false,
     super.key,
   });
 
@@ -38,9 +40,27 @@ class ResultListView<T> extends StatelessWidget {
   /// Liste doluyken satırlardan önce çizilen içerik.
   final Widget Function(List<T> items)? header;
 
+  /// Satırları kart ızgarası ([TileGrid]) olarak dizer; [header] ve
+  /// [separated] kullanılmaz.
+  final bool grid;
+
   @override
   Widget build(BuildContext context) {
     return switch (value) {
+      AsyncData(value: Ok(value: final items)) when items.isNotEmpty && grid =>
+        RefreshIndicator(
+          onRefresh: onRefresh,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+            children: [
+              TileGrid(
+                children: [
+                  for (final item in items) itemBuilder(context, item),
+                ],
+              ),
+            ],
+          ),
+        ),
       AsyncData(value: Ok(value: final items)) when items.isNotEmpty =>
         RefreshIndicator(
           onRefresh: onRefresh,

@@ -1,4 +1,3 @@
-import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/presentation/features/announcements/announcements_page.dart';
 import 'package:e_medrese/presentation/features/medrese/invite_code_page.dart';
@@ -7,6 +6,7 @@ import 'package:e_medrese/presentation/features/posts/posts_page.dart';
 import 'package:e_medrese/presentation/features/tasks/ranking_page.dart';
 import 'package:e_medrese/presentation/features/tasks/score_history_page.dart';
 import 'package:e_medrese/presentation/features/tasks/task_tracking_page.dart';
+import 'package:e_medrese/presentation/widgets/tile_card.dart';
 import 'package:flutter/material.dart';
 
 /// Medresenin kapısı: her bölüm kendi sayfasında açılır.
@@ -44,79 +44,60 @@ class MedresePage extends StatelessWidget {
               style: theme.textTheme.labelLarge,
             ),
           ),
-          const Divider(height: 1),
-          _Entry(
-            icon: Icons.campaign_outlined,
-            title: 'Duyurular',
-            subtitle: 'Hocaların duyuruları',
-            page: AnnouncementsPage(medrese: medrese),
-          ),
-          _Entry(
-            icon: Icons.forum_outlined,
-            title: 'Paylaşımlar',
-            subtitle: 'Medresedeki herkesin paylaşımları',
-            page: PostsPage(medrese: medrese),
-          ),
-          _Entry(
-            icon: Icons.groups_outlined,
-            title: 'Üyeler',
-            subtitle: 'Hocalar ve öğrenciler',
-            page: MembersPage(medrese: medrese),
-          ),
-          _Entry(
-            icon: Icons.emoji_events_outlined,
-            title: 'Haftalık sıralama',
-            subtitle: 'Biten dönemlerin görev puanları',
-            page: RankingPage(medrese: medrese),
-          ),
-          if (!medrese.myRole.isStaff)
-            _Entry(
-              icon: Icons.history,
-              title: 'Puan geçmişim',
-              subtitle: 'Haftalık görev puanların',
-              page: ScoreHistoryPage(medrese: medrese),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TileGrid(
+              children: [
+                TileCard.page(
+                  icon: const Icon(Icons.campaign_outlined),
+                  title: 'Duyurular',
+                  subtitle: 'Hocaların duyuruları',
+                  page: AnnouncementsPage(medrese: medrese),
+                ),
+                TileCard.page(
+                  icon: const Icon(Icons.forum_outlined),
+                  title: 'Paylaşımlar',
+                  subtitle: 'Medresedeki herkesin paylaşımları',
+                  page: PostsPage(medrese: medrese),
+                ),
+                TileCard.page(
+                  icon: const Icon(Icons.groups_outlined),
+                  title: 'Üyeler',
+                  subtitle: 'Hocalar ve öğrenciler',
+                  page: MembersPage(medrese: medrese),
+                ),
+                TileCard.page(
+                  icon: const Icon(Icons.emoji_events_outlined),
+                  title: 'Haftalık sıralama',
+                  subtitle: 'Biten dönemlerin görev puanları',
+                  page: RankingPage(medrese: medrese),
+                ),
+                if (!medrese.myRole.isStaff)
+                  TileCard.page(
+                    icon: const Icon(Icons.history),
+                    title: 'Puan geçmişim',
+                    subtitle: 'Haftalık görev puanların',
+                    page: ScoreHistoryPage(medrese: medrese),
+                  ),
+                if (medrese.myRole.isStaff)
+                  TileCard.page(
+                    icon: const Icon(Icons.task_alt),
+                    title: 'Görev takibi',
+                    subtitle: 'Görevleri başlat, öğrenci geçmişleri',
+                    page: TaskTrackingPage(medrese: medrese),
+                  ),
+                if (medrese.myRole.isStaff)
+                  TileCard.page(
+                    icon: const Icon(Icons.vpn_key_outlined),
+                    title: 'Davet kodu',
+                    subtitle: 'Öğrencilerin katılması için',
+                    page: InviteCodePage(medrese: medrese),
+                  ),
+              ],
             ),
-          if (medrese.myRole.isStaff)
-            _Entry(
-              icon: Icons.task_alt,
-              title: 'Görev takibi',
-              subtitle: 'Görevleri başlat, öğrenci geçmişleri',
-              page: TaskTrackingPage(medrese: medrese),
-            ),
-          if (medrese.myRole.isStaff)
-            _Entry(
-              icon: Icons.vpn_key_outlined,
-              title: 'Davet kodu',
-              subtitle: 'Öğrencilerin katılması için',
-              page: InviteCodePage(medrese: medrese),
-            ),
+          ),
         ],
       ),
-    );
-  }
-}
-
-class _Entry extends StatelessWidget {
-  const _Entry({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.page,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Widget page;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: () => context.push(page),
     );
   }
 }
