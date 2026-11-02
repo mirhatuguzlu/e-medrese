@@ -1,0 +1,17 @@
+# Görev Takibi Açık Rıza Metni
+
+Görev takibinde işaretlediğin namaz vakitleri, Kur'an-ı Kerim, Risale-i Nur, Cevşen ve diğer kitap okumaların ile derse katılımın dini inancını gösterebilir. Bu bilgiler 6698 sayılı KVKK'nın 6. maddesine göre özel nitelikli kişisel veridir ve yalnızca açık rızanla işlenir.
+
+Rıza verirsen:
+- İşaretlediğin girdiler ve bunlardan hesaplanan haftalık puanların saklanır.
+- Girdilerini ve puanlarını medresenin kurucusu ve hocaları görür; hocalar geçmiş günlerdeki girdilerini düzeltebilir.
+- Haftalık toplam puanın medresedeki sıralamada diğer üyelere görünür.
+- Veriler İrlanda'daki sunucularda (Supabase) saklanır.
+
+Rıza vermek zorunlu değildir. Vermezsen uygulamanın diğer bölümlerini kullanmaya devam edersin; yalnızca görev takibi kapalı kalır.
+
+Rızanı istediğin zaman Profil > Görev takibi rızası sayfasından geri alabilirsin. Geri aldığında bütün görev girdilerin ve haftalık puanların hemen silinir.
+
+18 yaşından küçüksen bu rızayı velinle birlikte, onun onayıyla vermelisin.
+
+Ayrıntılar için aydınlatma metnini okuyabilirsin.

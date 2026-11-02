@@ -40,6 +40,19 @@ type Pending = {
   created_at: string;
 };
 
+// Kullanıcının yazdığı metin Google'a (yurt dışı) gitmesin: duyuru ve
+// yorumda genel metin gider, ayrıntı uygulamadaki Bildirimler'de görünür.
+function pushText(p: Pending): { title: string; body: string } {
+  switch (p.kind) {
+    case 'announcement':
+      return { title: 'Yeni duyuru', body: 'Görmek için dokun.' };
+    case 'comment':
+      return { title: 'Paylaşımına yorum geldi', body: 'Görmek için dokun.' };
+    default:
+      return { title: p.title, body: p.body };
+  }
+}
+
 Deno.serve(async (req) => {
   const key = req.headers.get('Authorization')?.replace(/^Bearer /, '') ?? '';
   let role: unknown;
@@ -69,7 +82,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           message: {
             token,
-            notification: { title: p.title, body: p.body },
+            notification: pushText(p),
             // Uygulama dokununca ilgili sayfayı açar; FCM yalnız metin alır.
             data: {
               kind: p.kind,

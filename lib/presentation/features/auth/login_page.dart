@@ -1,9 +1,11 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
+import 'package:e_medrese/presentation/features/legal/legal_text_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Giriş ekranı; giriş ve kayıt yalnızca Google hesabıyla yapılır.
+/// Aydınlatma metni okunduğu onaylanmadan giriş yapılamaz (KVKK m.10).
 class LoginPage extends ConsumerStatefulWidget {
   /// Giriş ekranı.
   const LoginPage({super.key});
@@ -14,6 +16,7 @@ class LoginPage extends ConsumerStatefulWidget {
 
 class _LoginPageState extends ConsumerState<LoginPage> {
   bool _loading = false;
+  bool _noticeRead = false;
 
   Future<void> _google() async {
     setState(() => _loading = true);
@@ -55,8 +58,29 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     style: theme.textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 32),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.privacy_tip_outlined),
+                    label: const Text('Aydınlatma metnini oku'),
+                    onPressed: () => context.push(
+                      const LegalTextPage(
+                        title: 'Aydınlatma metni',
+                        asset: privacyNoticeAsset,
+                      ),
+                    ),
+                  ),
+                  CheckboxListTile(
+                    value: _noticeRead,
+                    onChanged: (v) => setState(() => _noticeRead = v ?? false),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text(
+                      'Kişisel verilerimin işlenmesine ilişkin aydınlatma '
+                      'metnini okudum.',
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   FilledButton(
-                    onPressed: _loading ? null : _google,
+                    onPressed: _loading || !_noticeRead ? null : _google,
                     child: _loading
                         ? const SizedBox.square(
                             dimension: 20,

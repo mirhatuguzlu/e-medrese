@@ -5,6 +5,7 @@ import 'package:e_medrese/domain/entities/feed.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/presentation/features/posts/new_post_page.dart';
 import 'package:e_medrese/presentation/features/posts/posts_page.dart';
+import 'package:e_medrese/presentation/features/report/report_page.dart';
 import 'package:e_medrese/presentation/widgets/author_label.dart';
 import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
 import 'package:flutter/material.dart';
@@ -87,6 +88,28 @@ class _PostPageState extends ConsumerState<PostPage> {
     }
   }
 
+  Future<void> _deleteComment(String id) async {
+    if (!await confirm(
+      context,
+      title: 'Yorumu sil',
+      message: 'Yorum silinsin mi?',
+      action: 'Sil',
+    )) {
+      return;
+    }
+    final result = await ref.read(feedRepositoryProvider).deleteComment(id);
+    if (!mounted) return;
+    switch (result) {
+      case Ok():
+        ref
+          ..invalidate(commentsProvider(widget.post.id))
+          ..invalidate(postsProvider(widget.medrese.id));
+        context.showMessage('Yorum silindi.');
+      case Err(:final error):
+        context.showMessage(error.message);
+    }
+  }
+
   String _author(String authorId, String name) => authorLabel(
     ref,
     medreseId: widget.medrese.id,
@@ -98,8 +121,9 @@ class _PostPageState extends ConsumerState<PostPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final comments = ref.watch(commentsProvider(widget.post.id));
-    final isAuthor =
-        _post.authorId == ref.watch(sessionProvider).valueOrNull?.user.id;
+    final myId = ref.watch(sessionProvider).valueOrNull?.user.id;
+    final isAuthor = _post.authorId == myId;
+    final staff = widget.medrese.myRole != MemberRole.student;
     // Veritabanı kuralı: yazan, kurucu ya da (öğrenci/ayrılmış üyenin
     // paylaşımında) hoca siler.
     final canDelete =
@@ -132,6 +156,12 @@ class _PostPageState extends ConsumerState<PostPage> {
               tooltip: 'Sil',
               icon: const Icon(Icons.delete_outline),
               onPressed: _delete,
+            ),
+          if (!isAuthor)
+            IconButton(
+              tooltip: 'Şikayet et',
+              icon: const Icon(Icons.flag_outlined),
+              onPressed: () => context.push(ReportPage(postId: _post.id)),
             ),
         ],
       ),
@@ -176,6 +206,19 @@ class _PostPageState extends ConsumerState<PostPage> {
                               ),
                             ],
                           ),
+                          // Veritabanı kuralı: yazan ya da kurucu/hoca siler.
+                          trailing: c.authorId == myId || staff
+                              ? IconButton(
+                                  tooltip: 'Yorumu sil',
+                                  icon: const Icon(Icons.delete_outline),
+                                  onPressed: () => _deleteComment(c.id),
+                                )
+                              : IconButton(
+                                  tooltip: 'Yorumu şikayet et',
+                                  icon: const Icon(Icons.flag_outlined),
+                                  onPressed: () =>
+                                      context.push(ReportPage(commentId: c.id)),
+                                ),
                         ),
                     ],
                     AsyncData(value: Err(:final error)) => [

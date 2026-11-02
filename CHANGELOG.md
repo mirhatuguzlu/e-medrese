@@ -2,6 +2,15 @@
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
 
+## 2.0.0+15 — 2026-11-02
+- Hukuki uyum (KVKK, 5651, 5846). Giriş ekranında aydınlatma metni var; okunduğu onaylanmadan giriş yapılamıyor. Profil'de aydınlatma metni, görev takibi rızası, künye ve iletişim, hesap silme sayfaları açıldı.
+- Görev takibi (namaz, okuma) artık açık rıza istiyor. Rıza verilmeden öğrenci de hoca da girdi yazamıyor. Rıza geri alınınca görev girdileri ve haftalık puanlar siliniyor. Eski sürümler rıza veremediği için görev işaretleyemez, bu yüzden büyük sürüm atlandı.
+- Paylaşım ve yorumlar şikayet edilebiliyor (telif hakkı ihlali dahil). Yorumu yazan kişi, kurucu ve hocalar yorumu silebiliyor.
+- Kurucu, başka bir üyeyi kurucu yapabiliyor. Başka üyesi olan bir medresenin kurucusu, hesabını silmeden önce kuruculuğu devretmek zorunda.
+- Telefon bildirimlerine duyuru ve yorum metni yazılmıyor; genel bir metin gidiyor.
+- İçerik oluşturma kayıtları (zaman, IP) 2 yıl tutuluyor.
+- Profil sayfasının son satırı alttaki menünün altında kalmıyor.
+
 ## 1.11.1+14 — 2026-11-01
 - Medreselerim ve medrese sayfasındaki bölümler (Duyurular, Paylaşımlar, …) kart oldu: büyük simge, altında yazı; telefonda yan yana 2, geniş ekranda 3–4 kart.
 

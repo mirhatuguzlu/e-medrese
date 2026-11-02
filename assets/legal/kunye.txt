@@ -1,0 +1,21 @@
+# Künye ve İletişim
+
+e-Medrese, medreselerin duyuru, paylaşım ve görev takibi için kullandığı bir mobil uygulamadır.
+
+# Yer sağlayıcı ve veri sorumlusu
+
+Mirhat Muhammed Uğuzlu
+Adres: [ADRES EKLENECEK]
+E-posta: dev.mirhat@gmail.com
+
+5651 sayılı Kanun kapsamında e-Medrese, kullanıcıların yazdığı içeriklere yer sağlayıcıdır. İçerikleri yazan kullanıcılar kendi içeriklerinden sorumludur.
+
+# Hukuka aykırı içerik ve şikayet
+
+Bir paylaşım ya da yorum hukuka aykırıysa, kişilik haklarını ihlal ediyorsa ya da kişisel verileri ifşa ediyorsa içeriğin yanındaki bayrak simgesiyle (Şikayet et) bildirebilirsin. Şikayetler incelenir; hukuka aykırı bulunan içerik kaldırılır.
+
+Uygulama kullanıcısı değilsen ya da bir mahkeme veya kurum kararı iletmek istiyorsan yukarıdaki e-posta adresine yazabilirsin.
+
+# Telif hakkı bildirimi
+
+Bir içeriğin 5846 sayılı Fikir ve Sanat Eserleri Kanunu kapsamındaki hakkını ihlal ettiğini düşünüyorsan "Telif hakkı ihlali" nedeniyle şikayet et ya da yukarıdaki e-posta adresine eserin, hak sahipliğinin ve ihlal eden içeriğin bilgisini gönder. Bildirim incelenir ve ihlal varsa içerik kaldırılır.

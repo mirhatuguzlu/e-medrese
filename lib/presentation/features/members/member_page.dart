@@ -65,6 +65,40 @@ class _MemberPageState extends ConsumerState<MemberPage> {
     }
   }
 
+  /// Üyeyi kurucu yapar; kurucu hoca olur (hesap silmeden önce gerekir).
+  Future<void> _makeOwner() async {
+    final name = displayName(widget.member.name);
+    final confirmed = await confirm(
+      context,
+      title: 'Kurucu yap',
+      message:
+          '$name medresenin kurucusu olsun mu? Sen hoca olursun ve bunu '
+          'yalnızca yeni kurucu geri alabilir.',
+      action: 'Kurucu yap',
+    );
+    if (!confirmed || !mounted) return;
+
+    setState(() => _loading = true);
+    final result = await ref
+        .read(medreseRepositoryProvider)
+        .transferOwnership(
+          medreseId: widget.medrese.id,
+          userId: widget.member.userId,
+        );
+    if (!mounted) return;
+    setState(() => _loading = false);
+
+    switch (result) {
+      case Ok():
+        // Açık sayfalardaki rol bilgisi eskidi; medreseler yeniden yüklenir.
+        ref.invalidate(myMedresesProvider);
+        Navigator.of(context).popUntil((r) => r.isFirst);
+        context.showMessage('$name artık kurucu.');
+      case Err(:final error):
+        context.showMessage(error.message);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -125,6 +159,14 @@ class _MemberPageState extends ConsumerState<MemberPage> {
                     : 'Öğrenciliğe düşür',
                 loading: _loading,
                 onPressed: _changeRole,
+              ),
+            ),
+          if (canChangeRole)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: OutlinedButton(
+                onPressed: _loading ? null : _makeOwner,
+                child: const Text('Kurucu yap'),
               ),
             ),
         ],

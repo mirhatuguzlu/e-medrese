@@ -143,3 +143,29 @@ final class Comment {
   /// Yazılma zamanı.
   final DateTime createdAt;
 }
+
+/// Şikayet nedeni; adları `reports.reason` değerleridir.
+enum ReportReason {
+  /// Hakaret, taciz.
+  insult('Hakaret ya da taciz'),
+
+  /// Hukuka aykırı içerik.
+  illegal('Hukuka aykırı içerik'),
+
+  /// Telif hakkı ihlali (5846).
+  copyright('Telif hakkı ihlali'),
+
+  /// Kişisel verilerin ifşası.
+  privacy('Kişisel verilerimin ifşası'),
+
+  /// Spam.
+  spam('Spam ya da reklam'),
+
+  /// Diğer.
+  other('Diğer');
+
+  const ReportReason(this.label);
+
+  /// Ekranda görünen ad.
+  final String label;
+}

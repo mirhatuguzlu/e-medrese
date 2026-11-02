@@ -26,6 +26,13 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<Result<void, AppFailure>> deleteAccount() async {
+    calls.add('deleteAccount');
+    sessions.add(null);
+    return const Ok(null);
+  }
+
+  @override
   Future<Result<void, AppFailure>> signOut() async {
     calls.add('signOut');
     sessions.add(null);
@@ -81,6 +88,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Ali Veli'), findsOneWidget);
     expect(find.text('ali@b.com'), findsOneWidget);
+    // Listenin sonuna in: son satır alttaki menünün üstünde durur.
+    await tester.drag(find.byType(ListView).last, const Offset(0, -1000));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Çıkış yap'));
     await tester.pumpAndSettle();
     expect(find.text('Hesabına giriş yap'), findsOneWidget);
@@ -94,6 +104,13 @@ void main() {
     await pumpApp(tester);
     expect(find.byType(TextFormField), findsNothing);
 
+    // Aydınlatma metni okunduğu onaylanmadan giriş yapılamaz.
+    await tester.tap(find.text('Google ile devam et'));
+    await tester.pumpAndSettle();
+    expect(auth.calls, isEmpty);
+
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
     await tester.tap(find.text('Google ile devam et'));
     await tester.pumpAndSettle();
     expect(auth.calls, ['signInWithGoogle']);
@@ -102,9 +119,37 @@ void main() {
   testWidgets('Google girişi hata verirse mesaj gösterilir', (tester) async {
     auth.googleResult = const Err(ConnectionFailure());
     await pumpApp(tester);
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
 
     await tester.tap(find.text('Google ile devam et'));
     await tester.pumpAndSettle();
     expect(find.text('İnternet bağlantısı yok.'), findsOneWidget);
+  });
+
+  testWidgets('aydınlatma metni giriş ekranından açılır', (tester) async {
+    await pumpApp(tester);
+    await tester.tap(find.text('Aydınlatma metnini oku'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Veri sorumlusu'), findsOneWidget);
+  });
+
+  testWidgets('profilden hesap silinir, giriş ekranına dönülür', (
+    tester,
+  ) async {
+    await pumpApp(tester);
+    auth.sessions.add(_session);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Profil'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Hesabı sil'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Hesabımı kalıcı olarak sil'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sil'));
+    await tester.pumpAndSettle();
+    expect(auth.calls, ['deleteAccount']);
+    expect(find.text('Hesabına giriş yap'), findsOneWidget);
   });
 }

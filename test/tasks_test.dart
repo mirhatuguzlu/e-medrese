@@ -44,6 +44,7 @@ void main() {
     Widget home, {
     TaskProgram? program,
     List<WeeklyScore> scores = const [],
+    FakeConsentRepository? consent,
   }) async {
     tasks = FakeTaskRepository(taskProgram: program)..scoreList.addAll(scores);
     // Bütün kartlar ve günler ekrana sığsın.
@@ -53,7 +54,7 @@ void main() {
       ProviderScope(
         key: UniqueKey(),
         overrides: [
-          ...pushOverrides(),
+          ...pushOverrides(consent: consent),
           sessionProvider.overrideWith((ref) => Stream.value(testSession)),
           medreseRepositoryProvider.overrideWithValue(medreses),
           taskRepositoryProvider.overrideWithValue(tasks),
@@ -96,6 +97,33 @@ void main() {
     for (final t in testTasks) {
       expect(find.text(t.title), findsOneWidget);
     }
+    expect(find.byType(GridView), findsOneWidget);
+  });
+
+  testWidgets('açık rıza yoksa görevler yerine rıza istenir', (tester) async {
+    medreses.medreses.add(_medrese(MemberRole.student));
+    final consent = FakeConsentRepository(given: false);
+    await pump(
+      tester,
+      const TasksTabPage(),
+      program: _program,
+      consent: consent,
+    );
+    expect(find.byType(GridView), findsNothing);
+
+    await tester.tap(find.textContaining('açık rıza ver'));
+    await tester.pumpAndSettle();
+    expect(find.text('Görev takibi rızası'), findsOneWidget);
+    // Onay kutusu işaretlenmeden rıza verilemez.
+    await tester.tap(find.text('Rıza ver'));
+    await tester.pumpAndSettle();
+    expect(consent.calls, isEmpty);
+
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
+    await tester.tap(find.text('Rıza ver'));
+    await tester.pumpAndSettle();
+    expect(consent.calls, ['give']);
     expect(find.byType(GridView), findsOneWidget);
   });
 

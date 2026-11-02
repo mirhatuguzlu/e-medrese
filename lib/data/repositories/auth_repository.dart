@@ -1,5 +1,6 @@
 import 'package:e_medrese/core/constants/supabase_config.dart';
 import 'package:e_medrese/core/core.dart';
+import 'package:e_medrese/data/repositories/supabase_guard.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -7,7 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// Uygulama genelindeki [AuthRepository].
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepository(
-    Supabase.instance.client.auth,
+    Supabase.instance.client,
     GoogleSignIn(
       serverClientId: SupabaseConfig.googleWebClientId,
       clientId: SupabaseConfig.googleIosClientId.isEmpty
@@ -22,13 +23,15 @@ final sessionProvider = StreamProvider<Session?>(
   (ref) => ref.watch(authRepositoryProvider).sessionChanges,
 );
 
-/// Google ile giriş/kayıt ve çıkış.
+/// Google ile giriş/kayıt, çıkış ve hesap silme.
 class AuthRepository {
-  /// Supabase auth istemcisiyle oluşturur.
-  AuthRepository(this._auth, this._google);
+  /// Supabase istemcisiyle oluşturur.
+  AuthRepository(this._client, this._google);
 
-  final GoTrueClient _auth;
+  final SupabaseClient _client;
   final GoogleSignIn _google;
+
+  GoTrueClient get _auth => _client.auth;
 
   /// Açılışta mevcut oturumu, sonra her değişikliği yayar.
   Stream<Session?> get sessionChanges =>
@@ -58,6 +61,16 @@ class AuthRepository {
     if (await _google.isSignedIn()) await _google.signOut();
     await _auth.signOut();
   });
+
+  /// Hesabı ve bütün verilerini siler, sonra oturumu kapatır. Başka üyesi
+  /// olan bir medresenin kurucusuysa önce kurucu devretmesi gerekir.
+  Future<Result<void, AppFailure>> deleteAccount() async {
+    final deleted = await guardSupabase(
+      () => _client.rpc<void>('delete_my_account'),
+    );
+    if (deleted is Err) return deleted;
+    return signOut();
+  }
 
   Future<Result<T, AppFailure>> _guard<T>(Future<T> Function() action) async {
     try {

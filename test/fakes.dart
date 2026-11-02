@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:e_medrese/core/core.dart';
+import 'package:e_medrese/data/repositories/consent_repository.dart';
 import 'package:e_medrese/data/repositories/feed_repository.dart';
 import 'package:e_medrese/data/repositories/medrese_repository.dart';
 import 'package:e_medrese/data/repositories/notification_repository.dart';
@@ -66,6 +67,15 @@ class FakeMedreseRepository implements MedreseRepository {
       role: role,
       joinedAt: m.joinedAt,
     );
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> transferOwnership({
+    required String medreseId,
+    required String userId,
+  }) async {
+    calls.add('owner $userId');
     return const Ok(null);
   }
 
@@ -221,6 +231,24 @@ class FakeFeedRepository implements FeedRepository {
   @override
   Future<Result<List<Comment>, AppFailure>> comments(String postId) async =>
       Ok(List.of(commentList));
+
+  @override
+  Future<Result<void, AppFailure>> deleteComment(String id) async {
+    calls.add('delete comment $id');
+    commentList.removeWhere((c) => c.id == id);
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> report({
+    required ReportReason reason,
+    required String note,
+    String? postId,
+    String? commentId,
+  }) async {
+    calls.add('report ${postId ?? commentId} ${reason.name} $note');
+    return const Ok(null);
+  }
 
   @override
   Future<Result<void, AppFailure>> createComment({
@@ -487,6 +515,30 @@ class FakeNotificationRepository implements NotificationRepository {
       const Ok(null);
 }
 
+class FakeConsentRepository implements ConsentRepository {
+  FakeConsentRepository({this.given = true});
+
+  bool given;
+  final calls = <String>[];
+
+  @override
+  Future<Result<bool, AppFailure>> hasTaskConsent() async => Ok(given);
+
+  @override
+  Future<Result<void, AppFailure>> giveTaskConsent() async {
+    calls.add('give');
+    given = true;
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> revokeTaskConsent() async {
+    calls.add('revoke');
+    given = false;
+    return const Ok(null);
+  }
+}
+
 /// Firebase'e dokunmayan push servisi.
 class FakePushService implements PushService {
   final calls = <String>[];
@@ -507,11 +559,15 @@ class FakePushService implements PushService {
   Stream<AppNotification> get opened => taps.stream;
 }
 
-/// Ana ekranı açan testler için bildirim sağlayıcıları.
+/// Ana ekranı açan testler için bildirim ve rıza sağlayıcıları.
 List<Override> pushOverrides({
   FakeNotificationRepository? notifications,
   FakePushService? push,
+  FakeConsentRepository? consent,
 }) => [
+  consentRepositoryProvider.overrideWithValue(
+    consent ?? FakeConsentRepository(),
+  ),
   pushServiceProvider.overrideWithValue(push ?? FakePushService()),
   notificationRepositoryProvider.overrideWithValue(
     notifications ?? FakeNotificationRepository(),

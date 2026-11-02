@@ -26,6 +26,12 @@ Future<Result<T, AppFailure>> guardSupabase<T>(
       (_, 'chest not available') => const ValidationFailure(
         'Bu sandık artık açılamaz; puanın geçmişine aktarıldı.',
       ),
+      (_, 'task consent required') => const ValidationFailure(
+        'Öğrenci görev takibine açık rıza vermedi.',
+      ),
+      (_, 'transfer ownership first') => const ValidationFailure(
+        'Kurucusu olduğun medreselerde önce başka bir üyeyi kurucu yap.',
+      ),
       ('42501', _) || (_, 'not allowed') => const UnauthorizedFailure(),
       _ => UnexpectedFailure(e.message),
     });

@@ -186,6 +186,28 @@ class FeedRepository {
         return rows.map(Comment.fromJson).toList();
       });
 
+  /// Yorumu siler (yazan ya da medresenin kurucusu/hocaları).
+  Future<Result<void, AppFailure>> deleteComment(String id) =>
+      _changeOne(_client.from('comments').delete(), id);
+
+  /// Paylaşımı ([postId]) ya da yorumu ([commentId]) şikayet eder.
+  Future<Result<void, AppFailure>> report({
+    required ReportReason reason,
+    required String note,
+    String? postId,
+    String? commentId,
+  }) => guardSupabase(
+    () => _client.rpc<void>(
+      'report_content',
+      params: {
+        'p': postId,
+        'c': commentId,
+        'reason': reason.name,
+        'note': note.trim(),
+      },
+    ),
+  );
+
   /// Yorum yapar.
   Future<Result<void, AppFailure>> createComment({
     required String postId,

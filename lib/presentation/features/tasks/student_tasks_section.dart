@@ -1,8 +1,10 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
+import 'package:e_medrese/data/repositories/consent_repository.dart';
 import 'package:e_medrese/data/repositories/task_repository.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/task.dart';
+import 'package:e_medrese/presentation/features/legal/task_consent_page.dart';
 import 'package:e_medrese/presentation/features/tasks/chest_page.dart';
 import 'package:e_medrese/presentation/features/tasks/task_page.dart';
 import 'package:flutter/material.dart';
@@ -54,6 +56,23 @@ class StudentTasksSection extends ConsumerWidget {
       );
     }
     if (program == null || tasks == null) return const SizedBox.shrink();
+    // Görev girdileri özel nitelikli veri: açık rıza olmadan gösterilmez.
+    switch (ref.watch(taskConsentProvider)) {
+      case AsyncData(value: Ok(value: true)):
+        break;
+      case AsyncData(value: Ok(value: false)):
+        return ListTile(
+          leading: const Icon(Icons.privacy_tip_outlined),
+          title: Text(medrese.name),
+          subtitle: const Text(
+            'Görevleri işaretlemek için görev takibine açık rıza ver.',
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(const TaskConsentPage()),
+        );
+      default:
+        return const SizedBox.shrink();
+    }
 
     final today = ref.watch(todayProvider);
     final periodStart = program.periodStart(today);

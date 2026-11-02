@@ -20,6 +20,9 @@ create function pg_temp.mine(k text) returns int language sql as $$
   select count(*)::int from notifications where kind = k
 $$;
 
+-- Görev girdileri için açık rıza (KVKK m.6).
+insert into task_consents (user_id) select id from auth.users where email like '%@test.com' on conflict do nothing;
+
 set local role authenticated;
 select pg_temp.login('00000000-0000-0000-0000-0000000000b1');
 insert into medreses (id, name) values ('30000000-0000-0000-0000-000000000001', 'Bildirim Medresesi');

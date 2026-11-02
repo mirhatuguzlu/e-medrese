@@ -121,6 +121,17 @@ class MedreseRepository {
     if (deleted.isEmpty) throw const PostgrestException(message: 'not allowed');
   });
 
+  /// [userId]'yi kurucu yapar; çağıran kurucu hoca olur.
+  Future<Result<void, AppFailure>> transferOwnership({
+    required String medreseId,
+    required String userId,
+  }) => guardSupabase(
+    () => _client.rpc<void>(
+      'transfer_ownership',
+      params: {'m': medreseId, 'u': userId},
+    ),
+  );
+
   /// Üyenin rolünü hoca ya da öğrenci yapar (yalnızca kurucu).
   Future<Result<void, AppFailure>> changeRole({
     required String medreseId,

@@ -354,4 +354,100 @@ void main() {
     expect(find.text('Paylaşım silindi.'), findsOneWidget);
     expect(find.text('Öğrenci Ali paylaşımı'), findsNothing);
   });
+
+  testWidgets('öğrenci başkasının paylaşımını ve yorumunu şikayet eder', (
+    tester,
+  ) async {
+    await pumpMedrese(tester, MemberRole.student);
+    feed.postList.add(post('p1', 'u3', 'Öğrenci Ali'));
+    feed.commentList.add(
+      Comment(
+        id: 'c1',
+        body: 'Kötü yorum',
+        authorId: 'u3',
+        authorName: 'Öğrenci Ali',
+        createdAt: DateTime(2026),
+      ),
+    );
+    await open(tester, 'Paylaşımlar');
+    await open(tester, 'Öğrenci Ali paylaşımı');
+    expect(find.byTooltip('Yorumu sil'), findsNothing);
+
+    await tester.tap(find.byTooltip('Şikayet et'));
+    await tester.pumpAndSettle();
+    // Neden seçilmeden gönderilemez.
+    await tester.ensureVisible(find.text('Gönder'));
+    await tester.tap(find.text('Gönder'));
+    await tester.pumpAndSettle();
+    expect(feed.calls, isEmpty);
+    expect(find.text('Bir neden seç.'), findsOneWidget);
+    // Uyarı düğmenin üstünü örtmesin.
+    tester
+        .state<ScaffoldMessengerState>(find.byType(ScaffoldMessenger))
+        .removeCurrentSnackBar();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Telif hakkı ihlali'));
+    await tester.enterText(find.byType(TextField), 'Benim yazım');
+    await tester.ensureVisible(find.text('Gönder'));
+    await tester.tap(find.text('Gönder'));
+    await tester.pumpAndSettle();
+    expect(find.text('Şikayetin alındı, incelenecek.'), findsOneWidget);
+    tester
+        .state<ScaffoldMessengerState>(find.byType(ScaffoldMessenger))
+        .removeCurrentSnackBar();
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Yorumu şikayet et'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Spam ya da reklam'));
+    await tester.ensureVisible(find.text('Gönder'));
+    await tester.tap(find.text('Gönder'));
+    await tester.pumpAndSettle();
+    expect(feed.calls, ['report p1 copyright Benim yazım', 'report c1 spam ']);
+  });
+
+  testWidgets('hoca yorumu siler', (tester) async {
+    await pumpMedrese(tester, MemberRole.teacher);
+    feed.postList.add(post('p1', 'u3', 'Öğrenci Ali'));
+    feed.commentList.add(
+      Comment(
+        id: 'c1',
+        body: 'Kötü yorum',
+        authorId: 'u3',
+        authorName: 'Öğrenci Ali',
+        createdAt: DateTime(2026),
+      ),
+    );
+    await open(tester, 'Paylaşımlar');
+    await open(tester, 'Öğrenci Ali paylaşımı');
+    await tester.tap(find.byTooltip('Yorumu sil'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Sil'));
+    await tester.pumpAndSettle();
+
+    expect(feed.calls, ['delete comment c1']);
+    expect(find.text('Kötü yorum'), findsNothing);
+  });
+
+  testWidgets('kurucu başka üyeyi kurucu yapar', (tester) async {
+    await pumpMedrese(tester, MemberRole.owner);
+    medreses.memberList.add(
+      Member(
+        userId: 'u3',
+        name: 'Hoca Ali',
+        role: MemberRole.teacher,
+        joinedAt: DateTime(2026),
+      ),
+    );
+    await open(tester, 'Üyeler');
+    await open(tester, 'Hoca Ali');
+    await tester.tap(find.text('Kurucu yap'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Kurucu yap'));
+    await tester.pumpAndSettle();
+
+    expect(medreses.calls, ['owner u3']);
+    expect(find.text('Hoca Ali artık kurucu.'), findsOneWidget);
+  });
 }
