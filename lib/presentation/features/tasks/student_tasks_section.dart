@@ -5,6 +5,7 @@ import 'package:e_medrese/data/repositories/task_repository.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/task.dart';
 import 'package:e_medrese/presentation/features/legal/task_consent_page.dart';
+import 'package:e_medrese/presentation/features/rewards/goal_card.dart';
 import 'package:e_medrese/presentation/features/tasks/chest_page.dart';
 import 'package:e_medrese/presentation/features/tasks/task_page.dart';
 import 'package:flutter/material.dart';
@@ -102,6 +103,7 @@ class StudentTasksSection extends ConsumerWidget {
               medrese: medrese,
               periodStart: periodStart.subtract(const Duration(days: 7)),
             ),
+          GoalCard(medrese: medrese, tasks: tasks, periodStart: periodStart),
           if (program.paused)
             const Text('Hocan görevleri durdurdu; şimdilik işaretleyemezsin.')
           else

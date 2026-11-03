@@ -5,11 +5,13 @@ import 'package:e_medrese/data/repositories/consent_repository.dart';
 import 'package:e_medrese/data/repositories/feed_repository.dart';
 import 'package:e_medrese/data/repositories/medrese_repository.dart';
 import 'package:e_medrese/data/repositories/notification_repository.dart';
+import 'package:e_medrese/data/repositories/reward_repository.dart';
 import 'package:e_medrese/data/repositories/task_repository.dart';
 import 'package:e_medrese/domain/entities/app_notification.dart';
 import 'package:e_medrese/domain/entities/feed.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/member.dart';
+import 'package:e_medrese/domain/entities/reward.dart';
 import 'package:e_medrese/domain/entities/task.dart';
 import 'package:e_medrese/services/push_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -564,7 +566,9 @@ List<Override> pushOverrides({
   FakeNotificationRepository? notifications,
   FakePushService? push,
   FakeConsentRepository? consent,
+  FakeRewardRepository? rewards,
 }) => [
+  rewardRepositoryProvider.overrideWithValue(rewards ?? FakeRewardRepository()),
   consentRepositoryProvider.overrideWithValue(
     consent ?? FakeConsentRepository(),
   ),
@@ -573,3 +577,56 @@ List<Override> pushOverrides({
     notifications ?? FakeNotificationRepository(),
   ),
 ];
+
+class FakeRewardRepository implements RewardRepository {
+  final rewardList = <Reward>[];
+  RewardGoal? myGoal;
+
+  @override
+  Future<Result<List<Reward>, AppFailure>> rewards(String medreseId) async =>
+      Ok(List.of(rewardList));
+
+  @override
+  Future<Result<void, AppFailure>> addReward({
+    required String medreseId,
+    required String title,
+    required String description,
+    required num points,
+  }) async {
+    rewardList.add(
+      Reward(
+        id: 'r${rewardList.length + 1}',
+        title: title,
+        description: description,
+        points: points,
+      ),
+    );
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> deleteReward(String id) async {
+    rewardList.removeWhere((r) => r.id == id);
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<RewardGoal?, AppFailure>> goal(String medreseId) async =>
+      Ok(myGoal);
+
+  @override
+  Future<Result<void, AppFailure>> setGoal({
+    required String medreseId,
+    required String rewardId,
+    required DateTime deadline,
+  }) async {
+    myGoal = RewardGoal(rewardId: rewardId, deadline: deadline);
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> clearGoal(String medreseId) async {
+    myGoal = null;
+    return const Ok(null);
+  }
+}

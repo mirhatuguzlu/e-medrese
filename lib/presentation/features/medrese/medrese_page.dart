@@ -3,6 +3,7 @@ import 'package:e_medrese/presentation/features/announcements/announcements_page
 import 'package:e_medrese/presentation/features/medrese/invite_code_page.dart';
 import 'package:e_medrese/presentation/features/members/members_page.dart';
 import 'package:e_medrese/presentation/features/posts/posts_page.dart';
+import 'package:e_medrese/presentation/features/rewards/rewards_page.dart';
 import 'package:e_medrese/presentation/features/tasks/ranking_page.dart';
 import 'package:e_medrese/presentation/features/tasks/score_history_page.dart';
 import 'package:e_medrese/presentation/features/tasks/task_tracking_page.dart';
@@ -71,6 +72,14 @@ class MedresePage extends StatelessWidget {
                   title: 'Haftalık sıralama',
                   subtitle: 'Biten dönemlerin görev puanları',
                   page: RankingPage(medrese: medrese),
+                ),
+                TileCard.page(
+                  icon: const Icon(Icons.card_giftcard),
+                  title: 'Ödüller',
+                  subtitle: medrese.myRole.isStaff
+                      ? 'Puan eşikleri ve ödüller'
+                      : 'Ödüller ve hedefin',
+                  page: RewardsPage(medrese: medrese),
                 ),
                 if (!medrese.myRole.isStaff)
                   TileCard.page(

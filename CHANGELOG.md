@@ -2,6 +2,11 @@
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
 
+## 2.1.0+16 — 2026-11-04
+- Ödüller sayfası: hoca birikmiş puan eşikli ödüller ekler ve siler; öğrenci birikmiş puanını ve ödüllere kalan puanı görür.
+- Öğrenci bir ödülü bitiş günüyle hedef seçer. Ana sayfada öneri çıkar: namaz her gün 5 vakit tam, kalan puan diğer görevlere en yüksek puanlarına oranla bölünür (günde ya da haftada en az). Uyum puanı hesaba katılmaz, bu öğrenciye yazılır.
+- Görev takibi rızası geri alınınca hedef de silinir.
+
 ## 2.0.0+15 — 2026-11-02
 - Hukuki uyum (KVKK, 5651, 5846). Giriş ekranında aydınlatma metni var; okunduğu onaylanmadan giriş yapılamıyor. Profil'de aydınlatma metni, görev takibi rızası, künye ve iletişim, hesap silme sayfaları açıldı.
 - Görev takibi (namaz, okuma) artık açık rıza istiyor. Rıza verilmeden öğrenci de hoca da girdi yazamıyor. Rıza geri alınınca görev girdileri ve haftalık puanlar siliniyor. Eski sürümler rıza veremediği için görev işaretleyemez, bu yüzden büyük sürüm atlandı.
