@@ -2,6 +2,10 @@
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
 
+## 2.3.3+21 — 2026-11-04
+- Hedef kartı kapalı başlar, altındaki görev kartları ekranda kalır. Dokununca hedefin görev satırları açılır.
+- Sağ üstteki "DEBUG" yazısı kalktı.
+
 ## 2.3.2+20 — 2026-11-04
 - Ana sayfadaki hedef kartında her görev ayrı satır: satırda her gün ne yapılacağı kısaca yazar (ör. "Her gün 20 sayfa"), dokununca açıklaması aşağı açılır.
 

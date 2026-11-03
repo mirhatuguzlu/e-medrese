@@ -202,9 +202,17 @@ void main() {
 
     expect(find.text('Hedef: Kitap'), findsOneWidget);
     expect(
-      find.text('1000 puan kaldı, 4 hafta: haftada en az 250 puan.'),
+      find.text(
+        '0 / 1000 puan · bitiş 23.11\n'
+        '1000 puan kaldı, 4 hafta: haftada en az 250 puan.',
+      ),
       findsOneWidget,
     );
+    // Kart kapalı başlar; görev kartları ekranda kalır.
+    expect(find.text('Her gün 5 vakit'), findsNothing);
+    await tester.tap(find.text('Hedef: Kitap'));
+    await tester.pumpAndSettle();
+
     // Satırda kısaca her gün ne yapılacağı yazar.
     expect(find.text('Her gün 5 vakit'), findsOneWidget);
     // Kitap: haftada 150, bu hafta 30 yapıldı, 120 / 6 gün.

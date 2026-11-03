@@ -28,6 +28,7 @@ class App extends ConsumerWidget {
       // Oturum değişince açık sayfa yığını (ör. Profil) sıfırlanır.
       key: ValueKey(session.valueOrNull?.user.id),
       title: 'e-Medrese',
+      debugShowCheckedModeBanner: false,
       home: switch (session) {
         AsyncData(value: Session()) => const MainShell(),
         AsyncLoading() => const Scaffold(

@@ -133,56 +133,60 @@ class GoalCard extends ConsumerWidget {
     );
     final theme = Theme.of(context);
 
-    final showPlan = !pending && plan.remaining > 0 && plan.weeks > 0;
+    final title = Text(
+      'Hedef: ${reward.title}',
+      style: theme.textTheme.titleMedium,
+    );
+    final points =
+        '${formatPoints(total)} / ${formatPoints(reward.points)} puan · '
+        'bitiş ${formatShortDate(goal.deadline)}';
 
+    // Öneri yoksa açılacak bir şey yok: dokununca Ödüller açılır.
+    if (pending || plan.remaining == 0 || plan.weeks == 0) {
+      return Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        child: ListTile(
+          title: title,
+          subtitle: Text(
+            '$points\n${switch ((pending, plan.remaining)) {
+              (true, _) => 'Ödülünü istedin; hocan teslim edecek.',
+              (_, 0) => 'Ödüle ulaştın! Dokun ve ödülünü iste.',
+              _ => 'Süre doldu. Dokun ve yeni bir bitiş günü seç.',
+            }}',
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: open,
+        ),
+      );
+    }
+
+    // Kapalı başlar: altındaki görev kartları ekranda kalsın.
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: ExpansionTile(
+        leading: const Icon(Icons.flag_outlined),
+        title: title,
+        subtitle: Text(
+          '$points\n'
+          '${formatPoints(plan.remaining)} puan kaldı, '
+          '${plan.weeks} hafta: haftada en az '
+          '${formatPoints(plan.remaining / plan.weeks)} puan.',
+        ),
+        shape: const Border(),
+        collapsedShape: const Border(),
+        expandedCrossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          InkWell(
-            onTap: open,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Hedef: ${reward.title}',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  Text(
-                    '${formatPoints(total)} / ${formatPoints(reward.points)} '
-                    'puan · bitiş ${formatShortDate(goal.deadline)}',
-                  ),
-                  const SizedBox(height: 8),
-                  if (pending)
-                    const Text('Ödülünü istedin; hocan teslim edecek.')
-                  else if (plan.remaining == 0)
-                    const Text('Ödüle ulaştın! Dokun ve ödülünü iste.')
-                  else if (plan.weeks == 0)
-                    const Text(
-                      'Süre doldu. Ödüle dokunup yeni bir bitiş günü seç.',
-                    )
-                  else ...[
-                    Text(
-                      '${formatPoints(plan.remaining)} puan kaldı, '
-                      '${plan.weeks} hafta: haftada en az '
-                      '${formatPoints(plan.remaining / plan.weeks)} puan.',
-                    ),
-                    if (!plan.reachable)
-                      Text(
-                        'Bu sürede bütün görevleri tam yapsan da yetişmiyor; '
-                        'bitiş gününü uzat.',
-                        style: TextStyle(color: theme.colorScheme.error),
-                      ),
-                  ],
-                ],
+          if (!plan.reachable)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                'Bu sürede bütün görevleri tam yapsan da yetişmiyor; '
+                'bitiş gününü uzat.',
+                style: TextStyle(color: theme.colorScheme.error),
               ),
             ),
-          ),
-          if (showPlan) ...[
+          ...[
             for (final n in plan.needs)
               () {
                 final done = taskTotal(n.task, myId, entries);
@@ -199,11 +203,18 @@ class GoalCard extends ConsumerWidget {
                 );
               }(),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
               child: Text(
                 'Uyum puanı hesaba katılmadı; ondan alacağın puan seni '
                 'hedefe daha erken ulaştırır.',
                 style: theme.textTheme.bodySmall,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+              child: TextButton(
+                onPressed: open,
+                child: const Text('Ödüller ve hedefi değiştir'),
               ),
             ),
           ],
