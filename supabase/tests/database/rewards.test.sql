@@ -3,7 +3,7 @@ begin;
 set local role postgres;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(16);
+select plan(21);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000f1', 'r-kurucu@test.com'),
@@ -58,10 +58,24 @@ select throws_ok($$ select deliver_reward((select id from reward_claims limit 1)
 select pg_temp.login('00000000-0000-0000-0000-0000000000f1');
 select is((select count(*)::int from notifications where kind = 'reward_request'), 1,
   'hocaya ödül isteği bildirimi');
-select lives_ok($$ select deliver_reward((select id from reward_claims limit 1)) $$,
-  'hoca istenen ödülü teslim eder');
+select throws_ok($$ select reject_reward((select id from reward_claims limit 1), '  ') $$,
+  'P0001', 'reason required', 'neden yazmadan reddedilmez');
+select lives_ok($$ select reject_reward((select id from reward_claims limit 1), 'Önce kitabı bitir') $$,
+  'hoca nedeniyle reddeder');
 select throws_ok($$ select deliver_reward((select id from reward_claims limit 1)) $$,
-  'P0001', 'already delivered', 'iki kez teslim edilmez');
+  'P0001', 'not pending', 'reddedilen teslim edilmez');
+
+select pg_temp.login('00000000-0000-0000-0000-0000000000f2');
+select is((select body from notifications where kind = 'reward_rejected'),
+  '"Kitap": Önce kitabı bitir', 'öğrenciye ret nedeni bildirilir');
+select lives_ok($$ select request_reward('60000000-0000-0000-0000-0000000000a1') $$,
+  'reddedilen ödülün puanı döner, yeniden istenir');
+
+select pg_temp.login('00000000-0000-0000-0000-0000000000f1');
+select lives_ok($$ select deliver_reward((select id from reward_claims where rejected_at is null)) $$,
+  'hoca istenen ödülü teslim eder');
+select throws_ok($$ select deliver_reward((select id from reward_claims where rejected_at is null)) $$,
+  'P0001', 'not pending', 'iki kez teslim edilmez');
 
 select pg_temp.login('00000000-0000-0000-0000-0000000000f2');
 select is((select count(*)::int from reward_goals), 0, 'teslim edilen ödül hedeften kalkar');

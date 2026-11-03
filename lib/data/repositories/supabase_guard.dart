@@ -38,8 +38,12 @@ Future<Result<T, AppFailure>> guardSupabase<T>(
       (_, 'already requested') => const ValidationFailure(
         'Bu ödülü zaten istedin; hocanın teslim etmesini bekle.',
       ),
-      (_, 'already delivered') => const ValidationFailure(
-        'Bu ödül zaten teslim edildi.',
+      (_, 'not pending') => const ValidationFailure(
+        'Bu istek zaten teslim edildi ya da reddedildi.',
+      ),
+      (_, 'reason required') => const ValidationFailure(
+        'Reddetme nedenini yaz.',
+        field: 'reason',
       ),
       ('42501', _) ||
       (_, 'not allowed') ||

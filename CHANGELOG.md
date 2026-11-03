@@ -2,6 +2,9 @@
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
 
+## 2.3.0+18 — 2026-11-04
+- Hoca bekleyen ödül isteğini "Reddet" ile, nedenini yazarak reddedebilir. Öğrenciye neden bildirim olarak gider ve Ödüller sayfasında yazar; ayrılan puan öğrenciye döner, ödülü yeniden isteyebilir.
+
 ## 2.2.0+17 — 2026-11-04
 - Öğrenci ödülün puanına ulaşınca "Ödülü iste"ye basar; hocalara bildirim gider. Hoca, Ödül istekleri sayfasında yalnız istenmiş ödülü "Teslim edildi" işaretleyebilir (bildirim gitmese de istek görünür).
 - İstenen ödülün puanı birikmiş puandan ayrılır, teslim edilince düşülmüş olur; aynı ödül teslim edilmeden yeniden istenemez. Teslim edilen ödül hedeften kalkar.

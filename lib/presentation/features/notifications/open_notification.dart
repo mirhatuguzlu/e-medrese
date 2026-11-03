@@ -57,7 +57,7 @@ Future<void> openNotification(
               )
             : ScoreHistoryPage(medrese: medrese),
       );
-    case 'reward':
+    case 'reward' || 'reward_rejected':
       await context.push(RewardsPage(medrese: medrese));
     case 'reward_request':
       await context.push(RewardRequestsPage(medrese: medrese));

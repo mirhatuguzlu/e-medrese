@@ -101,9 +101,7 @@ class GoalCard extends ConsumerWidget {
       _ => null,
     };
     if (claims == null || total == null) return const SizedBox.shrink();
-    final pending = claims.any(
-      (c) => c.rewardId == reward.id && c.deliveredAt == null,
-    );
+    final pending = claims.any((c) => c.rewardId == reward.id && c.pending);
     final daysLeft = 7 - today.difference(periodStart).inDays;
     String needText(TaskNeed n) =>
         _needText(n, taskTotal(n.task, myId, entries), daysLeft);

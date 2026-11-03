@@ -223,6 +223,46 @@ void main() {
     expect(find.textContaining('teslim:'), findsOneWidget);
   });
 
+  testWidgets('hoca nedeniyle reddeder, puan döner, neden öğrenciye yazar', (
+    tester,
+  ) async {
+    tasks.scoreList.add(
+      WeeklyScore(
+        studentId: 'u1',
+        studentName: 'Ali',
+        periodStart: DateTime.utc(2026, 10, 20),
+        total: 1200,
+        details: const {},
+        opened: true,
+      ),
+    );
+    await rewards.requestReward('r1');
+
+    await pump(
+      tester,
+      RewardRequestsPage(medrese: _medrese(MemberRole.teacher)),
+    );
+    await tester.tap(find.text('Reddet'));
+    await tester.pumpAndSettle();
+    // Neden yazmadan reddedilmez.
+    await tester.tap(find.widgetWithText(FilledButton, 'Reddet'));
+    await tester.pumpAndSettle();
+    expect(find.text('Reddetme nedenini yaz.'), findsOneWidget);
+    await tester.enterText(find.byType(TextFormField), 'Önce kitabı bitir');
+    await tester.tap(find.widgetWithText(FilledButton, 'Reddet'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Neden: Önce kitabı bitir'), findsOneWidget);
+    expect(find.text('Teslim edildi'), findsNothing);
+
+    await pump(tester, RewardsPage(medrese: _medrese(MemberRole.student)));
+    expect(
+      find.textContaining('Hocan isteğini reddetti: Önce kitabı bitir'),
+      findsOneWidget,
+    );
+    expect(find.text('Birikmiş puanın: 1200'), findsOneWidget);
+    expect(find.text('Ödülü iste'), findsOneWidget);
+  });
+
   testWidgets('istek yoksa hocanın teslim edecek bir şeyi yok', (tester) async {
     await pump(
       tester,

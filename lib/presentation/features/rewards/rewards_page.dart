@@ -112,9 +112,10 @@ class RewardsPage extends ConsumerWidget {
               ),
         itemBuilder: (context, r) {
           final isGoal = goal?.rewardId == r.id;
-          final pending =
-              claims?.any((c) => c.rewardId == r.id && c.deliveredAt == null) ??
-              false;
+          final mine = [...?claims?.where((c) => c.rewardId == r.id)]
+            ..sort((a, b) => b.requestedAt.compareTo(a.requestedAt));
+          final last = mine.firstOrNull;
+          final pending = last?.pending ?? false;
           final left = total == null || pending ? null : r.points - total;
           return ListTile(
             leading: Icon(
@@ -126,6 +127,8 @@ class RewardsPage extends ConsumerWidget {
               [
                 '${formatPoints(r.points)} puan',
                 if (pending) 'İstedin; hocan teslim edecek.',
+                if (last?.rejectedAt != null)
+                  'Hocan isteğini reddetti: ${last!.rejectReason}',
                 if (left != null)
                   left <= 0 ? 'Ulaştın!' : '${formatPoints(left)} puan kaldı',
                 if (isGoal) 'Hedefin: ${formatShortDate(goal!.deadline)}',

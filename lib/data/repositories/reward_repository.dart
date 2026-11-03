@@ -102,10 +102,11 @@ class RewardRepository {
             .from('reward_claims')
             .select(
               'id, reward_id, student_id, title, points, requested_at, '
-              'delivered_at, '
+              'delivered_at, rejected_at, reject_reason, '
               'student:profiles!reward_claims_student_id_fkey(full_name)',
             )
             .eq('medrese_id', medreseId)
+            .order('rejected_at', nullsFirst: true)
             .order('delivered_at', nullsFirst: true)
             .order('requested_at', ascending: false);
         return rows.map(RewardClaim.fromJson).toList();
@@ -122,6 +123,16 @@ class RewardRepository {
   Future<Result<void, AppFailure>> deliver(String claimId) => guardSupabase(
     () => _client.rpc<void>('deliver_reward', params: {'c': claimId}),
   );
+
+  /// Hoca bekleyen isteği [reason] ile reddeder; puan öğrenciye döner,
+  /// öğrenciye neden bildirilir.
+  Future<Result<void, AppFailure>> reject(String claimId, String reason) =>
+      guardSupabase(
+        () => _client.rpc<void>(
+          'reject_reward',
+          params: {'c': claimId, 'reason': reason.trim()},
+        ),
+      );
 
   /// Hedefi kaldırır.
   Future<Result<void, AppFailure>> clearGoal(String medreseId) => guardSupabase(

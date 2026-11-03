@@ -623,6 +623,24 @@ class FakeRewardRepository implements RewardRepository {
   }
 
   @override
+  Future<Result<void, AppFailure>> reject(String claimId, String reason) async {
+    final i = claimList.indexWhere((c) => c.id == claimId);
+    final c = claimList[i];
+    claimList[i] = RewardClaim(
+      id: c.id,
+      rewardId: c.rewardId,
+      studentId: c.studentId,
+      studentName: c.studentName,
+      title: c.title,
+      points: c.points,
+      requestedAt: c.requestedAt,
+      rejectedAt: DateTime(2026, 11, 5),
+      rejectReason: reason.trim(),
+    );
+    return const Ok(null);
+  }
+
+  @override
   Future<Result<List<Reward>, AppFailure>> rewards(String medreseId) async =>
       Ok(List.of(rewardList));
 

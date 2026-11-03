@@ -93,7 +93,8 @@ final class GoalPlan {
   final bool reachable;
 }
 
-/// Öğrencinin ödül isteği; hoca teslim edince [deliveredAt] dolar.
+/// Öğrencinin ödül isteği; hoca teslim edince [deliveredAt], reddedince
+/// [rejectedAt] dolar.
 final class RewardClaim {
   /// İstek.
   const RewardClaim({
@@ -105,6 +106,8 @@ final class RewardClaim {
     required this.points,
     required this.requestedAt,
     this.deliveredAt,
+    this.rejectedAt,
+    this.rejectReason = '',
   });
 
   /// `reward_claims` satırından (`student:profiles(full_name)` ile) oluşturur.
@@ -122,6 +125,11 @@ final class RewardClaim {
       final String at => DateTime.parse(at).toLocal(),
       _ => null,
     },
+    rejectedAt: switch (json['rejected_at']) {
+      final String at => DateTime.parse(at).toLocal(),
+      _ => null,
+    },
+    rejectReason: json['reject_reason'] as String? ?? '',
   );
 
   /// Kimlik.
@@ -147,10 +155,20 @@ final class RewardClaim {
 
   /// Teslim zamanı; teslim edilmediyse `null`.
   final DateTime? deliveredAt;
+
+  /// Ret zamanı; reddedilmediyse `null`.
+  final DateTime? rejectedAt;
+
+  /// Hocanın ret nedeni.
+  final String rejectReason;
+
+  /// Hoca henüz teslim etmedi ve reddetmedi.
+  bool get pending => deliveredAt == null && rejectedAt == null;
 }
 
 /// [student]'in istenebilir puanı: biten dönemler toplamından istenen ve
-/// teslim edilen ödüllerin puanı düşülür (sunucudaki `reward_balance`).
+/// teslim edilen ödüllerin puanı düşülür; reddedilenler düşülmez (sunucudaki
+/// `reward_balance`).
 num rewardBalance(
   List<WeeklyScore> scores,
   List<RewardClaim> claims,
@@ -160,7 +178,7 @@ num rewardBalance(
         .where((s) => s.studentId == student)
         .fold<num>(0, (sum, s) => sum + s.total) -
     claims
-        .where((c) => c.studentId == student)
+        .where((c) => c.studentId == student && c.rejectedAt == null)
         .fold<num>(0, (sum, c) => sum + c.points);
 
 /// Süren dönemde [need] için kalan: haftalık en azdan bu hafta yapılan
