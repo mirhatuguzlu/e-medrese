@@ -205,22 +205,25 @@ void main() {
       find.text('1000 puan kaldı, 4 hafta: haftada en az 250 puan.'),
       findsOneWidget,
     );
-    expect(
-      find.text('• Namaz: her gün 5 vakit, hepsi kılınmalı'),
-      findsOneWidget,
-    );
+    // Satırda kısaca her gün ne yapılacağı yazar.
+    expect(find.text('Her gün 5 vakit'), findsOneWidget);
+    // Kitap: haftada 150, bu hafta 30 yapıldı, 120 / 6 gün.
+    expect(find.text('Her gün 20 sayfa'), findsOneWidget);
+    expect(find.text('Bu hafta 3 kez daha'), findsOneWidget);
+    expect(find.textContaining('Uyum puanı hesaba katılmadı'), findsOneWidget);
+
+    // Açıklama dokununca açılır.
+    expect(find.textContaining('her hafta en az 150 sayfa'), findsNothing);
+    await tester.tap(find.text('Her gün 20 sayfa'));
+    await tester.pumpAndSettle();
     expect(
       find.text(
-        '• İslami kitap okuma: günde en az 22 sayfa; '
-        'bu hafta 120 sayfa kaldı (günde 20)',
+        'Hedefine yetişmek için her hafta en az 150 sayfa.\n'
+        'Bu hafta 30 sayfa yaptın.\n'
+        'Kalan 120 sayfa, haftanın kalan 6 gününe bölünce her gün 20 sayfa.',
       ),
       findsOneWidget,
     );
-    expect(
-      find.text('• Cevşen okuma: haftada en az 3 kez; bu hafta 3 kez kaldı'),
-      findsOneWidget,
-    );
-    expect(find.textContaining('Uyum puanı hesaba katılmadı'), findsOneWidget);
   });
 
   testWidgets('hedef sayfası en erken günü yazar', (tester) async {

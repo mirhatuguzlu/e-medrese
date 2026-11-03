@@ -2,6 +2,9 @@
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
 
+## 2.3.2+20 — 2026-11-04
+- Ana sayfadaki hedef kartında her görev ayrı satır: satırda her gün ne yapılacağı kısaca yazar (ör. "Her gün 20 sayfa"), dokununca açıklaması aşağı açılır.
+
 ## 2.3.1+19 — 2026-11-04
 - Hedef seçerken takvimde en erken gün, bütün görevler tam yapılsa ödüle ulaşılan gündür; daha erken günler seçilemez. Süren haftada geçen günler ve yapılanlar hesaba katılır, uyum puanı katılmaz.
 

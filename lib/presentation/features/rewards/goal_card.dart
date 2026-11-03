@@ -6,6 +6,7 @@ import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/reward.dart';
 import 'package:e_medrese/domain/entities/task.dart';
 import 'package:e_medrese/presentation/features/rewards/rewards_page.dart';
+import 'package:e_medrese/presentation/features/tasks/student_tasks_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -43,19 +44,40 @@ class GoalCard extends ConsumerWidget {
     _ => 'kez',
   };
 
-  static String _needText(TaskNeed n, num done, int daysLeft) {
+  /// Satırda görünen kısa yazı: bugünden itibaren ne yapılacak.
+  static String _short(TaskNeed n, ({int left, int? perDay}) week) {
     final unit = _unit(n.task);
-    if (n.task.id == 'namaz') {
-      return 'her gün ${n.task.items.length} vakit, hepsi kılınmalı';
-    }
-    final perDay = n.perDay;
-    final base = perDay != null
-        ? 'günde en az $perDay $unit'
-        : 'haftada en az ${n.perWeek} $unit';
-    final week = leftThisWeek(n, done, daysLeft);
-    if (week.left == 0) return '$base; bu hafta tamam';
-    return '$base; bu hafta ${week.left} $unit kaldı'
-        '${week.perDay == null ? '' : ' (günde ${week.perDay})'}';
+    if (n.task.id == 'namaz') return 'Her gün ${n.task.items.length} vakit';
+    if (week.left == 0) return 'Bu haftalık tamam';
+    final perDay = week.perDay;
+    return perDay != null
+        ? 'Her gün $perDay $unit'
+        : 'Bu hafta ${week.left} $unit daha';
+  }
+
+  /// Satıra dokununca açılan açıklama.
+  static String _detail(
+    TaskNeed n,
+    num done,
+    ({int left, int? perDay}) week,
+    int daysLeft,
+  ) {
+    final unit = _unit(n.task);
+    return [
+      if (n.task.id == 'namaz')
+        'Namaz kısılmaz: her gün ${n.task.items.length} vaktin hepsini kıl.'
+      else
+        'Hedefine yetişmek için her hafta en az ${n.perWeek} $unit.',
+      'Bu hafta ${formatPoints(done)} $unit yaptın.',
+      if (n.task.id != 'namaz')
+        switch (week) {
+          (left: 0, perDay: _) => 'Bu haftanın payı tamam.',
+          (:final left, perDay: final perDay?) =>
+            'Kalan $left $unit, haftanın kalan $daysLeft gününe bölünce '
+                'her gün $perDay $unit.',
+          (:final left, perDay: null) => 'Bu hafta $left $unit daha yap.',
+        },
+    ].join('\n');
   }
 
   @override
@@ -103,8 +125,6 @@ class GoalCard extends ConsumerWidget {
     if (claims == null || total == null) return const SizedBox.shrink();
     final pending = claims.any((c) => c.rewardId == reward.id && c.pending);
     final daysLeft = 7 - today.difference(periodStart).inDays;
-    String needText(TaskNeed n) =>
-        _needText(n, taskTotal(n.task, myId, entries), daysLeft);
     final plan = planGoal(
       tasks: tasks,
       total: total,
@@ -113,55 +133,81 @@ class GoalCard extends ConsumerWidget {
     );
     final theme = Theme.of(context);
 
+    final showPlan = !pending && plan.remaining > 0 && plan.weeks > 0;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: open,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Hedef: ${reward.title}',
-                style: theme.textTheme.titleMedium,
-              ),
-              Text(
-                '${formatPoints(total)} / ${formatPoints(reward.points)} puan · '
-                'bitiş ${formatShortDate(goal.deadline)}',
-              ),
-              const SizedBox(height: 8),
-              if (pending)
-                const Text('Ödülünü istedin; hocan teslim edecek.')
-              else if (plan.remaining == 0)
-                const Text('Ödüle ulaştın! Dokun ve ödülünü iste.')
-              else if (plan.weeks == 0)
-                const Text('Süre doldu. Ödüle dokunup yeni bir bitiş günü seç.')
-              else ...[
-                Text(
-                  '${formatPoints(plan.remaining)} puan kaldı, '
-                  '${plan.weeks} hafta: haftada en az '
-                  '${formatPoints(plan.remaining / plan.weeks)} puan.',
-                ),
-                if (!plan.reachable)
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          InkWell(
+            onTap: open,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    'Bu sürede bütün görevleri tam yapsan da yetişmiyor; '
-                    'bitiş gününü uzat.',
-                    style: TextStyle(color: theme.colorScheme.error),
+                    'Hedef: ${reward.title}',
+                    style: theme.textTheme.titleMedium,
                   ),
-                const SizedBox(height: 8),
-                for (final n in plan.needs)
-                  Text('• ${n.task.title}: ${needText(n)}'),
-                const SizedBox(height: 8),
-                Text(
-                  'Uyum puanı hesaba katılmadı; ondan alacağın puan seni '
-                  'hedefe daha erken ulaştırır.',
-                  style: theme.textTheme.bodySmall,
-                ),
-              ],
-            ],
+                  Text(
+                    '${formatPoints(total)} / ${formatPoints(reward.points)} '
+                    'puan · bitiş ${formatShortDate(goal.deadline)}',
+                  ),
+                  const SizedBox(height: 8),
+                  if (pending)
+                    const Text('Ödülünü istedin; hocan teslim edecek.')
+                  else if (plan.remaining == 0)
+                    const Text('Ödüle ulaştın! Dokun ve ödülünü iste.')
+                  else if (plan.weeks == 0)
+                    const Text(
+                      'Süre doldu. Ödüle dokunup yeni bir bitiş günü seç.',
+                    )
+                  else ...[
+                    Text(
+                      '${formatPoints(plan.remaining)} puan kaldı, '
+                      '${plan.weeks} hafta: haftada en az '
+                      '${formatPoints(plan.remaining / plan.weeks)} puan.',
+                    ),
+                    if (!plan.reachable)
+                      Text(
+                        'Bu sürede bütün görevleri tam yapsan da yetişmiyor; '
+                        'bitiş gününü uzat.',
+                        style: TextStyle(color: theme.colorScheme.error),
+                      ),
+                  ],
+                ],
+              ),
+            ),
           ),
-        ),
+          if (showPlan) ...[
+            for (final n in plan.needs)
+              () {
+                final done = taskTotal(n.task, myId, entries);
+                final week = leftThisWeek(n, done, daysLeft);
+                return ExpansionTile(
+                  leading: Icon(taskIcon(n.task.id)),
+                  title: Text(n.task.title),
+                  subtitle: Text(_short(n, week)),
+                  shape: const Border(),
+                  collapsedShape: const Border(),
+                  expandedAlignment: Alignment.centerLeft,
+                  childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  children: [Text(_detail(n, done, week, daysLeft))],
+                );
+              }(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+              child: Text(
+                'Uyum puanı hesaba katılmadı; ondan alacağın puan seni '
+                'hedefe daha erken ulaştırır.',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
