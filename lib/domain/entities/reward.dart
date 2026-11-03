@@ -93,10 +93,86 @@ final class GoalPlan {
   final bool reachable;
 }
 
-/// [student]'in biten dönemlerden birikmiş puanı.
-num totalScore(List<WeeklyScore> scores, String student) => scores
-    .where((s) => s.studentId == student)
-    .fold<num>(0, (sum, s) => sum + s.total);
+/// Öğrencinin ödül isteği; hoca teslim edince [deliveredAt] dolar.
+final class RewardClaim {
+  /// İstek.
+  const RewardClaim({
+    required this.id,
+    required this.rewardId,
+    required this.studentId,
+    required this.studentName,
+    required this.title,
+    required this.points,
+    required this.requestedAt,
+    this.deliveredAt,
+  });
+
+  /// `reward_claims` satırından (`student:profiles(full_name)` ile) oluşturur.
+  factory RewardClaim.fromJson(Map<String, dynamic> json) => RewardClaim(
+    id: json['id'] as String,
+    rewardId: json['reward_id'] as String?,
+    studentId: json['student_id'] as String,
+    studentName:
+        (json['student'] as Map<String, dynamic>?)?['full_name'] as String? ??
+        '',
+    title: json['title'] as String,
+    points: json['points'] as num,
+    requestedAt: DateTime.parse(json['requested_at'] as String).toLocal(),
+    deliveredAt: switch (json['delivered_at']) {
+      final String at => DateTime.parse(at).toLocal(),
+      _ => null,
+    },
+  );
+
+  /// Kimlik.
+  final String id;
+
+  /// Ödül; ödül sonradan silindiyse `null`.
+  final String? rewardId;
+
+  /// Öğrenci.
+  final String studentId;
+
+  /// Öğrencinin adı (boş olabilir).
+  final String studentName;
+
+  /// İstek anındaki ödül adı.
+  final String title;
+
+  /// Birikmiş puandan düşülen puan.
+  final num points;
+
+  /// İstek zamanı.
+  final DateTime requestedAt;
+
+  /// Teslim zamanı; teslim edilmediyse `null`.
+  final DateTime? deliveredAt;
+}
+
+/// [student]'in istenebilir puanı: biten dönemler toplamından istenen ve
+/// teslim edilen ödüllerin puanı düşülür (sunucudaki `reward_balance`).
+num rewardBalance(
+  List<WeeklyScore> scores,
+  List<RewardClaim> claims,
+  String student,
+) =>
+    scores
+        .where((s) => s.studentId == student)
+        .fold<num>(0, (sum, s) => sum + s.total) -
+    claims
+        .where((c) => c.studentId == student)
+        .fold<num>(0, (sum, c) => sum + c.points);
+
+/// Süren dönemde [need] için kalan: haftalık en azdan bu hafta yapılan
+/// [done] düşülür; her gün yapılan görevde kalan [daysLeft] güne (bugün
+/// dahil) bölünür.
+({int left, int? perDay}) leftThisWeek(TaskNeed need, num done, int daysLeft) {
+  final left = max<num>(0, need.perWeek - done).ceil();
+  return (
+    left: left,
+    perDay: need.perDay == null ? null : (left / daysLeft - 1e-9).ceil(),
+  );
+}
 
 /// [deadline]'e kadar bitecek dönem sayısı; [periodStart] süren dönemin ilk
 /// günü. Puan dönem bitince eklendiği için yarım dönem sayılmaz.

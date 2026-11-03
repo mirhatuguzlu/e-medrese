@@ -17,6 +17,8 @@ class GoalCard extends ConsumerWidget {
     required this.medrese,
     required this.tasks,
     required this.periodStart,
+    required this.today,
+    required this.entries,
     super.key,
   });
 
@@ -29,21 +31,31 @@ class GoalCard extends ConsumerWidget {
   /// Süren dönemin ilk günü.
   final DateTime periodStart;
 
+  /// Bugün.
+  final DateTime today;
+
+  /// Süren dönemin girdileri.
+  final List<TaskEntry> entries;
+
   static String _unit(TaskDefinition t) => switch (t.kind) {
     TaskKind.pages => 'sayfa',
     TaskKind.checks when t.items.length > 1 => 'vakit',
     _ => 'kez',
   };
 
-  static String _needText(TaskNeed n) {
+  static String _needText(TaskNeed n, num done, int daysLeft) {
     final unit = _unit(n.task);
     if (n.task.id == 'namaz') {
       return 'her gün ${n.task.items.length} vakit, hepsi kılınmalı';
     }
     final perDay = n.perDay;
-    return perDay != null
+    final base = perDay != null
         ? 'günde en az $perDay $unit'
         : 'haftada en az ${n.perWeek} $unit';
+    final week = leftThisWeek(n, done, daysLeft);
+    if (week.left == 0) return '$base; bu hafta tamam';
+    return '$base; bu hafta ${week.left} $unit kaldı'
+        '${week.perDay == null ? '' : ' (günde ${week.perDay})'}';
   }
 
   @override
@@ -76,11 +88,25 @@ class GoalCard extends ConsumerWidget {
     }
 
     final myId = ref.watch(sessionProvider).valueOrNull?.user.id ?? '';
-    final total = switch (ref.watch(weeklyScoresProvider(medrese.id))) {
-      AsyncData(value: Ok(:final value)) => totalScore(value, myId),
+    final claims = switch (ref.watch(rewardClaimsProvider(medrese.id))) {
+      AsyncData(value: Ok(:final value)) => value,
       _ => null,
     };
-    if (total == null) return const SizedBox.shrink();
+    final total = switch (ref.watch(weeklyScoresProvider(medrese.id))) {
+      AsyncData(value: Ok(:final value)) when claims != null => rewardBalance(
+        value,
+        claims,
+        myId,
+      ),
+      _ => null,
+    };
+    if (claims == null || total == null) return const SizedBox.shrink();
+    final pending = claims.any(
+      (c) => c.rewardId == reward.id && c.deliveredAt == null,
+    );
+    final daysLeft = 7 - today.difference(periodStart).inDays;
+    String needText(TaskNeed n) =>
+        _needText(n, taskTotal(n.task, myId, entries), daysLeft);
     final plan = planGoal(
       tasks: tasks,
       total: total,
@@ -107,8 +133,10 @@ class GoalCard extends ConsumerWidget {
                 'bitiş ${formatShortDate(goal.deadline)}',
               ),
               const SizedBox(height: 8),
-              if (plan.remaining == 0)
-                const Text('Ödüle ulaştın! Hocana haber ver.')
+              if (pending)
+                const Text('Ödülünü istedin; hocan teslim edecek.')
+              else if (plan.remaining == 0)
+                const Text('Ödüle ulaştın! Dokun ve ödülünü iste.')
               else if (plan.weeks == 0)
                 const Text('Süre doldu. Ödüle dokunup yeni bir bitiş günü seç.')
               else ...[
@@ -125,7 +153,7 @@ class GoalCard extends ConsumerWidget {
                   ),
                 const SizedBox(height: 8),
                 for (final n in plan.needs)
-                  Text('• ${n.task.title}: ${_needText(n)}'),
+                  Text('• ${n.task.title}: ${needText(n)}'),
                 const SizedBox(height: 8),
                 Text(
                   'Uyum puanı hesaba katılmadı; ondan alacağın puan seni '

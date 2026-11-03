@@ -580,7 +580,47 @@ List<Override> pushOverrides({
 
 class FakeRewardRepository implements RewardRepository {
   final rewardList = <Reward>[];
+  final claimList = <RewardClaim>[];
   RewardGoal? myGoal;
+
+  @override
+  Future<Result<List<RewardClaim>, AppFailure>> claims(
+    String medreseId,
+  ) async => Ok(List.of(claimList));
+
+  @override
+  Future<Result<void, AppFailure>> requestReward(String rewardId) async {
+    final r = rewardList.firstWhere((r) => r.id == rewardId);
+    claimList.add(
+      RewardClaim(
+        id: 'c${claimList.length + 1}',
+        rewardId: r.id,
+        studentId: 'u1',
+        studentName: 'Ali',
+        title: r.title,
+        points: r.points,
+        requestedAt: DateTime(2026, 11, 4),
+      ),
+    );
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> deliver(String claimId) async {
+    final i = claimList.indexWhere((c) => c.id == claimId);
+    final c = claimList[i];
+    claimList[i] = RewardClaim(
+      id: c.id,
+      rewardId: c.rewardId,
+      studentId: c.studentId,
+      studentName: c.studentName,
+      title: c.title,
+      points: c.points,
+      requestedAt: c.requestedAt,
+      deliveredAt: DateTime(2026, 11, 5),
+    );
+    return const Ok(null);
+  }
 
   @override
   Future<Result<List<Reward>, AppFailure>> rewards(String medreseId) async =>

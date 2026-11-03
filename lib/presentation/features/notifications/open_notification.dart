@@ -6,6 +6,8 @@ import 'package:e_medrese/domain/entities/app_notification.dart';
 import 'package:e_medrese/domain/entities/task.dart';
 import 'package:e_medrese/presentation/features/announcements/announcements_page.dart';
 import 'package:e_medrese/presentation/features/posts/post_page.dart';
+import 'package:e_medrese/presentation/features/rewards/reward_requests_page.dart';
+import 'package:e_medrese/presentation/features/rewards/rewards_page.dart';
 import 'package:e_medrese/presentation/features/shell/main_shell.dart';
 import 'package:e_medrese/presentation/features/tasks/chest_page.dart';
 import 'package:e_medrese/presentation/features/tasks/score_history_page.dart';
@@ -55,6 +57,10 @@ Future<void> openNotification(
               )
             : ScoreHistoryPage(medrese: medrese),
       );
+    case 'reward':
+      await context.push(RewardsPage(medrese: medrese));
+    case 'reward_request':
+      await context.push(RewardRequestsPage(medrese: medrese));
     case 'comment' when n.postId != null:
       final post = await ref.read(feedRepositoryProvider).post(n.postId!);
       if (!context.mounted) return;

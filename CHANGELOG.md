@@ -2,6 +2,12 @@
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
 
+## 2.2.0+17 — 2026-11-04
+- Öğrenci ödülün puanına ulaşınca "Ödülü iste"ye basar; hocalara bildirim gider. Hoca, Ödül istekleri sayfasında yalnız istenmiş ödülü "Teslim edildi" işaretleyebilir (bildirim gitmese de istek görünür).
+- İstenen ödülün puanı birikmiş puandan ayrılır, teslim edilince düşülmüş olur; aynı ödül teslim edilmeden yeniden istenemez. Teslim edilen ödül hedeften kalkar.
+- Hoca ödül ekleyince öğrencilere bildirim gider.
+- Ana sayfa önerisi bu hafta yapılanı düşer: her görevde bu hafta kalan miktar ve kalan günlere göre günlük miktar yazar.
+
 ## 2.1.0+16 — 2026-11-04
 - Ödüller sayfası: hoca birikmiş puan eşikli ödüller ekler ve siler; öğrenci birikmiş puanını ve ödüllere kalan puanı görür.
 - Öğrenci bir ödülü bitiş günüyle hedef seçer. Ana sayfada öneri çıkar: namaz her gün 5 vakit tam, kalan puan diğer görevlere en yüksek puanlarına oranla bölünür (günde ya da haftada en az). Uyum puanı hesaba katılmaz, bu öğrenciye yazılır.

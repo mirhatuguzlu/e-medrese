@@ -32,7 +32,19 @@ Future<Result<T, AppFailure>> guardSupabase<T>(
       (_, 'transfer ownership first') => const ValidationFailure(
         'Kurucusu olduğun medreselerde önce başka bir üyeyi kurucu yap.',
       ),
-      ('42501', _) || (_, 'not allowed') => const UnauthorizedFailure(),
+      (_, 'not enough points') => const ValidationFailure(
+        'Bu ödül için birikmiş puanın yetmiyor.',
+      ),
+      (_, 'already requested') => const ValidationFailure(
+        'Bu ödülü zaten istedin; hocanın teslim etmesini bekle.',
+      ),
+      (_, 'already delivered') => const ValidationFailure(
+        'Bu ödül zaten teslim edildi.',
+      ),
+      ('42501', _) ||
+      (_, 'not allowed') ||
+      (_, 'not a student of this medrese') ||
+      (_, 'not staff of this medrese') => const UnauthorizedFailure(),
       _ => UnexpectedFailure(e.message),
     });
   } on Exception catch (e, st) {

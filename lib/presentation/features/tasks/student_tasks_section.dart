@@ -103,7 +103,13 @@ class StudentTasksSection extends ConsumerWidget {
               medrese: medrese,
               periodStart: periodStart.subtract(const Duration(days: 7)),
             ),
-          GoalCard(medrese: medrese, tasks: tasks, periodStart: periodStart),
+          GoalCard(
+            medrese: medrese,
+            tasks: tasks,
+            periodStart: periodStart,
+            today: today,
+            entries: entries,
+          ),
           if (program.paused)
             const Text('Hocan görevleri durdurdu; şimdilik işaretleyemezsin.')
           else

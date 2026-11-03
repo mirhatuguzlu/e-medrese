@@ -3,6 +3,7 @@ import 'package:e_medrese/presentation/features/announcements/announcements_page
 import 'package:e_medrese/presentation/features/medrese/invite_code_page.dart';
 import 'package:e_medrese/presentation/features/members/members_page.dart';
 import 'package:e_medrese/presentation/features/posts/posts_page.dart';
+import 'package:e_medrese/presentation/features/rewards/reward_requests_page.dart';
 import 'package:e_medrese/presentation/features/rewards/rewards_page.dart';
 import 'package:e_medrese/presentation/features/tasks/ranking_page.dart';
 import 'package:e_medrese/presentation/features/tasks/score_history_page.dart';
@@ -81,6 +82,13 @@ class MedresePage extends StatelessWidget {
                       : 'Ödüller ve hedefin',
                   page: RewardsPage(medrese: medrese),
                 ),
+                if (medrese.myRole.isStaff)
+                  TileCard.page(
+                    icon: const Icon(Icons.redeem),
+                    title: 'Ödül istekleri',
+                    subtitle: 'Ödülünü isteyenler, teslim',
+                    page: RewardRequestsPage(medrese: medrese),
+                  ),
                 if (!medrese.myRole.isStaff)
                   TileCard.page(
                     icon: const Icon(Icons.history),

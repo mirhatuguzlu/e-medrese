@@ -41,15 +41,47 @@ class RewardsPage extends ConsumerWidget {
     }
   }
 
+  Future<void> _request(BuildContext context, WidgetRef ref, Reward r) async {
+    if (!await confirm(
+      context,
+      title: 'Ödülü iste',
+      message:
+          '"${r.title}" için hocana istek gider. Hocan teslim edince '
+          '${formatPoints(r.points)} puan birikmiş puanından düşülür.',
+      action: 'İste',
+    )) {
+      return;
+    }
+    final result = await ref.read(rewardRepositoryProvider).requestReward(r.id);
+    if (!context.mounted) return;
+    switch (result) {
+      case Ok():
+        ref.invalidate(rewardClaimsProvider(medrese.id));
+        context.showMessage('İsteğin hocana gitti.');
+      case Err(:final error):
+        context.showMessage(error.message);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final staff = medrese.myRole.isStaff;
     final myId = ref.watch(sessionProvider).valueOrNull?.user.id ?? '';
-    final total = staff
+    final claims = staff
+        ? null
+        : switch (ref.watch(rewardClaimsProvider(medrese.id))) {
+            AsyncData(value: Ok(:final value)) => value,
+            _ => null,
+          };
+    final total = claims == null
         ? null
         : switch (ref.watch(weeklyScoresProvider(medrese.id))) {
-            AsyncData(value: Ok(:final value)) => totalScore(value, myId),
+            AsyncData(value: Ok(:final value)) => rewardBalance(
+              value,
+              claims,
+              myId,
+            ),
             _ => null,
           };
     final goal = staff
@@ -73,11 +105,17 @@ class RewardsPage extends ConsumerWidget {
             : (_) => ListTile(
                 leading: const Icon(Icons.stars_outlined),
                 title: Text('Birikmiş puanın: ${formatPoints(total)}'),
-                subtitle: const Text('Biten haftaların puanları toplanır.'),
+                subtitle: const Text(
+                  'Biten haftaların puanları toplanır; istediğin ödüllerin '
+                  'puanı düşülür.',
+                ),
               ),
         itemBuilder: (context, r) {
           final isGoal = goal?.rewardId == r.id;
-          final left = total == null ? null : r.points - total;
+          final pending =
+              claims?.any((c) => c.rewardId == r.id && c.deliveredAt == null) ??
+              false;
+          final left = total == null || pending ? null : r.points - total;
           return ListTile(
             leading: Icon(
               isGoal ? Icons.flag : Icons.card_giftcard,
@@ -87,6 +125,7 @@ class RewardsPage extends ConsumerWidget {
             subtitle: Text(
               [
                 '${formatPoints(r.points)} puan',
+                if (pending) 'İstedin; hocan teslim edecek.',
                 if (left != null)
                   left <= 0 ? 'Ulaştın!' : '${formatPoints(left)} puan kaldı',
                 if (isGoal) 'Hedefin: ${formatShortDate(goal!.deadline)}',
@@ -99,6 +138,11 @@ class RewardsPage extends ConsumerWidget {
                     tooltip: 'Sil',
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () => _delete(context, ref, r),
+                  )
+                : left != null && left <= 0
+                ? FilledButton(
+                    onPressed: () => _request(context, ref, r),
+                    child: const Text('Ödülü iste'),
                   )
                 : const Icon(Icons.chevron_right),
             onTap: staff

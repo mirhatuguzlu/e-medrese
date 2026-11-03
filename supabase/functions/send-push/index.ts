@@ -48,6 +48,10 @@ function pushText(p: Pending): { title: string; body: string } {
       return { title: 'Yeni duyuru', body: 'Görmek için dokun.' };
     case 'comment':
       return { title: 'Paylaşımına yorum geldi', body: 'Görmek için dokun.' };
+    case 'reward':
+      return { title: 'Yeni ödül', body: 'Görmek için dokun.' };
+    case 'reward_request':
+      return { title: 'Ödül isteği', body: 'Bir öğrenci ödülünü istiyor.' };
     default:
       return { title: p.title, body: p.body };
   }

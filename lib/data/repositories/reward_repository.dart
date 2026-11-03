@@ -22,6 +22,16 @@ myGoalProvider = FutureProvider.autoDispose.family(
   (ref, medreseId) => ref.watch(rewardRepositoryProvider).goal(medreseId),
 );
 
+/// Ödül istekleri: hocaya medresenin bütün istekleri, öğrenciye kendi
+/// istekleri (RLS); bekleyenler önce, en yeni önce.
+final AutoDisposeFutureProviderFamily<
+  Result<List<RewardClaim>, AppFailure>,
+  String
+>
+rewardClaimsProvider = FutureProvider.autoDispose.family(
+  (ref, medreseId) => ref.watch(rewardRepositoryProvider).claims(medreseId),
+);
+
 /// Ödüller ve öğrenci hedefleri.
 class RewardRepository {
   /// Supabase istemcisiyle oluşturur.
@@ -83,6 +93,34 @@ class RewardRepository {
       'reward_id': rewardId,
       'deadline': _day.format(deadline),
     }),
+  );
+
+  /// Ödül istekleri.
+  Future<Result<List<RewardClaim>, AppFailure>> claims(String medreseId) =>
+      guardSupabase(() async {
+        final rows = await _client
+            .from('reward_claims')
+            .select(
+              'id, reward_id, student_id, title, points, requested_at, '
+              'delivered_at, '
+              'student:profiles!reward_claims_student_id_fkey(full_name)',
+            )
+            .eq('medrese_id', medreseId)
+            .order('delivered_at', nullsFirst: true)
+            .order('requested_at', ascending: false);
+        return rows.map(RewardClaim.fromJson).toList();
+      });
+
+  /// Öğrenci ödülü ister; puanı yetmiyorsa sunucu reddeder. Hocalara
+  /// bildirim gider, ama istek bildirimden bağımsız kaydedilir.
+  Future<Result<void, AppFailure>> requestReward(String rewardId) =>
+      guardSupabase(
+        () => _client.rpc<void>('request_reward', params: {'r': rewardId}),
+      );
+
+  /// Hoca istenmiş ödülü teslim edildi işaretler; puanı düşülür.
+  Future<Result<void, AppFailure>> deliver(String claimId) => guardSupabase(
+    () => _client.rpc<void>('deliver_reward', params: {'c': claimId}),
   );
 
   /// Hedefi kaldırır.
