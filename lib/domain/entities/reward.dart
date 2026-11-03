@@ -192,6 +192,42 @@ num rewardBalance(
   );
 }
 
+/// Bütün görevler en yüksek puanla yapılsa ödüle en erken ulaşılan gün (bir
+/// dönemin son günü). Süren dönemde yalnız bugünden sonra kalan günler ve
+/// [entries]'teki yapılanlar sayılır; hocanın verdiği puan sayılmaz.
+DateTime earliestDeadline({
+  required List<TaskDefinition> tasks,
+  required List<TaskEntry> entries,
+  required String student,
+  required num total,
+  required num threshold,
+  required DateTime periodStart,
+  required DateTime today,
+}) {
+  final own = [
+    for (final t in tasks)
+      if (t.kind != TaskKind.teacher) t,
+  ];
+  final daysLeft = [
+    for (var i = 0; i < 7; i++) periodStart.add(Duration(days: i)),
+  ].where((d) => !d.isBefore(today));
+  double thisWeek(TaskDefinition t) {
+    // Sayfa ve haftalık görevde kalan gün sınır değil; tek günde cap'e varılır.
+    final room = t.kind == TaskKind.checks
+        ? t.items.length * daysLeft.where(t.isOn).length
+        : t.cap;
+    return t.score(taskTotal(t, student, entries) + room);
+  }
+
+  final perWeek = own.fold<double>(0, (s, t) => s + t.maxScore);
+  final rest =
+      threshold - total - own.fold<double>(0, (s, t) => s + thisWeek(t));
+  final weeks = rest <= 0 || perWeek == 0
+      ? 1
+      : 1 + (rest / perWeek - 1e-9).ceil();
+  return periodStart.add(Duration(days: 7 * weeks - 1));
+}
+
 /// [deadline]'e kadar bitecek dönem sayısı; [periodStart] süren dönemin ilk
 /// günü. Puan dönem bitince eklendiği için yarım dönem sayılmaz.
 int weeksUntil(DateTime periodStart, DateTime deadline) =>

@@ -2,6 +2,9 @@
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
 
+## 2.3.1+19 — 2026-11-04
+- Hedef seçerken takvimde en erken gün, bütün görevler tam yapılsa ödüle ulaşılan gündür; daha erken günler seçilemez. Süren haftada geçen günler ve yapılanlar hesaba katılır, uyum puanı katılmaz.
+
 ## 2.3.0+18 — 2026-11-04
 - Hoca bekleyen ödül isteğini "Reddet" ile, nedenini yazarak reddedebilir. Öğrenciye neden bildirim olarak gider ve Ödüller sayfasında yazar; ayrılan puan öğrenciye döner, ödülü yeniden isteyebilir.
 

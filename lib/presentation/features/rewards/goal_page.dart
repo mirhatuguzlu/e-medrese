@@ -1,4 +1,5 @@
 import 'package:e_medrese/core/core.dart';
+import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:e_medrese/data/repositories/reward_repository.dart';
 import 'package:e_medrese/data/repositories/task_repository.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
@@ -44,22 +45,71 @@ class _GoalPageState extends ConsumerState<GoalPage> {
     };
   }
 
-  Future<void> _pick() async {
-    // En erken süren dönemin son günü: puan dönem bitince eklenir.
-    final first = _periodStart.add(const Duration(days: 6));
+  /// Bütün görevler tam yapılsa ödüle ulaşılan en erken gün; veri
+  /// yüklenmediyse `null`.
+  DateTime? _earliest() {
+    final id = widget.medrese.id;
+    final today = ref.watch(todayProvider);
+    final periodStart = _periodStart;
+    final myId = ref.watch(sessionProvider).valueOrNull?.user.id ?? '';
+    // Program yoksa bu hafta yapılan da yok.
+    final entries = switch (ref.watch(taskProgramProvider(id))) {
+      AsyncData(value: Ok(value: _?)) => switch (ref.watch(
+        periodEntriesProvider((medreseId: id, periodStart: periodStart)),
+      )) {
+        AsyncData(value: Ok(:final value)) => value,
+        _ => null,
+      },
+      AsyncData(value: Ok()) => const <TaskEntry>[],
+      _ => null,
+    };
+    final data = (
+      ref.watch(taskDefinitionsProvider),
+      ref.watch(weeklyScoresProvider(id)),
+      ref.watch(rewardClaimsProvider(id)),
+    );
+    if (data case (
+      AsyncData(value: Ok(value: final tasks)),
+      AsyncData(value: Ok(value: final scores)),
+      AsyncData(value: Ok(value: final claims)),
+    ) when entries != null) {
+      return earliestDeadline(
+        tasks: tasks,
+        entries: entries,
+        student: myId,
+        // Bu ödülün bekleyen isteği varsa puanı ayrılmış sayılmasın.
+        total: rewardBalance(scores, [
+          for (final c in claims)
+            if (!(c.pending && c.rewardId == widget.reward.id)) c,
+        ], myId),
+        threshold: widget.reward.points,
+        periodStart: periodStart,
+        today: today,
+      );
+    }
+    return null;
+  }
+
+  Future<void> _pick(DateTime first) async {
+    final deadline = _deadline;
     final picked = await showDatePicker(
       context: context,
-      initialDate: _deadline ?? first.add(const Duration(days: 28)),
+      initialDate: deadline == null || deadline.isBefore(first)
+          ? first
+          : deadline,
       firstDate: first,
       lastDate: first.add(const Duration(days: 366)),
     );
     if (picked != null) setState(() => _deadline = dateOnly(picked));
   }
 
-  Future<void> _save() async {
+  Future<void> _save(DateTime? first) async {
     final deadline = _deadline;
-    if (deadline == null) {
-      context.showMessage('Bir bitiş günü seç.');
+    if (first == null) return;
+    if (deadline == null || deadline.isBefore(first)) {
+      context.showMessage(
+        'Bir bitiş günü seç; en erken ${formatShortDate(first)}.',
+      );
       return;
     }
     setState(() => _loading = true);
@@ -96,8 +146,7 @@ class _GoalPageState extends ConsumerState<GoalPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Seçiciyi açarken okunabilsin diye dinlenir.
-    ref.watch(taskProgramProvider(widget.medrese.id));
+    final first = _earliest();
     final theme = Theme.of(context);
     final deadline = _deadline;
     final r = widget.reward;
@@ -121,8 +170,16 @@ class _GoalPageState extends ConsumerState<GoalPage> {
                   ? 'Bitiş günü seç'
                   : 'Bitiş: ${formatDay(deadline)}',
             ),
-            onPressed: _loading ? null : _pick,
+            onPressed: _loading || first == null ? null : () => _pick(first),
           ),
+          if (first != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'En erken ${formatDay(first)}: bütün görevleri tam yapsan '
+              'bile daha önce ulaşamazsın. Uyum puanı hesaba katılmadı.',
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
           if (deadline != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -135,7 +192,7 @@ class _GoalPageState extends ConsumerState<GoalPage> {
           LoadingButton(
             label: widget.current == null ? 'Hedef yap' : 'Kaydet',
             loading: _loading,
-            onPressed: _save,
+            onPressed: () => _save(first),
           ),
           if (widget.current != null)
             TextButton(

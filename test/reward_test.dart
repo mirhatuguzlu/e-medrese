@@ -4,6 +4,7 @@ import 'package:e_medrese/data/repositories/task_repository.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/reward.dart';
 import 'package:e_medrese/domain/entities/task.dart';
+import 'package:e_medrese/presentation/features/rewards/goal_page.dart';
 import 'package:e_medrese/presentation/features/rewards/reward_requests_page.dart';
 import 'package:e_medrese/presentation/features/rewards/rewards_page.dart';
 import 'package:e_medrese/presentation/features/tasks/tasks_tab_page.dart';
@@ -101,6 +102,49 @@ void main() {
     expect(leftThisWeek(ders, 1, 6), (left: 1, perDay: null));
   });
 
+  group('en erken bitiş günü', () {
+    // Dönem Salı 27.10, bugün Çarşamba 28.10: bu hafta 6 gün kaldı.
+    final start = DateTime.utc(2026, 10, 27);
+    final today = DateTime.utc(2026, 10, 28);
+    DateTime earliest(num threshold, [List<TaskEntry> entries = const []]) =>
+        earliestDeadline(
+          tasks: testTasks,
+          entries: entries,
+          student: 'u1',
+          total: 0,
+          threshold: threshold,
+          periodStart: start,
+          today: today,
+        );
+    TaskEntry entry(String task, int item) => TaskEntry(
+      studentId: 'u1',
+      taskId: task,
+      day: start,
+      item: item,
+      value: 1,
+    );
+
+    test('bu haftanın kalanıyla yetişiyorsa bu dönemin sonu', () {
+      // Bu hafta en çok: namaz 30 vakit (21,43) + 1 ders (15) + 285 = 321,43.
+      expect(earliest(300), DateTime.utc(2026, 11, 2));
+    });
+
+    test('kaçırılan günler geri gelmez, sonra haftada en çok 340', () {
+      // 1000 - 321,43 = 678,57 → 2 hafta daha.
+      expect(earliest(1000), DateTime.utc(2026, 11, 16));
+    });
+
+    test('bu hafta yapılanlar sayılır, uyum sayılmaz', () {
+      // Salı 5 vakit ve ders yapılmış: bu hafta da tam 340.
+      final done = [
+        for (var i = 0; i < 5; i++) entry('namaz', i),
+        entry('ders', 0),
+      ];
+      expect(earliest(680, done), DateTime.utc(2026, 11, 9));
+      expect(earliest(681, done), DateTime.utc(2026, 11, 16));
+    });
+  });
+
   late FakeRewardRepository rewards;
   late FakeTaskRepository tasks;
 
@@ -177,6 +221,22 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('Uyum puanı hesaba katılmadı'), findsOneWidget);
+  });
+
+  testWidgets('hedef sayfası en erken günü yazar', (tester) async {
+    await pump(
+      tester,
+      GoalPage(
+        medrese: _medrese(MemberRole.student),
+        reward: rewards.rewardList[0],
+      ),
+    );
+    expect(find.textContaining('En erken 16.11'), findsOneWidget);
+    // Seçilmeden kaydedilmez.
+    await tester.tap(find.text('Hedef yap'));
+    await tester.pumpAndSettle();
+    expect(find.text('Bir bitiş günü seç; en erken 16.11.'), findsOneWidget);
+    expect(rewards.myGoal, isNull);
   });
 
   testWidgets('puana ulaşmadan ödül istenemez', (tester) async {
