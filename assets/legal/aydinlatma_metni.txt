@@ -1,6 +1,6 @@
 # e-Medrese Kişisel Verilerin Korunması Aydınlatma Metni ve Gizlilik Politikası
 
-Son güncelleme: 2 Kasım 2026
+Son güncelleme: 4 Kasım 2026
 
 Bu metin, 6698 sayılı Kişisel Verilerin Korunması Kanunu'nun (KVKK) 10. maddesi ve Aydınlatma Yükümlülüğünün Yerine Getirilmesinde Uyulacak Usul ve Esaslar Hakkında Tebliğ uyarınca, e-Medrese mobil uygulamasını kullananların kişisel verilerinin nasıl işlendiğini açıklar. Google Play'deki gizlilik politikası bu metnin aynısıdır.
 
@@ -19,13 +19,14 @@ Kullanıcı içerikleri: yazdığın duyurular, paylaşımlar, yorumlar ve gönd
 Görev takibi verileri (yalnızca açık rıza verirsen): işaretlediğin namaz vakitleri, Kur'an-ı Kerim, Risale-i Nur, Cevşen ve diğer kitap okumaların, derse katılımın ve bunlardan hesaplanan haftalık puanların. Bu veriler dini inancını gösterebildiği için KVKK m.6 kapsamında özel nitelikli kişisel veridir.
 Hoca değerlendirmesi: hocanın sana verdiği haftalık uyum puanı ve notu.
 Cihaz bilgisi: bildirim göndermek için telefonunun bildirim adresi (Firebase bildirim belirteci).
+Sürüm kontrolü: uygulama her açıldığında yeni sürüm olup olmadığını GitHub'dan sorar. Bu istekte GitHub telefonunun IP adresini ve bağlantı bilgisini görür; hesap bilgilerin gönderilmez.
 İşlem güvenliği ve trafik bilgisi: içerik yazdığın ya da düzenlediğin zaman, kullanıcı kimliğin ve IP adresin; giriş kayıtları.
 
 Uygulama reklam kimliği, konum, rehber, kamera, mikrofon, ödeme bilgisi toplamaz; analitik, reklam ya da oturum kaydı aracı kullanmaz.
 
 # 3. İşleme amaçları
 
-Hesabını açmak ve girişini sağlamak; medreselere katılmanı, duyuru, paylaşım ve yorum yazmanı sağlamak; görev takibini, puanları ve sıralamayı göstermek; duyuru, yorum ve görevlerle ilgili bildirim göndermek; şikayetleri incelemek ve hukuka aykırı içeriği kaldırmak; 5651 sayılı Kanun'dan doğan trafik bilgisi saklama yükümlülüğünü yerine getirmek; bilgi güvenliğini sağlamak; yetkili kurumların taleplerini yanıtlamak.
+Hesabını açmak ve girişini sağlamak; medreselere katılmanı, duyuru, paylaşım ve yorum yazmanı sağlamak; görev takibini, puanları ve sıralamayı göstermek; duyuru, yorum ve görevlerle ilgili bildirim göndermek; uygulamanın güncel ve güvenli sürümle kullanılmasını sağlamak; şikayetleri incelemek ve hukuka aykırı içeriği kaldırmak; 5651 sayılı Kanun'dan doğan trafik bilgisi saklama yükümlülüğünü yerine getirmek; bilgi güvenliğini sağlamak; yetkili kurumların taleplerini yanıtlamak.
 
 # 4. Hukuki sebepler
 
@@ -38,12 +39,12 @@ Kişisel veriler mobil uygulama üzerinden, elektronik ortamda, otomatik yollarl
 # 5. Verilerin aktarıldığı kişiler
 
 Aynı medresenin üyeleri: adın, paylaşımların, yorumların ve duyurular medresendeki üyelere görünür. Görev takibi verilerini ve puanlarını medresenin kurucusu ve hocaları görür; haftalık toplam puanın sıralamada medresedeki üyelere görünür.
-Hizmet sağlayıcılar: Supabase Inc. (veritabanı ve sunucular, AB / İrlanda); Google LLC ve Google Ireland Ltd. (Google ile giriş ve Firebase bildirim hizmeti; sunucuları ABD dahil farklı ülkelerde olabilir). Bildirimlerde yazdığın metin Google'a gönderilmez; yalnızca "Yeni duyuru" gibi genel bir metin gider.
+Hizmet sağlayıcılar: Supabase Inc. (veritabanı ve sunucular, AB / İrlanda); Google LLC ve Google Ireland Ltd. (Google ile giriş ve Firebase bildirim hizmeti; sunucuları ABD dahil farklı ülkelerde olabilir); GitHub Inc. (ABD; uygulamanın sürüm kontrolü ve güncelleme dosyasının indirilmesi). Bildirimlerde yazdığın metin Google'a gönderilmez; yalnızca "Yeni duyuru" gibi genel bir metin gider.
 Yetkili kamu kurum ve kuruluşları ile yargı mercileri: kanunen istenmesi halinde.
 
 # 6. Yurt dışına aktarım
 
-Sunucular Türkiye dışında (İrlanda) ve Google hizmetleri ABD dahil yurt dışında bulunduğundan veriler yurt dışına aktarılır. Aktarım KVKK m.9 kapsamında, hizmet sağlayıcılarla yapılan ve Kişisel Verileri Koruma Kurulu'na bildirilen standart sözleşmelere dayanır.
+Sunucular Türkiye dışında (İrlanda), Google ve GitHub hizmetleri ABD dahil yurt dışında bulunduğundan veriler yurt dışına aktarılır. Aktarım KVKK m.9 kapsamında, hizmet sağlayıcılarla yapılan ve Kişisel Verileri Koruma Kurulu'na bildirilen standart sözleşmelere dayanır.
 
 # 7. Saklama süreleri
 

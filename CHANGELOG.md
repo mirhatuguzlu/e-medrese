@@ -1,6 +1,10 @@
 # Changelog
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
+## 2.4.0+22 — 2026-11-04
+- Zorunlu güncelleme: GitHub'da yeni bir sürüm çıktıysa uygulama "Bu sürüm artık mevcut değil" sayfasını gösteriyor ve güncellenene kadar kullanılamıyor. "Uygulamayı güncelle" düğmesi son APK'yı indiriyor. Kontrol her açılışta ve uygulama öne her geldiğinde yapılıyor; internet yoksa uygulama kilitlenmiyor.
+- Aydınlatma metnine GitHub sürüm kontrolü eklendi.
+
 
 ## 2.3.3+21 — 2026-11-04
 - Hedef kartı kapalı başlar, altındaki görev kartları ekranda kalır. Dokununca hedefin görev satırları açılır.

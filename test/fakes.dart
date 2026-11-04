@@ -14,6 +14,7 @@ import 'package:e_medrese/domain/entities/member.dart';
 import 'package:e_medrese/domain/entities/reward.dart';
 import 'package:e_medrese/domain/entities/task.dart';
 import 'package:e_medrese/services/push_service.dart';
+import 'package:e_medrese/services/update_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -569,6 +570,8 @@ List<Override> pushOverrides({
   FakeRewardRepository? rewards,
 }) => [
   rewardRepositoryProvider.overrideWithValue(rewards ?? FakeRewardRepository()),
+  // Testler GitHub'a sürüm sormasın.
+  updateRequiredProvider.overrideWith((ref) async => false),
   consentRepositoryProvider.overrideWithValue(
     consent ?? FakeConsentRepository(),
   ),
