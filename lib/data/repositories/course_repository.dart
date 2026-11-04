@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
+import 'package:e_medrese/data/repositories/legacy_saved_courses.dart';
 import 'package:e_medrese/data/repositories/supabase_guard.dart';
 import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/domain/entities/feed.dart';
@@ -36,9 +37,26 @@ final courseConsentProvider = FutureProvider<Result<bool, AppFailure>>((ref) {
 /// Kullanıcının kaydettiği kurslar, en son kaydedilen başta.
 final savedCoursesProvider = FutureProvider<Result<List<String>, AppFailure>>((
   ref,
-) {
-  if (ref.watch(sessionProvider).valueOrNull == null) return const Ok([]);
-  return ref.watch(courseRepositoryProvider).savedCourses();
+) async {
+  final user = ref.watch(sessionProvider).valueOrNull?.user.id;
+  if (user == null) return const Ok([]);
+  final repo = ref.watch(courseRepositoryProvider);
+  // 2.9'da telefona kaydedilenler rıza 4 verilince sunucuya taşınır.
+  if (await ref.watch(courseConsentProvider.future) case Ok(value: true)) {
+    final legacy = ref.watch(legacySavedCoursesProvider);
+    final local = await legacy.read(user);
+    final courses = await ref.watch(coursesProvider.future);
+    if (courses case Ok(:final value) when local.isNotEmpty) {
+      // Yayından kalkan kurslar taşınmaz (sunucu kabul etmez).
+      final published = {for (final c in value) c.id};
+      local.removeWhere((id, _) => !published.contains(id));
+      // Taşınamazsa telefonda kalır, sonra yeniden denenir.
+      if (local.isEmpty || await repo.importSaved(local) is Ok) {
+        await legacy.remove(user);
+      }
+    }
+  }
+  return repo.savedCourses();
 });
 
 /// Kullanıcının medreselerine hocaların verdiği kurslar.
@@ -654,6 +672,19 @@ class CourseRepository {
             .order('created_at', ascending: false);
         return [for (final r in rows) r['course_id'] as String];
       });
+
+  /// Telefonda kalan kayıtları kaydetme zamanlarıyla sunucuya yazar;
+  /// zaten kayıtlı olanlar atlanır.
+  Future<Result<void, AppFailure>> importSaved(Map<String, DateTime> saved) =>
+      guardSupabase(
+        () => _client.from('saved_courses').upsert([
+          for (final e in saved.entries)
+            {
+              'course_id': e.key,
+              'created_at': e.value.toUtc().toIso8601String(),
+            },
+        ], ignoreDuplicates: true),
+      );
 
   /// Kursu kaydeder ya da kayıtlılardan çıkarır (kaydetmek rıza 4 ister).
   Future<Result<void, AppFailure>> setSaved(

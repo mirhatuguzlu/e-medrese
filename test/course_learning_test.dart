@@ -211,10 +211,12 @@ void main() {
   group('sayfalar', () {
     late FakeCourseRepository repo;
     late FakeMedreseRepository medreses;
+    late FakeLegacySavedCourses legacy;
 
     setUp(() {
       repo = FakeCourseRepository()..courseList.addAll([_course, _siyer]);
       medreses = FakeMedreseRepository();
+      legacy = FakeLegacySavedCourses();
     });
 
     Future<void> pump(WidgetTester tester, Widget page) async {
@@ -226,7 +228,7 @@ void main() {
           overrides: [
             sessionProvider.overrideWith((ref) => Stream.value(testSession)),
             medreseRepositoryProvider.overrideWithValue(medreses),
-            ...pushOverrides(courses: repo),
+            ...pushOverrides(courses: repo, legacy: legacy),
           ],
           child: MaterialApp(home: page),
         ),
@@ -717,6 +719,38 @@ void main() {
       expect(find.text('Kaydettiklerin'), findsOneWidget);
       expect(find.text('Siyer-i Nebi'), findsOneWidget);
       expect(find.textContaining('Henüz bir kursa'), findsNothing);
+    });
+
+    testWidgets('2.9 telefon kayıtları sunucuya taşınır, telefondan silinir', (
+      tester,
+    ) async {
+      final at = DateTime(2026, 11);
+      legacy.entries.addAll({
+        'u1:c2': at,
+        // Yayından kalkmış kurs ve başka kullanıcının kaydı taşınmaz.
+        'u1:gone': at,
+        'u2:c1': at,
+      });
+      await pump(tester, const MyCoursesPage());
+      expect(repo.calls, ['import c2']);
+      expect(find.text('Siyer-i Nebi'), findsOneWidget);
+      expect(legacy.entries.keys, ['u2:c1']);
+    });
+
+    testWidgets('taşınamayan telefon kayıtları silinmez, rızasız taşınmaz', (
+      tester,
+    ) async {
+      legacy.entries['u1:c2'] = DateTime(2026, 11);
+      repo.importFails = true;
+      await pump(tester, const MyCoursesPage());
+      expect(repo.calls, ['import c2']);
+      expect(legacy.entries.keys, ['u1:c2']);
+
+      repo
+        ..calls.clear()
+        ..consent = false;
+      await pump(tester, const MyCoursesPage());
+      expect(repo.calls, isEmpty);
     });
 
     testWidgets('yönetici derse https kaynak ekler; geçersiz link olmaz', (

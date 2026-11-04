@@ -7,12 +7,15 @@ import 'package:e_medrese/services/update_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Ayarlar android/app/google-services.json'dan gelir.
   await Firebase.initializeApp();
+  // 2.9'un telefona kaydettiği kurslar sunucuya taşınırken okunur.
+  await Hive.initFlutter();
   await Supabase.initialize(
     url: SupabaseConfig.url,
     publishableKey: SupabaseConfig.publishableKey,

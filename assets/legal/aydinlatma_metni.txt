@@ -1,6 +1,6 @@
 # e-Medrese Kişisel Verilerin Korunması Aydınlatma Metni ve Gizlilik Politikası
 
-Son güncelleme: 9 Kasım 2026
+Son güncelleme: 5 Kasım 2026
 
 Bu metin, 6698 sayılı Kişisel Verilerin Korunması Kanunu'nun (KVKK) 10. maddesi ve Aydınlatma Yükümlülüğünün Yerine Getirilmesinde Uyulacak Usul ve Esaslar Hakkında Tebliğ uyarınca, e-Medrese mobil uygulamasını kullananların kişisel verilerinin nasıl işlendiğini açıklar. Google Play'deki gizlilik politikası bu metnin aynısıdır.
 

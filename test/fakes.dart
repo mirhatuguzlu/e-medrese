@@ -4,6 +4,7 @@ import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/consent_repository.dart';
 import 'package:e_medrese/data/repositories/course_repository.dart';
 import 'package:e_medrese/data/repositories/feed_repository.dart';
+import 'package:e_medrese/data/repositories/legacy_saved_courses.dart';
 import 'package:e_medrese/data/repositories/medrese_repository.dart';
 import 'package:e_medrese/data/repositories/notification_repository.dart';
 import 'package:e_medrese/data/repositories/reward_repository.dart';
@@ -570,6 +571,21 @@ class FakePushService implements PushService {
   Stream<AppNotification> get opened => taps.stream;
 }
 
+/// 2.9'un telefondaki kurs kayıtları; anahtar `<kullanıcı>:<kurs>`.
+class FakeLegacySavedCourses implements LegacySavedCourses {
+  final entries = <String, DateTime>{};
+
+  @override
+  Future<Map<String, DateTime>> read(String user) async => {
+    for (final e in entries.entries)
+      if (e.key.startsWith('$user:')) e.key.substring(user.length + 1): e.value,
+  };
+
+  @override
+  Future<void> remove(String user) async =>
+      entries.removeWhere((k, _) => k.startsWith('$user:'));
+}
+
 /// Ana ekranı açan testler için bildirim ve rıza sağlayıcıları.
 List<Override> pushOverrides({
   FakeNotificationRepository? notifications,
@@ -577,9 +593,13 @@ List<Override> pushOverrides({
   FakeConsentRepository? consent,
   FakeRewardRepository? rewards,
   FakeCourseRepository? courses,
+  FakeLegacySavedCourses? legacy,
 }) => [
   rewardRepositoryProvider.overrideWithValue(rewards ?? FakeRewardRepository()),
   courseRepositoryProvider.overrideWithValue(courses ?? FakeCourseRepository()),
+  legacySavedCoursesProvider.overrideWithValue(
+    legacy ?? FakeLegacySavedCourses(),
+  ),
   // Testler GitHub'a sürüm sormasın.
   updateRequiredProvider.overrideWith((ref) async => false),
   consentRepositoryProvider.overrideWithValue(
@@ -806,6 +826,20 @@ class FakeCourseRepository implements CourseRepository {
   @override
   Future<Result<List<String>, AppFailure>> savedCourses() async =>
       Ok(List.of(savedList));
+
+  bool importFails = false;
+
+  @override
+  Future<Result<void, AppFailure>> importSaved(
+    Map<String, DateTime> saved,
+  ) async {
+    calls.add('import ${saved.keys.join(',')}');
+    if (importFails) return const Err(NetworkFailure('Bağlantı yok.'));
+    for (final id in saved.keys) {
+      if (!savedList.contains(id)) savedList.add(id);
+    }
+    return const Ok(null);
+  }
 
   @override
   Future<Result<void, AppFailure>> setSaved(

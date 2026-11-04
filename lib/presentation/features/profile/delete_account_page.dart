@@ -1,5 +1,6 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
+import 'package:e_medrese/data/repositories/legacy_saved_courses.dart';
 import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
 import 'package:e_medrese/presentation/widgets/loading_button.dart';
 import 'package:e_medrese/services/push_service.dart';
@@ -31,7 +32,12 @@ class _DeleteAccountPageState extends ConsumerState<DeleteAccountPage> {
     setState(() => _loading = true);
     // Silmeden önce: token silmek için oturum gerekiyor.
     await ref.read(pushServiceProvider).unregister();
+    final userId = ref.read(sessionProvider).valueOrNull?.user.id;
     final result = await ref.read(authRepositoryProvider).deleteAccount();
+    // 2.9'dan telefonda kalan kurs kayıtları da silinsin.
+    if (result is Ok && userId != null) {
+      await ref.read(legacySavedCoursesProvider).remove(userId);
+    }
     // Başarılı silmede oturum kapanır, bu sayfa ağaçtan kalkar.
     if (!mounted) return;
     setState(() => _loading = false);
