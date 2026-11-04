@@ -1,6 +1,5 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/course_repository.dart';
-import 'package:e_medrese/data/repositories/saved_courses_repository.dart';
 import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/presentation/features/courses/certificate_page.dart';
 import 'package:e_medrese/presentation/features/courses/course_consent_page.dart';
@@ -24,6 +23,28 @@ class CoursePage extends ConsumerWidget {
     await context.push(LessonPage(courseId: courseId, lessonId: lesson.id));
   }
 
+  Future<void> _setSaved(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool saved,
+  }) async {
+    // Kaydetmek sunucuya yazar, rıza ister; çıkarmak istemez.
+    if (saved && !await ensureCourseConsent(context, ref)) return;
+    final result = await ref
+        .read(courseRepositoryProvider)
+        .setSaved(courseId, saved: saved);
+    ref.invalidate(savedCoursesProvider);
+    if (!context.mounted) return;
+    switch (result) {
+      case Ok() when saved:
+        context.showMessage('Kaydedildi. Kurslarım sayfasında bulursun.');
+      case Ok():
+        break;
+      case Err(:final error):
+        context.showMessage(error.message);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final course = switch (ref.watch(coursesProvider)) {
@@ -45,6 +66,11 @@ class CoursePage extends ConsumerWidget {
       AsyncData(value: Ok(:final value)) => value,
       _ => const <String, LessonProgress>{},
     };
+    // Kayıtlar yüklenene kadar düğme gösterilmez.
+    final saved = switch (ref.watch(savedCoursesProvider)) {
+      AsyncData(value: Ok(:final value)) => value.contains(course.id),
+      _ => null,
+    };
     final summary = CourseProgress(course, progress);
     final next = summary.next;
     final theme = Theme.of(context);
@@ -56,23 +82,13 @@ class CoursePage extends ConsumerWidget {
             pinned: true,
             expandedHeight: MediaQuery.sizeOf(context).width * 9 / 16,
             actions: [
-              if (ref.watch(savedCoursesProvider).contains(course.id))
+              if (saved case final saved?)
                 IconButton(
-                  tooltip: 'Kayıtlılardan çıkar',
-                  icon: const Icon(Icons.bookmark),
-                  onPressed: () =>
-                      ref.read(savedCoursesProvider.notifier).toggle(course.id),
-                )
-              else
-                IconButton(
-                  tooltip: 'Kursu kaydet',
-                  icon: const Icon(Icons.bookmark_add_outlined),
-                  onPressed: () {
-                    ref.read(savedCoursesProvider.notifier).toggle(course.id);
-                    context.showMessage(
-                      'Kaydedildi. Kurslarım sayfasında bulursun.',
-                    );
-                  },
+                  tooltip: saved ? 'Kayıtlılardan çıkar' : 'Kursu kaydet',
+                  icon: Icon(
+                    saved ? Icons.bookmark : Icons.bookmark_add_outlined,
+                  ),
+                  onPressed: () => _setSaved(context, ref, saved: !saved),
                 ),
             ],
             flexibleSpace: FlexibleSpaceBar(

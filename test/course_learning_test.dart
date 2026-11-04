@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:e_medrese/data/repositories/medrese_repository.dart';
-import 'package:e_medrese/data/repositories/saved_courses_repository.dart';
 import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/member.dart';
@@ -692,29 +691,29 @@ void main() {
       await tester.tap(find.byTooltip('Kayıtlılardan çıkar'));
       await tester.pumpAndSettle();
       expect(find.byTooltip('Kursu kaydet'), findsOneWidget);
+      expect(repo.calls, ['saved c2 true', 'saved c2 false']);
+    });
+
+    testWidgets('rıza yoksa kaydetmek rıza sayfasını açar, kaydetmez', (
+      tester,
+    ) async {
+      repo.consent = false;
+      await pump(tester, const CoursePage(courseId: 'c2'));
+      await tester.tap(find.byTooltip('Kursu kaydet'));
+      await tester.pumpAndSettle();
+      expect(find.text('Online Medrese rızası'), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(repo.calls, isEmpty);
+      expect(find.byTooltip('Kursu kaydet'), findsOneWidget);
     });
 
     testWidgets('kaydedilen başlanmamış kurs Kurslarım sayfasında', (
       tester,
     ) async {
-      await pump(
-        tester,
-        Consumer(
-          builder: (context, ref, _) {
-            // Uygulamadaki gibi kayıt, oturum yüklendikten sonra yapılsın.
-            ref.watch(savedCoursesProvider);
-            return TextButton(
-              onPressed: () {
-                ref.read(savedCoursesProvider.notifier).toggle('c2');
-                unawaited(context.push(const MyCoursesPage()));
-              },
-              child: const Text('aç'),
-            );
-          },
-        ),
-      );
-      await tester.tap(find.text('aç'));
-      await tester.pumpAndSettle();
+      // Başka telefonda kaydedilmiş gibi: sunucudan gelir.
+      repo.savedList.add('c2');
+      await pump(tester, const MyCoursesPage());
       expect(find.text('Kaydettiklerin'), findsOneWidget);
       expect(find.text('Siyer-i Nebi'), findsOneWidget);
       expect(find.textContaining('Henüz bir kursa'), findsNothing);

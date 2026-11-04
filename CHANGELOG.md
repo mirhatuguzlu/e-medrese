@@ -1,6 +1,10 @@
 # Changelog
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
+## 2.10.0+29 — 2026-11-05
+- Kaydedilen kurslar artık hesapta saklanır, bütün telefonlarda Kurslarım'da görünür. Kaydetmek Online Medrese rızası ister; rıza metni (sürüm 4) ve aydınlatma metni güncellendi, rıza verenlerden yeniden onay istenir. Rıza geri alınınca kayıtlar da silinir.
+- Güncelleme artık telefonun işlemcisine uygun, yaklaşık üçte bir boyutlu APK'yı indirir.
+
 ## 2.9.1+28 — 2026-11-05
 - Güncelleme ekranı yenilendi: düz beyaz sayfa yerine renkli zemin ve kart; uygulamanın bozulduğu izlenimi vermiyor.
 

@@ -1,6 +1,5 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/course_repository.dart';
-import 'package:e_medrese/data/repositories/saved_courses_repository.dart';
 import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/presentation/features/courses/online_medrese_page.dart';
 import 'package:flutter/material.dart';
@@ -32,8 +31,12 @@ class MyCoursesPage extends ConsumerWidget {
     final done = started.where((p) => p.finished).toList();
     // Kaydedilip henüz başlanmayanlar; başlanınca "Devam edenler"e geçer.
     final byId = {for (final c in courses) c.id: c};
+    final savedIds = switch (ref.watch(savedCoursesProvider)) {
+      AsyncData(value: Ok(:final value)) => value,
+      _ => const <String>[],
+    };
     final saved = [
-      for (final id in ref.watch(savedCoursesProvider))
+      for (final id in savedIds)
         if (byId[id] case final c? when !CourseProgress(c, progress).started) c,
     ];
     final lessonsDone = progress.values.where((p) => p.completed).length;
@@ -58,7 +61,8 @@ class MyCoursesPage extends ConsumerWidget {
         onRefresh: () async {
           ref
             ..invalidate(coursesProvider)
-            ..invalidate(lessonProgressProvider);
+            ..invalidate(lessonProgressProvider)
+            ..invalidate(savedCoursesProvider);
           await ref.read(lessonProgressProvider.future);
         },
         child: ListView(

@@ -797,6 +797,24 @@ class FakeCourseRepository implements CourseRepository {
     calls.add('revoke');
     consent = false;
     progressMap.clear();
+    savedList.clear();
+    return const Ok(null);
+  }
+
+  final savedList = <String>[];
+
+  @override
+  Future<Result<List<String>, AppFailure>> savedCourses() async =>
+      Ok(List.of(savedList));
+
+  @override
+  Future<Result<void, AppFailure>> setSaved(
+    String courseId, {
+    required bool saved,
+  }) async {
+    calls.add('saved $courseId $saved');
+    savedList.remove(courseId);
+    if (saved) savedList.insert(0, courseId);
     return const Ok(null);
   }
 

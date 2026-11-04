@@ -54,7 +54,8 @@ class _CourseConsentPageState extends ConsumerState<CourseConsentPage> {
       case Ok():
         ref
           ..invalidate(courseConsentProvider)
-          ..invalidate(lessonProgressProvider);
+          ..invalidate(lessonProgressProvider)
+          ..invalidate(savedCoursesProvider);
         Navigator.of(context).pop();
         context.showMessage(
           give

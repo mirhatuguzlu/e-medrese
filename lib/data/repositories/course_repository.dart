@@ -33,6 +33,14 @@ final courseConsentProvider = FutureProvider<Result<bool, AppFailure>>((ref) {
   return ref.watch(courseRepositoryProvider).hasConsent();
 });
 
+/// Kullanıcının kaydettiği kurslar, en son kaydedilen başta.
+final savedCoursesProvider = FutureProvider<Result<List<String>, AppFailure>>((
+  ref,
+) {
+  if (ref.watch(sessionProvider).valueOrNull == null) return const Ok([]);
+  return ref.watch(courseRepositoryProvider).savedCourses();
+});
+
 /// Kullanıcının medreselerine hocaların verdiği kurslar.
 final assignmentsProvider =
     FutureProvider<Result<List<CourseAssignment>, AppFailure>>((ref) {
@@ -220,8 +228,9 @@ class CourseRepository {
   });
 
   /// Geçerli rıza metninin sürümü (`assets/legal/kurs_riza.txt`). 3: tekrar
-  /// soruları, değerlendirmeler, icazet ve haftalık puan da kapsanır.
-  static const consentVersion = 3;
+  /// soruları, değerlendirmeler, icazet ve haftalık puan da kapsanır. 4:
+  /// kaydedilen kurslar da kapsanır.
+  static const consentVersion = 4;
 
   /// Kullanıcının geçerli sürüm rızası var mı. Eski sürüm rıza verenlere
   /// yeniden sorulur.
@@ -635,6 +644,28 @@ class CourseRepository {
             ),
         };
       });
+
+  /// Kaydedilen kurslar, en son kaydedilen başta (RLS: yalnız kendisininki).
+  Future<Result<List<String>, AppFailure>> savedCourses() =>
+      guardSupabase(() async {
+        final rows = await _client
+            .from('saved_courses')
+            .select('course_id')
+            .order('created_at', ascending: false);
+        return [for (final r in rows) r['course_id'] as String];
+      });
+
+  /// Kursu kaydeder ya da kayıtlılardan çıkarır (kaydetmek rıza 4 ister).
+  Future<Result<void, AppFailure>> setSaved(
+    String courseId, {
+    required bool saved,
+  }) => guardSupabase(
+    () => saved
+        ? _client
+              .from('saved_courses')
+              .upsert({'course_id': courseId}, ignoreDuplicates: true)
+        : _client.from('saved_courses').delete().eq('course_id', courseId),
+  );
 
   /// Kursun isimsiz değerlendirmeleri; kullanıcınınki başta.
   Future<Result<List<CourseReview>, AppFailure>> reviews(String courseId) =>

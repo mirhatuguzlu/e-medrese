@@ -1,12 +1,21 @@
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:package_info_plus/package_info_plus.dart';
 
+/// Bu telefonun işlemcisine göre bölünmüş APK (`flutter build apk
+/// --split-per-abi` çıktısının adı); tek APK'dan çok daha küçük.
+String apkName() => switch (Abi.current()) {
+  Abi.androidArm => 'app-armeabi-v7a-release.apk',
+  Abi.androidX64 => 'app-x86_64-release.apk',
+  _ => 'app-arm64-v8a-release.apk',
+};
+
 /// Yeni sürümün indirildiği adres.
-const latestApkUrl =
-    'https://github.com/mirhatuguzlu/e-medrese/releases/latest/download/e-medrese.apk';
+String get latestApkUrl =>
+    'https://github.com/mirhatuguzlu/e-medrese/releases/latest/download/${apkName()}';
 
 const _latestReleaseApi =
     'https://api.github.com/repos/mirhatuguzlu/e-medrese/releases/latest';
@@ -23,7 +32,7 @@ final updateRequiredProvider = FutureProvider<bool>((ref) async {
     final release = jsonDecode(res.body) as Map<String, dynamic>;
     // APK henüz yüklenmediyse indirme adresi 404 verir; zorlanmaz.
     final hasApk = (release['assets'] as List<dynamic>).any(
-      (a) => (a as Map<String, dynamic>)['name'] == 'e-medrese.apk',
+      (a) => (a as Map<String, dynamic>)['name'] == apkName(),
     );
     final installed = (await PackageInfo.fromPlatform()).version;
     return hasApk && isNewerVersion(release['tag_name'] as String, installed);
