@@ -171,7 +171,8 @@ class CourseRepository {
           'level, outcomes, '
           'published, lessons(id, position, section, title, description, '
           'youtube_id, duration_seconds, lesson_questions(id, lesson_id, '
-          'position, question, options, answer, explanation))',
+          'position, question, options, answer, explanation), '
+          'lesson_resources(id, position, title, url))',
         );
     if (onlyPublished) query = query.eq('published', true);
     final rows = await query
@@ -480,6 +481,28 @@ class CourseRepository {
   /// Soruyu ve öğrencilerin cevaplarını siler (yönetici).
   Future<Result<void, AppFailure>> deleteQuestion(String id) => guardSupabase(
     () => _client.from('lesson_questions').delete().eq('id', id),
+  );
+
+  // Ders kaynakları ----------------------------------------------------------
+
+  /// Derse kaynak linki ekler (yönetici).
+  Future<Result<void, AppFailure>> addResource({
+    required String lessonId,
+    required int position,
+    required String title,
+    required String url,
+  }) => guardSupabase(
+    () => _client.from('lesson_resources').insert({
+      'lesson_id': lessonId,
+      'position': position,
+      'title': title.trim(),
+      'url': url,
+    }),
+  );
+
+  /// Kaynağı siler (yönetici).
+  Future<Result<void, AppFailure>> deleteResource(String id) => guardSupabase(
+    () => _client.from('lesson_resources').delete().eq('id', id),
   );
 
   // Medrese içi ders tartışması ----------------------------------------------

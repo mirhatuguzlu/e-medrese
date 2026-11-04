@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:e_medrese/data/repositories/medrese_repository.dart';
+import 'package:e_medrese/data/repositories/saved_courses_repository.dart';
 import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/member.dart';
 import 'package:e_medrese/domain/entities/reward.dart';
+import 'package:e_medrese/presentation/features/courses/admin_resources_page.dart';
 import 'package:e_medrese/presentation/features/courses/course_discussions_page.dart';
 import 'package:e_medrese/presentation/features/courses/course_form_page.dart';
 import 'package:e_medrese/presentation/features/courses/course_page.dart';
@@ -113,6 +117,26 @@ void main() {
       expect(courseMatches(_course, 'akaid fıkıh'), isFalse);
       expect(courseMatches(_siyer, '  '), isTrue);
       expect(courseMatches(_siyer, 'SİYER'), isTrue);
+    });
+
+    test('kaynak linki: yalnız https, şemasız olana https eklenir', () {
+      expect(
+        normalizeResourceUrl(' site.com/a.pdf '),
+        'https://site.com/a.pdf',
+      );
+      expect(normalizeResourceUrl('https://x.org'), 'https://x.org');
+      expect(normalizeResourceUrl('http://x.org'), isNull);
+      expect(normalizeResourceUrl('javascript:alert(1)'), isNull);
+      expect(normalizeResourceUrl('https://localhost'), isNull);
+      expect(normalizeResourceUrl('https://a.com/b c'), isNull);
+      expect(normalizeResourceUrl(''), isNull);
+      const pdf = LessonResource(
+        id: 'r',
+        position: 1,
+        title: 'Not',
+        url: 'https://a.com/Not.PDF?v=2',
+      );
+      expect(pdf.isPdf, isTrue);
     });
 
     test('Türkçe büyük harf', () {
@@ -654,6 +678,76 @@ void main() {
       await tester.pumpAndSettle();
       expect(repo.calls, [
         'course null Fıkıh Usulü fikih false orta Delilleri tanır',
+      ]);
+    });
+
+    testWidgets('kurs sayfasından kaydedilir ve çıkarılır', (tester) async {
+      await pump(tester, const CoursePage(courseId: 'c2'));
+      await tester.tap(find.byTooltip('Kursu kaydet'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Kaydedildi. Kurslarım sayfasında bulursun.'),
+        findsOneWidget,
+      );
+      await tester.tap(find.byTooltip('Kayıtlılardan çıkar'));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Kursu kaydet'), findsOneWidget);
+    });
+
+    testWidgets('kaydedilen başlanmamış kurs Kurslarım sayfasında', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        Consumer(
+          builder: (context, ref, _) {
+            // Uygulamadaki gibi kayıt, oturum yüklendikten sonra yapılsın.
+            ref.watch(savedCoursesProvider);
+            return TextButton(
+              onPressed: () {
+                ref.read(savedCoursesProvider.notifier).toggle('c2');
+                unawaited(context.push(const MyCoursesPage()));
+              },
+              child: const Text('aç'),
+            );
+          },
+        ),
+      );
+      await tester.tap(find.text('aç'));
+      await tester.pumpAndSettle();
+      expect(find.text('Kaydettiklerin'), findsOneWidget);
+      expect(find.text('Siyer-i Nebi'), findsOneWidget);
+      expect(find.textContaining('Henüz bir kursa'), findsNothing);
+    });
+
+    testWidgets('yönetici derse https kaynak ekler; geçersiz link olmaz', (
+      tester,
+    ) async {
+      repo.admin = true;
+      await pump(
+        tester,
+        const AdminResourcesPage(courseId: 'c1', lessonId: 'l2'),
+      );
+      expect(find.textContaining('Bu derste kaynak yok'), findsOneWidget);
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Kaynağın adı'),
+        'Ders notu',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Link'),
+        'http://site.com/a.pdf',
+      );
+      await tester.tap(find.text('Kaynağı ekle'));
+      await tester.pumpAndSettle();
+      expect(find.text('Geçerli bir https linki yapıştır.'), findsOneWidget);
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Link'),
+        'site.com/notlar/a.pdf',
+      );
+      await tester.tap(find.text('Kaynağı ekle'));
+      await tester.pumpAndSettle();
+      expect(repo.calls, [
+        'resource l2 1 Ders notu https://site.com/notlar/a.pdf',
       ]);
     });
   });

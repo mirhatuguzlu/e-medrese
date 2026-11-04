@@ -1,5 +1,6 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/course_repository.dart';
+import 'package:e_medrese/data/repositories/saved_courses_repository.dart';
 import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/presentation/features/courses/online_medrese_page.dart';
 import 'package:flutter/material.dart';
@@ -29,6 +30,12 @@ class MyCoursesPage extends ConsumerWidget {
           ..sort((a, b) => b.lastWatched!.compareTo(a.lastWatched!));
     final going = started.where((p) => !p.finished).toList();
     final done = started.where((p) => p.finished).toList();
+    // Kaydedilip henüz başlanmayanlar; başlanınca "Devam edenler"e geçer.
+    final byId = {for (final c in courses) c.id: c};
+    final saved = [
+      for (final id in ref.watch(savedCoursesProvider))
+        if (byId[id] case final c? when !CourseProgress(c, progress).started) c,
+    ];
     final lessonsDone = progress.values.where((p) => p.completed).length;
     final watchedSeconds = progress.values.fold<int>(
       0,
@@ -57,16 +64,17 @@ class MyCoursesPage extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.only(bottom: 24),
           children: [
-            if (started.isEmpty)
+            if (started.isEmpty && saved.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(32),
                 child: Text(
                   'Henüz bir kursa başlamadın. Online Medrese akışından '
-                  'bir kurs seç.',
+                  'bir kurs seç; sonra izlemek istediklerini kurs '
+                  'sayfasındaki yer imiyle kaydedebilirsin.',
                   textAlign: TextAlign.center,
                 ),
               )
-            else
+            else if (started.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Card(
@@ -92,6 +100,12 @@ class MyCoursesPage extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
                 child: CourseCard(progress: p),
+              ),
+            if (saved.isNotEmpty) title('Kaydettiklerin'),
+            for (final c in saved)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                child: CourseCard(progress: CourseProgress(c, progress)),
               ),
             if (done.isNotEmpty) title('Bitirdiklerin'),
             for (final p in done)

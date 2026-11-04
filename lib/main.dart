@@ -1,5 +1,6 @@
 import 'package:e_medrese/core/constants/supabase_config.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
+import 'package:e_medrese/data/repositories/saved_courses_repository.dart';
 import 'package:e_medrese/presentation/features/auth/login_page.dart';
 import 'package:e_medrese/presentation/features/shell/main_shell.dart';
 import 'package:e_medrese/presentation/features/update/update_required_page.dart';
@@ -7,6 +8,7 @@ import 'package:e_medrese/services/update_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
@@ -17,6 +19,8 @@ Future<void> main() async {
     url: SupabaseConfig.url,
     publishableKey: SupabaseConfig.publishableKey,
   );
+  await Hive.initFlutter();
+  await Hive.openBox<int>(savedCoursesBox);
   runApp(const ProviderScope(child: App()));
 }
 

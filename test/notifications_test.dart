@@ -3,6 +3,7 @@ import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:e_medrese/data/repositories/feed_repository.dart';
 import 'package:e_medrese/data/repositories/medrese_repository.dart';
 import 'package:e_medrese/domain/entities/app_notification.dart';
+import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/domain/entities/feed.dart';
 import 'package:e_medrese/presentation/features/notifications/notifications_page.dart';
 import 'package:e_medrese/presentation/features/shell/main_shell.dart';
@@ -13,6 +14,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'fakes.dart';
 
 void main() {
+  group('ders tartışması', _lessonCommentTests);
+
   testWidgets('zil okunmamış sayısını gösterir, sayfa hepsini okundu yapar', (
     tester,
   ) async {
@@ -133,5 +136,60 @@ void main() {
     await tester.tap(find.text('Paylaşımına yorum geldi'));
     await tester.pumpAndSettle();
     expect(find.text('Selam herkese'), findsOneWidget);
+  });
+}
+
+void _lessonCommentTests() {
+  testWidgets('ders tartışması bildirimine dokununca o dersin tartışması', (
+    tester,
+  ) async {
+    final push = FakePushService();
+    final courses = FakeCourseRepository()
+      ..courseList.add(
+        const Course(
+          id: 'c1',
+          title: 'Temel Akaid',
+          subtitle: '',
+          description: '',
+          teacher: '',
+          category: CourseCategory.akaid,
+          coverUrl: '',
+          lessons: [
+            Lesson(
+              id: 'l1',
+              position: 1,
+              section: '',
+              title: 'İman',
+              description: '',
+              youtubeId: 'abcdefghijk',
+              durationSeconds: 0,
+            ),
+          ],
+        ),
+      );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ...pushOverrides(push: push, courses: courses),
+          sessionProvider.overrideWith((ref) => Stream.value(testSession)),
+          medreseRepositoryProvider.overrideWithValue(FakeMedreseRepository()),
+          myMedresesProvider.overrideWith((ref) => const Ok([testMedrese])),
+        ],
+        child: const MaterialApp(home: MainShell()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    push.taps.add(
+      AppNotification.fromPush({
+        'kind': 'lesson_comment',
+        'medrese_id': testMedrese.id,
+        'lesson_id': 'l1',
+        'created_at': '2026-11-08T10:00:00Z',
+      }),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Ders tartışması'), findsOneWidget);
+    expect(find.text('${testMedrese.name} · İman'), findsOneWidget);
   });
 }

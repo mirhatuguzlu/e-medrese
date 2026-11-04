@@ -10,6 +10,7 @@ final class AppNotification {
     required this.read,
     this.medreseId,
     this.postId,
+    this.lessonId,
   });
 
   /// `notifications` satırından oluşturur.
@@ -23,6 +24,7 @@ final class AppNotification {
         read: json['read_at'] != null,
         medreseId: json['medrese_id'] as String?,
         postId: json['post_id'] as String?,
+        lessonId: json['lesson_id'] as String?,
       );
 
   /// Push mesajının verisinden (send-push) oluşturur; yalnız yönlendirme
@@ -43,6 +45,7 @@ final class AppNotification {
       read: true,
       medreseId: text('medrese_id'),
       postId: text('post_id'),
+      lessonId: text('lesson_id'),
     );
   }
 
@@ -71,4 +74,7 @@ final class AppNotification {
 
   /// Yorum bildiriminde paylaşım.
   final String? postId;
+
+  /// Ders tartışması bildiriminde ders.
+  final String? lessonId;
 }

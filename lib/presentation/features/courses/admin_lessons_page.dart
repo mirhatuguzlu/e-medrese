@@ -2,6 +2,7 @@ import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/course_repository.dart';
 import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/presentation/features/courses/admin_questions_page.dart';
+import 'package:e_medrese/presentation/features/courses/admin_resources_page.dart';
 import 'package:e_medrese/presentation/features/courses/course_cover.dart';
 import 'package:e_medrese/presentation/features/courses/course_form_page.dart';
 import 'package:e_medrese/presentation/features/courses/lesson_form_page.dart';
@@ -174,6 +175,20 @@ class _AdminLessonsPageState extends ConsumerState<AdminLessonsPage> {
                             ),
                             onPressed: () => context.push(
                               AdminQuestionsPage(
+                                courseId: course.id,
+                                lessonId: lesson.id,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Ders kaynakları',
+                            icon: Badge.count(
+                              count: lesson.resources.length,
+                              isLabelVisible: lesson.resources.isNotEmpty,
+                              child: const Icon(Icons.attach_file),
+                            ),
+                            onPressed: () => context.push(
+                              AdminResourcesPage(
                                 courseId: course.id,
                                 lessonId: lesson.id,
                               ),

@@ -37,6 +37,7 @@ type Pending = {
   tokens: string[];
   medrese_id: string | null;
   post_id: string | null;
+  lesson_id: string | null;
   created_at: string;
 };
 
@@ -94,6 +95,7 @@ Deno.serve(async (req) => {
               kind: p.kind,
               medrese_id: p.medrese_id ?? '',
               post_id: p.post_id ?? '',
+              lesson_id: p.lesson_id ?? '',
               created_at: p.created_at,
             },
           },

@@ -928,6 +928,23 @@ class FakeCourseRepository implements CourseRepository {
     return const Ok(null);
   }
 
+  @override
+  Future<Result<void, AppFailure>> addResource({
+    required String lessonId,
+    required int position,
+    required String title,
+    required String url,
+  }) async {
+    calls.add('resource $lessonId $position $title $url');
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> deleteResource(String id) async {
+    calls.add('delete resource $id');
+    return const Ok(null);
+  }
+
   final commentList = <LessonComment>[];
 
   @override

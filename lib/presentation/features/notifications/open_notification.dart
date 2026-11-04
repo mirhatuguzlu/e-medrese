@@ -7,6 +7,7 @@ import 'package:e_medrese/domain/entities/app_notification.dart';
 import 'package:e_medrese/domain/entities/task.dart';
 import 'package:e_medrese/presentation/features/announcements/announcements_page.dart';
 import 'package:e_medrese/presentation/features/courses/icazet_requests_page.dart';
+import 'package:e_medrese/presentation/features/courses/lesson_discussion_page.dart';
 import 'package:e_medrese/presentation/features/courses/medrese_courses_page.dart';
 import 'package:e_medrese/presentation/features/posts/post_page.dart';
 import 'package:e_medrese/presentation/features/rewards/reward_requests_page.dart';
@@ -68,6 +69,21 @@ Future<void> openNotification(
     case 'icazet_request':
       ref.invalidate(icazetRequestsProvider);
       await context.push(IcazetRequestsPage(medrese: medrese));
+    case 'lesson_comment' when n.lessonId != null:
+      final lesson = switch (await ref.read(coursesProvider.future)) {
+        Ok(:final value) =>
+          value
+              .expand((c) => c.lessons)
+              .where((l) => l.id == n.lessonId)
+              .firstOrNull,
+        Err() => null,
+      };
+      if (!context.mounted) return;
+      await context.push(
+        lesson == null
+            ? MedreseCoursesPage(medrese: medrese)
+            : LessonDiscussionPage(medrese: medrese, lesson: lesson),
+      );
     case 'icazet_approved' || 'icazet_rejected' || 'lesson_comment':
       ref.invalidate(icazetRequestsProvider);
       await context.push(MedreseCoursesPage(medrese: medrese));

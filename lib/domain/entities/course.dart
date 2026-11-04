@@ -107,6 +107,7 @@ final class Lesson {
     required this.youtubeId,
     required this.durationSeconds,
     this.questions = const [],
+    this.resources = const [],
   });
 
   /// `lessons` satırından (`lesson_questions(*)` ile) oluşturur.
@@ -122,10 +123,17 @@ final class Lesson {
       for (final q in json['lesson_questions'] as List<dynamic>? ?? const [])
         LessonQuestion.fromJson(q as Map<String, dynamic>),
     ]..sort((a, b) => a.position.compareTo(b.position)),
+    resources: [
+      for (final r in json['lesson_resources'] as List<dynamic>? ?? const [])
+        LessonResource.fromJson(r as Map<String, dynamic>),
+    ]..sort((a, b) => a.position.compareTo(b.position)),
   );
 
   /// Tekrar soruları, sırasıyla.
   final List<LessonQuestion> questions;
+
+  /// Ders kaynakları (PDF, web linki), sırasıyla.
+  final List<LessonResource> resources;
 
   /// Kimlik.
   final String id;
@@ -737,3 +745,54 @@ String foldTurkish(String s) {
 
 /// Tekrar sorularında ilk cevaplar: soru kimliği -> doğru mu.
 typedef QuestionResults = Map<String, bool>;
+
+/// Yöneticinin derse eklediği kaynak: PDF ya da web sayfası linki.
+final class LessonResource {
+  /// Kaynak.
+  const LessonResource({
+    required this.id,
+    required this.position,
+    required this.title,
+    required this.url,
+  });
+
+  /// `lesson_resources` satırından oluşturur.
+  factory LessonResource.fromJson(Map<String, dynamic> json) => LessonResource(
+    id: json['id'] as String,
+    position: json['position'] as int? ?? 0,
+    title: json['title'] as String,
+    url: json['url'] as String,
+  );
+
+  /// Kimlik.
+  final String id;
+
+  /// Dersteki sırası.
+  final int position;
+
+  /// Görünen ad.
+  final String title;
+
+  /// https linki.
+  final String url;
+
+  /// Link PDF dosyası mı.
+  bool get isPdf =>
+      Uri.tryParse(url)?.path.toLowerCase().endsWith('.pdf') ?? false;
+}
+
+/// Kaynak linki geçerliyse temizlenmiş hali: yalnız https ve alan adı olan
+/// linkler (sunucu da aynı kuralı uygular); geçersizse `null`. Şemasız
+/// yazılana https eklenir.
+String? normalizeResourceUrl(String input) {
+  final text = input.trim();
+  if (text.isEmpty || text.contains(RegExp(r'\s')) || text.length > 2000) {
+    return null;
+  }
+  final url = text.contains('://') ? text : 'https://$text';
+  final uri = Uri.tryParse(url);
+  if (uri == null || uri.scheme != 'https' || !uri.host.contains('.')) {
+    return null;
+  }
+  return url;
+}

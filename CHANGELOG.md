@@ -1,6 +1,12 @@
 # Changelog
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
+## 2.9.0+27 — 2026-11-09
+- Kurs kaydetme: kurs sayfasındaki yer imiyle kaydedilen kurslar "Kurslarım"da "Kaydettiklerin" altında. Kayıtlar yalnız telefonda tutulur; hesap silinince telefondan da silinir.
+- Ders kaynakları: yöneticiler derse PDF ya da web sayfası linki ekler (yalnız https); öğrenci ders sayfasındaki "Ders kaynakları"ndan açar.
+- Ders tartışması bildirimine (uygulama içi ya da telefon bildirimi) dokununca doğrudan o dersin tartışması açılır.
+- Aydınlatma metni güncellendi (kaynak linkleri, telefonda tutulan kayıtlar).
+
 ## 2.8.0+26 — 2026-11-08
 - Tekrar soruları: yöneticiler derslere çoktan seçmeli soru ekler (2–5 şık, açıklama). Öğrenci dersi bitirince çözer; yanlışta doğrusu ve açıklaması görünür. İlk cevap kaydedilir, yeniden çözmek serbest. Hocalar verdikleri kursta doğru sayısını görür.
 - Medrese içi ders tartışması: hocanın verdiği kursun derslerinde yalnız medrese üyelerinin gördüğü soru-cevap; yazı videonun o anına bağlanabilir, ana dokununca video oraya gider. Hocanın yazısı "Hoca" rozetli; hocalar kursun bütün tartışmalarını tek sayfada görür. Şikayet ve silme var; bildirim gider.

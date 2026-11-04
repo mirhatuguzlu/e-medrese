@@ -1,5 +1,6 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/course_repository.dart';
+import 'package:e_medrese/data/repositories/saved_courses_repository.dart';
 import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/presentation/features/courses/certificate_page.dart';
 import 'package:e_medrese/presentation/features/courses/course_consent_page.dart';
@@ -54,6 +55,26 @@ class CoursePage extends ConsumerWidget {
           SliverAppBar(
             pinned: true,
             expandedHeight: MediaQuery.sizeOf(context).width * 9 / 16,
+            actions: [
+              if (ref.watch(savedCoursesProvider).contains(course.id))
+                IconButton(
+                  tooltip: 'Kayıtlılardan çıkar',
+                  icon: const Icon(Icons.bookmark),
+                  onPressed: () =>
+                      ref.read(savedCoursesProvider.notifier).toggle(course.id),
+                )
+              else
+                IconButton(
+                  tooltip: 'Kursu kaydet',
+                  icon: const Icon(Icons.bookmark_add_outlined),
+                  onPressed: () {
+                    ref.read(savedCoursesProvider.notifier).toggle(course.id);
+                    context.showMessage(
+                      'Kaydedildi. Kurslarım sayfasında bulursun.',
+                    );
+                  },
+                ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,

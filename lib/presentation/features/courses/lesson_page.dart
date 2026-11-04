@@ -13,6 +13,7 @@ import 'package:e_medrese/presentation/features/courses/lesson_quiz_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
@@ -297,6 +298,15 @@ class _LessonPageState extends ConsumerState<LessonPage>
     unawaited(_player?.playVideo());
   }
 
+  Future<void> _openResource(LessonResource r) async {
+    unawaited(_player?.pauseVideo());
+    final opened = await launchUrl(
+      Uri.parse(r.url),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened && mounted) context.showMessage('Kaynak açılamadı.');
+  }
+
   Future<void> _openQuiz() async {
     final lesson = _lesson;
     if (lesson == null) return;
@@ -561,6 +571,29 @@ class _LessonPageState extends ConsumerState<LessonPage>
                 if (lesson.description.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text(lesson.description, style: theme.textTheme.bodyLarge),
+                ],
+                if (lesson.resources.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    'Ders kaynakları',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  for (final r in lesson.resources)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        r.isPdf ? Icons.picture_as_pdf_outlined : Icons.link,
+                      ),
+                      title: Text(r.title),
+                      subtitle: Text(
+                        Uri.parse(r.url).host,
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      trailing: const Icon(Icons.open_in_new),
+                      onTap: () => _openResource(r),
+                    ),
                 ],
                 const SizedBox(height: 24),
                 if (next != null)
