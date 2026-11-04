@@ -1,10 +1,12 @@
 import 'package:e_medrese/core/core.dart';
+import 'package:e_medrese/data/repositories/course_repository.dart';
 import 'package:e_medrese/data/repositories/feed_repository.dart';
 import 'package:e_medrese/data/repositories/medrese_repository.dart';
 import 'package:e_medrese/data/repositories/task_repository.dart';
 import 'package:e_medrese/domain/entities/app_notification.dart';
 import 'package:e_medrese/domain/entities/task.dart';
 import 'package:e_medrese/presentation/features/announcements/announcements_page.dart';
+import 'package:e_medrese/presentation/features/courses/medrese_courses_page.dart';
 import 'package:e_medrese/presentation/features/posts/post_page.dart';
 import 'package:e_medrese/presentation/features/rewards/reward_requests_page.dart';
 import 'package:e_medrese/presentation/features/rewards/rewards_page.dart';
@@ -59,6 +61,9 @@ Future<void> openNotification(
       );
     case 'reward' || 'reward_rejected':
       await context.push(RewardsPage(medrese: medrese));
+    case 'course_assigned':
+      ref.invalidate(assignmentsProvider);
+      await context.push(MedreseCoursesPage(medrese: medrese));
     case 'reward_request':
       await context.push(RewardRequestsPage(medrese: medrese));
     case 'comment' when n.postId != null:

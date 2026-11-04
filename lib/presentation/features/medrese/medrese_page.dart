@@ -1,5 +1,6 @@
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/presentation/features/announcements/announcements_page.dart';
+import 'package:e_medrese/presentation/features/courses/medrese_courses_page.dart';
 import 'package:e_medrese/presentation/features/medrese/invite_code_page.dart';
 import 'package:e_medrese/presentation/features/members/members_page.dart';
 import 'package:e_medrese/presentation/features/posts/posts_page.dart';
@@ -67,6 +68,14 @@ class MedresePage extends StatelessWidget {
                   title: 'Üyeler',
                   subtitle: 'Hocalar ve öğrenciler',
                   page: MembersPage(medrese: medrese),
+                ),
+                TileCard.page(
+                  icon: const Icon(Icons.ondemand_video_outlined),
+                  title: 'Online kurslar',
+                  subtitle: medrese.myRole.isStaff
+                      ? 'Kurs ver, öğrenci ilerlemesi'
+                      : 'Hocalarının verdiği kurslar',
+                  page: MedreseCoursesPage(medrese: medrese),
                 ),
                 TileCard.page(
                   icon: const Icon(Icons.emoji_events_outlined),

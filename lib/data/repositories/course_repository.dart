@@ -32,6 +32,38 @@ final courseConsentProvider = FutureProvider<Result<bool, AppFailure>>((ref) {
   return ref.watch(courseRepositoryProvider).hasConsent();
 });
 
+/// Kullanıcının medreselerine hocaların verdiği kurslar.
+final assignmentsProvider =
+    FutureProvider<Result<List<CourseAssignment>, AppFailure>>((ref) {
+      if (ref.watch(sessionProvider).valueOrNull == null) return const Ok([]);
+      return ref.watch(courseRepositoryProvider).assignments();
+    });
+
+/// Öğrencilerin verilen kurstaki ilerlemesi (hocalar).
+final AutoDisposeFutureProviderFamily<
+  Result<List<StudentCourseProgress>, AppFailure>,
+  ({String medreseId, String courseId})
+>
+assignmentProgressProvider = FutureProvider.autoDispose
+    .family<
+      Result<List<StudentCourseProgress>, AppFailure>,
+      ({String medreseId, String courseId})
+    >(
+      (ref, key) => ref
+          .watch(courseRepositoryProvider)
+          .assignmentProgress(medreseId: key.medreseId, courseId: key.courseId),
+    );
+
+/// Kullanıcının bir dersteki notları.
+final AutoDisposeFutureProviderFamily<
+  Result<List<LessonNote>, AppFailure>,
+  String
+>
+lessonNotesProvider = FutureProvider.autoDispose
+    .family<Result<List<LessonNote>, AppFailure>, String>(
+      (ref, lessonId) => ref.watch(courseRepositoryProvider).notes(lessonId),
+    );
+
 /// Kullanıcı uygulama yöneticisi mi (kurs yönetimi).
 final courseAdminProvider = FutureProvider<Result<bool, AppFailure>>((ref) {
   if (ref.watch(sessionProvider).valueOrNull == null) return const Ok(false);
@@ -95,31 +127,127 @@ class CourseRepository {
         };
       });
 
-  /// İlerlemeyi kaydeder. Sunucu izlenen en ileri saniyeyi ve tamamlanmayı
-  /// geri almaz; rıza yoksa reddeder.
-  Future<Result<void, AppFailure>> saveProgress({
+  /// İlerlemeyi kaydeder; ders sunucuda tamamlanmış sayılıyorsa `true`.
+  /// Sunucu izlenen süreyi gerçek zamana göre sınırlar, tamamlanmayı %90
+  /// izlenmeden kabul etmez; rıza yoksa reddeder.
+  Future<Result<bool, AppFailure>> saveProgress({
     required String lessonId,
     required int positionSeconds,
     required int watchedSeconds,
     required bool completed,
-  }) => guardSupabase(
-    () => _client.from('lesson_progress').upsert({
-      'user_id': _client.auth.currentUser!.id,
-      'lesson_id': lessonId,
-      'position_seconds': positionSeconds,
-      'watched_seconds': watchedSeconds,
-      if (completed) 'completed_at': DateTime.now().toUtc().toIso8601String(),
-    }),
-  );
+  }) => guardSupabase(() async {
+    final row = await _client
+        .from('lesson_progress')
+        .upsert({
+          'user_id': _client.auth.currentUser!.id,
+          'lesson_id': lessonId,
+          'position_seconds': positionSeconds,
+          'watched_seconds': watchedSeconds,
+          if (completed)
+            'completed_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .select('completed_at')
+        .single();
+    return row['completed_at'] != null;
+  });
 
-  /// Kullanıcının rızası var mı.
+  /// Kullanıcının geçerli (hocalarla paylaşımı da kapsayan, 2.) sürüm rızası
+  /// var mı. Eski sürüm rıza verenlere yeniden sorulur.
   Future<Result<bool, AppFailure>> hasConsent() => guardSupabase(() async {
     final row = await _client
         .from('course_consents')
-        .select('user_id')
+        .select('version')
         .maybeSingle();
-    return row != null;
+    return (row?['version'] as int? ?? 0) >= 2;
   });
+
+  // Hocanın verdiği kurslar ------------------------------------------------
+
+  /// Kullanıcının medreselerine verilen kurslar (RLS: üye olduğu medreseler).
+  Future<Result<List<CourseAssignment>, AppFailure>> assignments() =>
+      guardSupabase(() async {
+        final rows = await _client
+            .from('course_assignments')
+            .select('medrese_id, course_id, due_on, created_at, medreses(name)')
+            .order('created_at', ascending: false);
+        return rows.map(CourseAssignment.fromJson).toList();
+      });
+
+  /// [medreseId]'ye [courseId] kursunu verir (hocalar); öğrencilere bildirim
+  /// gider.
+  Future<Result<void, AppFailure>> assign({
+    required String medreseId,
+    required String courseId,
+    required DateTime? dueOn,
+  }) => guardSupabase(
+    () => _client.from('course_assignments').insert({
+      'medrese_id': medreseId,
+      'course_id': courseId,
+      if (dueOn != null)
+        'due_on': DateTime.utc(
+          dueOn.year,
+          dueOn.month,
+          dueOn.day,
+        ).toIso8601String().substring(0, 10),
+    }),
+  );
+
+  /// Verilen kursu geri alır; öğrencilerin ilerlemesi silinmez.
+  Future<Result<void, AppFailure>> unassign({
+    required String medreseId,
+    required String courseId,
+  }) => guardSupabase(
+    () => _client
+        .from('course_assignments')
+        .delete()
+        .eq('medrese_id', medreseId)
+        .eq('course_id', courseId),
+  );
+
+  /// Medresenin öğrencilerinin verilen kurstaki ilerlemesi (hocalar).
+  Future<Result<List<StudentCourseProgress>, AppFailure>> assignmentProgress({
+    required String medreseId,
+    required String courseId,
+  }) => guardSupabase(() async {
+    final rows = await _client.rpc<List<dynamic>>(
+      'assignment_progress',
+      params: {'m': medreseId, 'c': courseId},
+    );
+    return [
+      for (final r in rows)
+        StudentCourseProgress.fromJson(r as Map<String, dynamic>),
+    ];
+  });
+
+  // Ders notları -------------------------------------------------------------
+
+  /// Kullanıcının [lessonId] dersindeki notları, videodaki sırasıyla.
+  Future<Result<List<LessonNote>, AppFailure>> notes(String lessonId) =>
+      guardSupabase(() async {
+        final rows = await _client
+            .from('lesson_notes')
+            .select('id, lesson_id, seconds, body, created_at')
+            .eq('lesson_id', lessonId)
+            .order('seconds');
+        return rows.map(LessonNote.fromJson).toList();
+      });
+
+  /// Dersin [seconds]. saniyesine not ekler.
+  Future<Result<void, AppFailure>> addNote({
+    required String lessonId,
+    required int seconds,
+    required String body,
+  }) => guardSupabase(
+    () => _client.from('lesson_notes').insert({
+      'lesson_id': lessonId,
+      'seconds': seconds,
+      'body': body.trim(),
+    }),
+  );
+
+  /// Notu siler.
+  Future<Result<void, AppFailure>> deleteNote(String id) =>
+      guardSupabase(() => _client.from('lesson_notes').delete().eq('id', id));
 
   /// Rıza verir.
   Future<Result<void, AppFailure>> giveConsent() =>

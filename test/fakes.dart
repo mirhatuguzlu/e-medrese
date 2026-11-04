@@ -713,13 +713,66 @@ class FakeCourseRepository implements CourseRepository {
       Ok(Map.of(progressMap));
 
   @override
-  Future<Result<void, AppFailure>> saveProgress({
+  Future<Result<bool, AppFailure>> saveProgress({
     required String lessonId,
     required int positionSeconds,
     required int watchedSeconds,
     required bool completed,
   }) async {
     calls.add('save $lessonId $positionSeconds $watchedSeconds $completed');
+    return Ok(completed);
+  }
+
+  final assignmentList = <CourseAssignment>[];
+  final studentProgress = <StudentCourseProgress>[];
+  final noteList = <LessonNote>[];
+
+  @override
+  Future<Result<List<CourseAssignment>, AppFailure>> assignments() async =>
+      Ok(List.of(assignmentList));
+
+  @override
+  Future<Result<void, AppFailure>> assign({
+    required String medreseId,
+    required String courseId,
+    required DateTime? dueOn,
+  }) async {
+    calls.add('assign $medreseId $courseId $dueOn');
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> unassign({
+    required String medreseId,
+    required String courseId,
+  }) async {
+    calls.add('unassign $medreseId $courseId');
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<List<StudentCourseProgress>, AppFailure>> assignmentProgress({
+    required String medreseId,
+    required String courseId,
+  }) async => Ok(List.of(studentProgress));
+
+  @override
+  Future<Result<List<LessonNote>, AppFailure>> notes(String lessonId) async =>
+      Ok(noteList.where((n) => n.lessonId == lessonId).toList());
+
+  @override
+  Future<Result<void, AppFailure>> addNote({
+    required String lessonId,
+    required int seconds,
+    required String body,
+  }) async {
+    calls.add('note $lessonId $seconds $body');
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> deleteNote(String id) async {
+    calls.add('delete note $id');
     return const Ok(null);
   }
 

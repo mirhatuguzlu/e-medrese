@@ -4,6 +4,8 @@ import 'dart:math';
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/course_repository.dart';
 import 'package:e_medrese/domain/entities/course.dart';
+import 'package:e_medrese/presentation/features/courses/lesson_note_page.dart';
+import 'package:e_medrese/presentation/features/courses/lesson_notes_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,6 +39,7 @@ class _Playback extends ChangeNotifier {
   bool ended = false;
   bool completed = false;
   bool failed = false;
+  bool captions = false;
 
   /// İlk izleyiş: izlenmemiş kısma sarma kapalı.
   bool get locked => !completed;
@@ -66,6 +69,14 @@ class _LessonPageState extends ConsumerState<LessonPage>
   int _savedWatched = -1;
   bool _savedCompleted = false;
   DateTime _lastLockWarning = DateTime(0);
+
+  // Seçilen hız. YouTube bazen hızı kendiliğinden 1x'e döndürür ya da
+  // değişikliği bildirmez; bu yüzden ekranda bu gösterilir ve gerekirse
+  // yeniden uygulanır.
+  double _rate = 1;
+  DateTime _lastRateApply = DateTime(0);
+  bool _fullscreen = false;
+  bool _completionRejected = false;
 
   @override
   void initState() {
@@ -109,6 +120,7 @@ class _LessonPageState extends ConsumerState<LessonPage>
         // Videoya dokunmak sarmaya yol açmasın; her şey bizim düğmelerde.
         pointerEvents: PointerEvents.none,
         enableCaption: false,
+        captionLanguage: 'tr',
         interfaceLanguage: 'tr',
         strictRelatedVideos: true,
         showVideoAnnotations: false,
@@ -119,16 +131,16 @@ class _LessonPageState extends ConsumerState<LessonPage>
     _subscriptions
       ..add(player.videoStateStream.listen(_onTick))
       ..add(player.listen(_onValue));
-    _saveTimer = Timer.periodic(
-      const Duration(seconds: 10),
-      (_) => unawaited(_save()),
-    );
+    _saveTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      unawaited(_save());
+      unawaited(_checkRate());
+    });
   }
 
   void _onTick(YoutubeVideoState state) {
     final p = _playback;
     final pos = state.position.inMilliseconds / 1000;
-    if (p.locked && pos > p.watched + _jumpTolerance * max(1, p.rate)) {
+    if (p.locked && pos > p.watched + _jumpTolerance * max(1, _rate)) {
       // Düğmeler dışından (ör. klavye) izlenmemiş kısma gidildi: geri al.
       unawaited(_player?.seekTo(seconds: p.watched, allowSeekAhead: true));
       _warnLocked();
@@ -147,7 +159,7 @@ class _LessonPageState extends ConsumerState<LessonPage>
     final seconds = value.metaData.duration.inSeconds;
     if (seconds > 0) p.duration = seconds.toDouble();
     p
-      ..rate = value.playbackRate
+      ..rate = _rate
       ..playing = value.playerState == PlayerState.playing
       ..buffering =
           value.playerState == PlayerState.buffering ||
@@ -159,6 +171,12 @@ class _LessonPageState extends ConsumerState<LessonPage>
       if (p.locked) _complete();
     }
     if (wasPlaying && !p.playing) unawaited(_save());
+    if (!wasPlaying && p.playing) {
+      _applyCaptions();
+      if (value.playbackRate != _rate) _applyRate();
+    }
+    final fullscreen = value.fullScreenOption.enabled;
+    if (fullscreen != _fullscreen) _setSystemFullscreen(fullscreen);
     // Oynarken ekran kararmasın.
     if (wasPlaying != p.playing) {
       unawaited(WakelockPlus.toggle(enable: p.playing));
@@ -205,11 +223,25 @@ class _LessonPageState extends ConsumerState<LessonPage>
       watchedSeconds: watched,
       completed: completing,
     );
-    if (result case Err(:final error)) {
-      // Yeniden denensin.
-      _savedPosition = -1;
-      if (completing) _savedCompleted = false;
-      if (completing && mounted) context.showMessage(error.message);
+    switch (result) {
+      case Ok(:final value) when completing && !value:
+        // Sunucu henüz kabul etmedi (izlenen süre gerçek zamanla sınırlı);
+        // sonraki kayıtta yeniden denenir.
+        _savedCompleted = false;
+        if (!_completionRejected && mounted) {
+          _completionRejected = true;
+          context.showMessage(
+            'Ders henüz tamamlanmış sayılmadı; izlemeye devam edince '
+            'kaydedilir.',
+          );
+        }
+      case Ok():
+        break;
+      case Err(:final error):
+        // Yeniden denensin.
+        _savedPosition = -1;
+        if (completing) _savedCompleted = false;
+        if (completing && mounted) context.showMessage(error.message);
     }
     _container.invalidate(lessonProgressProvider);
   }
@@ -242,9 +274,89 @@ class _LessonPageState extends ConsumerState<LessonPage>
     }
   }
 
+  Future<void> _addNote() async {
+    final lesson = _lesson;
+    if (lesson == null) return;
+    final seconds = _playback.position.floor();
+    unawaited(_player?.pauseVideo());
+    await context.push(LessonNotePage(lessonId: lesson.id, seconds: seconds));
+  }
+
+  Future<void> _openNotes() async {
+    final lesson = _lesson;
+    if (lesson == null) return;
+    final seconds = await Navigator.of(context).push<int>(
+      MaterialPageRoute(builder: (_) => LessonNotesPage(lesson: lesson)),
+    );
+    if (seconds == null) return;
+    _seek(seconds.toDouble());
+    unawaited(_player?.playVideo());
+  }
+
   void _nextRate() {
-    final i = _rates.indexOf(_playback.rate);
-    unawaited(_player?.setPlaybackRate(_rates[(i + 1) % _rates.length]));
+    _rate = _rates[(_rates.indexOf(_rate) + 1) % _rates.length];
+    _playback
+      ..rate = _rate
+      ..changed();
+    _applyRate();
+  }
+
+  void _applyRate() {
+    final now = DateTime.now();
+    // YouTube reddederse sonsuz döngüye girmesin.
+    if (now.difference(_lastRateApply).inMilliseconds < 1500) return;
+    _lastRateApply = now;
+    unawaited(_player?.setPlaybackRate(_rate));
+  }
+
+  Future<void> _checkRate() async {
+    final player = _player;
+    if (player == null || !_playback.playing) return;
+    try {
+      if (await player.playbackRate != _rate) _applyRate();
+    } on Exception {
+      // Oynatıcı hazır değil; sonraki turda.
+    }
+  }
+
+  void _toggleCaptions() {
+    _playback
+      ..captions = !_playback.captions
+      ..changed();
+    _applyCaptions();
+  }
+
+  // YouTube dil ayarına göre altyazıyı kendiliğinden açabiliyor; seçim her
+  // oynatmada yeniden uygulanır.
+  void _applyCaptions() {
+    final js = _playback.captions
+        ? "player.loadModule('captions');"
+        : "player.unloadModule('captions');";
+    unawaited(
+      _player?.webViewController.runJavaScript(js).catchError((Object _) {}),
+    );
+  }
+
+  // Paket tam ekranı yalnız oynatıcıyı büyüterek yapar; durum ve gezinme
+  // çubuklarını gizlemek ve yatay döndürmek bizde.
+  void _setSystemFullscreen(bool on) {
+    _fullscreen = on;
+    unawaited(
+      SystemChrome.setEnabledSystemUIMode(
+        on ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
+      ),
+    );
+    unawaited(
+      SystemChrome.setPreferredOrientations(
+        on
+            ? const [
+                DeviceOrientation.landscapeLeft,
+                DeviceOrientation.landscapeRight,
+              ]
+            // Çıkınca dikey kalsın; yoksa telefon yanken hemen geri girer.
+            : const [DeviceOrientation.portraitUp],
+      ),
+    );
   }
 
   Lesson? get _next {
@@ -284,6 +396,8 @@ class _LessonPageState extends ConsumerState<LessonPage>
     }
     unawaited(_save());
     unawaited(WakelockPlus.disable());
+    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
+    unawaited(SystemChrome.setPreferredOrientations(const []));
     unawaited(_player?.close());
     _playback.dispose();
     super.dispose();
@@ -322,6 +436,7 @@ class _LessonPageState extends ConsumerState<LessonPage>
               onPlayPause: _togglePlay,
               onSeek: _seek,
               onRate: _nextRate,
+              onCaptions: _toggleCaptions,
               onFullscreen: player.toggleFullScreen,
               onNext: _openNext,
             ),
@@ -351,6 +466,39 @@ class _LessonPageState extends ConsumerState<LessonPage>
                 ListenableBuilder(
                   listenable: _playback,
                   builder: (context, _) => _StatusBanner(playback: _playback),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _addNote,
+                        icon: const Icon(Icons.edit_note),
+                        label: ListenableBuilder(
+                          listenable: _playback,
+                          builder: (context, _) => Text(
+                            'Not al · '
+                            '${formatClock(_playback.position.floor())}',
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _openNotes,
+                        icon: const Icon(Icons.sticky_note_2_outlined),
+                        label: Text(switch (ref.watch(
+                          lessonNotesProvider(lesson.id),
+                        )) {
+                          AsyncData(value: Ok(:final value))
+                              when value.isNotEmpty =>
+                            'Notlarım (${value.length})',
+                          _ => 'Notlarım',
+                        }),
+                      ),
+                    ),
+                  ],
                 ),
                 if (lesson.description.isNotEmpty) ...[
                   const SizedBox(height: 16),
@@ -439,6 +587,7 @@ class _Controls extends StatefulWidget {
     required this.onPlayPause,
     required this.onSeek,
     required this.onRate,
+    required this.onCaptions,
     required this.onFullscreen,
     required this.onNext,
   });
@@ -449,6 +598,7 @@ class _Controls extends StatefulWidget {
   final VoidCallback onPlayPause;
   final ValueChanged<double> onSeek;
   final VoidCallback onRate;
+  final VoidCallback onCaptions;
   final VoidCallback onFullscreen;
   final VoidCallback onNext;
 
@@ -534,6 +684,19 @@ class _ControlsState extends State<_Controls> {
                   child: Text(
                     '${formatRate(p.rate)}x',
                     style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  tooltip: p.captions ? 'Altyazıyı kapat' : 'Altyazıyı aç',
+                  color: white,
+                  onPressed: () {
+                    widget.onCaptions();
+                    _show();
+                  },
+                  icon: Icon(
+                    p.captions
+                        ? Icons.closed_caption
+                        : Icons.closed_caption_off_outlined,
                   ),
                 ),
                 IconButton(

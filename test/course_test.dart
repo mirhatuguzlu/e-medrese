@@ -1,6 +1,11 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:e_medrese/domain/entities/course.dart';
+import 'package:e_medrese/domain/entities/medrese.dart';
+import 'package:e_medrese/presentation/features/courses/course_page.dart';
+import 'package:e_medrese/presentation/features/courses/lesson_note_page.dart';
+import 'package:e_medrese/presentation/features/courses/lesson_notes_page.dart';
+import 'package:e_medrese/presentation/features/courses/medrese_courses_page.dart';
 import 'package:e_medrese/presentation/features/courses/online_medrese_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,6 +52,8 @@ LessonProgress _p(
 );
 
 void main() {
+  group('hocanın verdiği kurslar, notlar, icazet', _assignmentTests);
+
   group('ileri sarma kilidi', () {
     test('ilk izleyişte izlenen yerden öteye gidilemez, geri serbest', () {
       expect(allowedSeek(target: 300, watched: 120, completed: false), 120);
@@ -312,5 +319,174 @@ void main() {
         findsOneWidget,
       );
     });
+  });
+}
+
+void _assignmentTests() {
+  const medrese = Medrese(
+    id: 'm1',
+    name: 'Nur Medresesi',
+    description: '',
+    inviteCode: 'ABC',
+    myRole: MemberRole.teacher,
+  );
+
+  late FakeCourseRepository repo;
+
+  setUp(() => repo = FakeCourseRepository()..courseList.add(_course));
+
+  Future<void> pump(WidgetTester tester, Widget page) async {
+    tester.view.physicalSize = const Size(1080, 4000);
+    tester.view.devicePixelRatio = 2;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sessionProvider.overrideWith((ref) => Stream.value(testSession)),
+          ...pushOverrides(courses: repo),
+        ],
+        child: MaterialApp(home: page),
+      ),
+    );
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('hocanın verdiği kurs akışta etiketli ve en üstte', (
+    tester,
+  ) async {
+    repo
+      ..courseList.insert(
+        0,
+        const Course(
+          id: 'c0',
+          title: 'Fıkıh Usulü',
+          subtitle: '',
+          description: '',
+          teacher: '',
+          category: CourseCategory.fikih,
+          coverUrl: '',
+          lessons: [],
+        ),
+      )
+      ..assignmentList.add(
+        CourseAssignment(
+          medreseId: 'm1',
+          medreseName: 'Nur Medresesi',
+          courseId: 'c1',
+          createdAt: DateTime(2026, 11, 7),
+          dueOn: DateTime(2026, 11, 20),
+        ),
+      );
+    await pump(tester, const OnlineMedresePage());
+    expect(find.text('Hocan verdi · son gün 20.11'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Temel Akaid')).dy,
+      lessThan(tester.getTopLeft(find.text('Fıkıh Usulü')).dy),
+    );
+  });
+
+  testWidgets('hoca kurs verir; verilmiş kurs listede çıkmaz', (tester) async {
+    await pump(tester, const MedreseCoursesPage(medrese: medrese));
+    expect(find.textContaining('Henüz kurs vermedin'), findsOneWidget);
+    await tester.tap(find.text('Kurs ver'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Temel Akaid'));
+    await tester.tap(find.text('Kursu ver'));
+    await tester.pumpAndSettle();
+    expect(repo.calls, ['assign m1 c1 null']);
+  });
+
+  testWidgets('hoca öğrenci ilerlemesini görür; rızasız öğrenci gizli', (
+    tester,
+  ) async {
+    repo
+      ..assignmentList.add(
+        CourseAssignment(
+          medreseId: 'm1',
+          medreseName: 'Nur Medresesi',
+          courseId: 'c1',
+          createdAt: DateTime(2026, 11, 7),
+        ),
+      )
+      ..studentProgress.addAll([
+        StudentCourseProgress(
+          userId: 'u1',
+          name: 'Ahmet',
+          consent: true,
+          done: 1,
+          lastWatched: DateTime(2026, 11, 7, 10),
+        ),
+        const StudentCourseProgress(
+          userId: 'u2',
+          name: 'Mehmet',
+          consent: false,
+          done: 0,
+        ),
+      ]);
+    await pump(tester, const MedreseCoursesPage(medrese: medrese));
+    await tester.tap(find.text('Temel Akaid'));
+    await tester.pumpAndSettle();
+    expect(find.text('1/3 ders · son izleme 07.11.2026 10:00'), findsOneWidget);
+    expect(find.text('İlerlemesini paylaşmaya rıza vermedi.'), findsOneWidget);
+    await tester.tap(find.byTooltip('Kursu geri al'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Geri al'));
+    await tester.pumpAndSettle();
+    expect(repo.calls, ['unassign m1 c1']);
+  });
+
+  testWidgets('kurs bitince icazet', (tester) async {
+    for (final l in _course.lessons) {
+      repo.progressMap[l.id] = _p(l.id, day: 6, done: true);
+    }
+    await pump(tester, const CoursePage(courseId: 'c1'));
+    await tester.tap(find.text('Kursu bitirdin'));
+    await tester.pumpAndSettle();
+    expect(find.text('İCAZET'), findsOneWidget);
+    expect(find.text('Temel Akaid'), findsOneWidget);
+    expect(find.text('06.11.2026'), findsOneWidget);
+  });
+
+  testWidgets('derse not yazılır', (tester) async {
+    await pump(tester, const LessonNotePage(lessonId: 'l1', seconds: 187));
+    expect(find.text('Not · 3:07'), findsOneWidget);
+    await tester.enterText(find.byType(TextFormField), 'Güzel bir örnek');
+    await tester.tap(find.text('Kaydet'));
+    await tester.pumpAndSettle();
+    expect(repo.calls, ['note l1 187 Güzel bir örnek']);
+  });
+
+  testWidgets('nota dokununca o saniyeyle dönülür', (tester) async {
+    repo.noteList.add(
+      LessonNote(
+        id: 'n1',
+        lessonId: 'l1',
+        seconds: 65,
+        body: 'Önemli yer',
+        createdAt: DateTime(2026, 11, 7),
+      ),
+    );
+    int? returned;
+    await pump(
+      tester,
+      Builder(
+        builder: (context) => TextButton(
+          onPressed: () async =>
+              returned = await Navigator.of(context).push<int>(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      LessonNotesPage(lesson: _course.lessons.first),
+                ),
+              ),
+          child: const Text('aç'),
+        ),
+      ),
+    );
+    await tester.tap(find.text('aç'));
+    await tester.pumpAndSettle();
+    expect(find.text('1:05'), findsOneWidget);
+    await tester.tap(find.text('Önemli yer'));
+    await tester.pumpAndSettle();
+    expect(returned, 65);
   });
 }

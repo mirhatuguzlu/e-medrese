@@ -1,6 +1,16 @@
 # Changelog
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
+## 2.7.0+25 — 2026-11-07
+- Düzeltme: ders ilerlemesi 1. dakikada takılıyor, ders tamamlanmıyordu (sunucu doğrulaması kaydı her seferinde yeni sayıyordu). Kalınan yer ve tamamlanma artık doğru kaydediliyor; sunucu kabul etmezse uygulama yeniden deniyor.
+- Tam ekranda durum ve gezinme çubukları gizleniyor, ekran yatay dönüyor.
+- Hız: seçilen hız ekranda görünüyor, YouTube hızı kendiliğinden 1x'e döndürürse yeniden uygulanıyor.
+- Altyazı kapalı açılıyor; oynatıcıdaki CC düğmesiyle açılıp kapanıyor.
+- Hocanın verdiği kurslar: hocalar medrese sayfasındaki "Online kurslar"dan medreseye kurs verir (isteğe bağlı son gün), öğrencilere bildirim gider. Kurs öğrencinin akışında "Hocan verdi" etiketiyle en üstte çıkar. Hocalar rıza veren öğrencilerin o kurstaki ilerlemesini görür.
+- Ders notları: izlerken "Not al" ile videonun o anına not; "Notlarım"da nota dokununca video o ana gider.
+- İcazet: bütün dersleri biten kursun sayfasından icazet görüntülenir.
+- Online Medrese rıza metni yenilendi (hocalarla ilerleme paylaşımı, notlar); önceki rızayı verenlere bir kez yeniden sorulur. Aydınlatma metni güncellendi.
+
 ## 2.6.0+24 — 2026-11-05
 - Kurs yönetimi: uygulama yöneticileri Online Medrese sayfasındaki düğmeyle kurs açar, bilgisini düzenler, yayına alır ya da siler. Ders, YouTube linki yapıştırılarak eklenir (başlık YouTube'dan gelir); dersler sürüklenerek sıralanır.
 - Video oynarken ekran kararmıyor; duraklayınca YouTube önerileri görünmüyor.

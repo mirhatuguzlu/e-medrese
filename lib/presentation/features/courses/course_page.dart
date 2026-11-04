@@ -1,6 +1,7 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/course_repository.dart';
 import 'package:e_medrese/domain/entities/course.dart';
+import 'package:e_medrese/presentation/features/courses/certificate_page.dart';
 import 'package:e_medrese/presentation/features/courses/course_consent_page.dart';
 import 'package:e_medrese/presentation/features/courses/course_cover.dart';
 import 'package:e_medrese/presentation/features/courses/lesson_page.dart';
@@ -104,6 +105,21 @@ class CoursePage extends ConsumerWidget {
                 ],
                 const SizedBox(height: 16),
                 _Stats(summary: summary),
+                if (summary.finished) ...[
+                  const SizedBox(height: 16),
+                  Card(
+                    margin: EdgeInsets.zero,
+                    color: theme.colorScheme.primaryContainer,
+                    child: ListTile(
+                      leading: const Icon(Icons.workspace_premium_outlined),
+                      title: const Text('Kursu bitirdin'),
+                      subtitle: const Text('İcazetini gör'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () =>
+                          context.push(CertificatePage(progress: summary)),
+                    ),
+                  ),
+                ],
                 if (course.description.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text(course.description, style: theme.textTheme.bodyLarge),

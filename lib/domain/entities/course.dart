@@ -221,7 +221,14 @@ final class CourseProgress {
           .map((l) => progress[l.id]?.updatedAt)
           .whereType<DateTime>()
           .fold<DateTime?>(null, (a, b) => a == null || b.isAfter(a) ? b : a),
+      lastCompleted = course.lessons
+          .map((l) => progress[l.id]?.completedAt)
+          .whereType<DateTime>()
+          .fold<DateTime?>(null, (a, b) => a == null || b.isAfter(a) ? b : a),
       next = _next(course, progress);
+
+  /// Son tamamlanan dersin zamanı; kurs bittiyse bitirme tarihi.
+  final DateTime? lastCompleted;
 
   /// Kurs.
   final Course course;
@@ -306,4 +313,122 @@ int? parseDuration(String input) {
   if (numbers.length == 1) return numbers.first! * 60;
   if (numbers.skip(1).any((n) => n! > 59)) return null;
   return numbers.fold<int>(0, (sum, n) => sum * 60 + n!);
+}
+
+/// Hocanın bir medreseye verdiği kurs.
+final class CourseAssignment {
+  /// Verilen kurs.
+  const CourseAssignment({
+    required this.medreseId,
+    required this.medreseName,
+    required this.courseId,
+    required this.createdAt,
+    this.dueOn,
+  });
+
+  /// `course_assignments` satırından (`medreses(name)` ile) oluşturur.
+  factory CourseAssignment.fromJson(Map<String, dynamic> json) =>
+      CourseAssignment(
+        medreseId: json['medrese_id'] as String,
+        medreseName:
+            (json['medreses'] as Map<String, dynamic>?)?['name'] as String? ??
+            '',
+        courseId: json['course_id'] as String,
+        createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+        dueOn: switch (json['due_on']) {
+          final String d => DateTime.parse(d),
+          _ => null,
+        },
+      );
+
+  /// Medrese.
+  final String medreseId;
+
+  /// Medresenin adı.
+  final String medreseName;
+
+  /// Kurs.
+  final String courseId;
+
+  /// Verildiği zaman.
+  final DateTime createdAt;
+
+  /// Bitirme tarihi; yoksa `null`.
+  final DateTime? dueOn;
+}
+
+/// Hocanın gördüğü, öğrencinin verilen kurstaki ilerlemesi.
+final class StudentCourseProgress {
+  /// İlerleme.
+  const StudentCourseProgress({
+    required this.userId,
+    required this.name,
+    required this.consent,
+    required this.done,
+    this.lastWatched,
+  });
+
+  /// `assignment_progress` satırından oluşturur.
+  factory StudentCourseProgress.fromJson(Map<String, dynamic> json) =>
+      StudentCourseProgress(
+        userId: json['user_id'] as String,
+        name: json['full_name'] as String? ?? '',
+        consent: json['consent'] as bool? ?? false,
+        done: json['done'] as int? ?? 0,
+        lastWatched: switch (json['last_watched']) {
+          final String at => DateTime.parse(at).toLocal(),
+          _ => null,
+        },
+      );
+
+  /// Öğrenci.
+  final String userId;
+
+  /// Ad soyad.
+  final String name;
+
+  /// Öğrenci ilerlemesini hocalarla paylaşmaya rıza verdi.
+  final bool consent;
+
+  /// Tamamladığı ders sayısı.
+  final int done;
+
+  /// Son izleme; hiç izlemediyse `null`.
+  final DateTime? lastWatched;
+}
+
+/// Öğrencinin dersin bir anına yazdığı not.
+final class LessonNote {
+  /// Not.
+  const LessonNote({
+    required this.id,
+    required this.lessonId,
+    required this.seconds,
+    required this.body,
+    required this.createdAt,
+  });
+
+  /// `lesson_notes` satırından oluşturur.
+  factory LessonNote.fromJson(Map<String, dynamic> json) => LessonNote(
+    id: json['id'] as String,
+    lessonId: json['lesson_id'] as String,
+    seconds: json['seconds'] as int,
+    body: json['body'] as String,
+    createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+  );
+
+  /// Kimlik.
+  final String id;
+
+  /// Ders.
+  final String lessonId;
+
+  /// Videonun kaçıncı saniyesi.
+  final int seconds;
+
+  /// Not.
+  final String body;
+
+  /// Yazıldığı zaman.
+  final DateTime createdAt;
 }

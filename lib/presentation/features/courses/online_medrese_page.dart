@@ -25,7 +25,8 @@ class _OnlineMedresePageState extends ConsumerState<OnlineMedresePage> {
   Future<void> _refresh() async {
     ref
       ..invalidate(coursesProvider)
-      ..invalidate(lessonProgressProvider);
+      ..invalidate(lessonProgressProvider)
+      ..invalidate(assignmentsProvider);
     await ref.read(coursesProvider.future);
   }
 
@@ -36,6 +37,23 @@ class _OnlineMedresePageState extends ConsumerState<OnlineMedresePage> {
       _ => const <String, LessonProgress>{},
     };
     final courses = ref.watch(coursesProvider);
+    // Hocanın verdiği kurslar; aynı kurs birkaç medreseye verildiyse son
+    // günü en yakın olan.
+    final assigned = <String, CourseAssignment>{};
+    if (ref.watch(assignmentsProvider) case AsyncData(
+      value: Ok(:final value),
+    )) {
+      for (final a in value) {
+        final old = assigned[a.courseId];
+        if (old == null ||
+            (a.dueOn != null && (old.dueOn?.isAfter(a.dueOn!) ?? true))) {
+          assigned[a.courseId] = a;
+        }
+      }
+    }
+    // Verilen ve bitmemiş kurslar başta.
+    bool first(Course c) =>
+        assigned.containsKey(c.id) && !CourseProgress(c, progress).finished;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Online Medrese'),
@@ -53,11 +71,14 @@ class _OnlineMedresePageState extends ConsumerState<OnlineMedresePage> {
       body: ResultListView<Course>(
         value: switch (courses) {
           AsyncData(value: Ok(:final value)) => AsyncData(
-            Ok(
-              _category == null
-                  ? value
-                  : value.where((c) => c.category == _category).toList(),
-            ),
+            Ok([
+              for (final pass in [true, false])
+                ...value.where(
+                  (c) =>
+                      first(c) == pass &&
+                      (_category == null || c.category == _category),
+                ),
+            ]),
           ),
           _ => courses,
         },
@@ -78,7 +99,10 @@ class _OnlineMedresePageState extends ConsumerState<OnlineMedresePage> {
         ),
         itemBuilder: (context, course) => Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-          child: CourseCard(progress: CourseProgress(course, progress)),
+          child: CourseCard(
+            progress: CourseProgress(course, progress),
+            assignment: assigned[course.id],
+          ),
         ),
       ),
     );
@@ -242,10 +266,13 @@ class _ResumeCard extends ConsumerWidget {
 /// Katalogdaki kurs kartı: kapak, başlık, hoca, ders sayısı ve ilerleme.
 class CourseCard extends StatelessWidget {
   /// [progress] kursunun kartı.
-  const CourseCard({required this.progress, super.key});
+  const CourseCard({required this.progress, this.assignment, super.key});
 
   /// Kurs ve ilerlemesi.
   final CourseProgress progress;
+
+  /// Hoca bu kursu verdiyse.
+  final CourseAssignment? assignment;
 
   @override
   Widget build(BuildContext context) {
@@ -282,6 +309,17 @@ class CourseCard extends StatelessWidget {
                   right: 8,
                   top: 8,
                   child: CoverBadge(icon: Icons.verified, label: 'Tamamlandı'),
+                )
+              else if (assignment case final a?)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: CoverBadge(
+                    icon: Icons.assignment_outlined,
+                    label: a.dueOn == null
+                        ? 'Hocan verdi'
+                        : 'Hocan verdi · son gün ${formatShortDate(a.dueOn!)}',
+                  ),
                 ),
             ],
           ),
