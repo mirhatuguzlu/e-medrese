@@ -4,6 +4,8 @@ import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/presentation/features/courses/certificate_page.dart';
 import 'package:e_medrese/presentation/features/courses/course_consent_page.dart';
 import 'package:e_medrese/presentation/features/courses/course_cover.dart';
+import 'package:e_medrese/presentation/features/courses/course_reviews_page.dart';
+import 'package:e_medrese/presentation/features/courses/icazet_page.dart';
 import 'package:e_medrese/presentation/features/courses/lesson_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -75,7 +77,12 @@ class CoursePage extends ConsumerWidget {
             sliver: SliverList.list(
               children: [
                 Text(
-                  course.category.label.toUpperCase(),
+                  upperTr(
+                    [
+                      course.category.label,
+                      if (course.level case final l?) l.label,
+                    ].join(' · '),
+                  ),
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: theme.colorScheme.primary,
                     letterSpacing: 1.2,
@@ -103,7 +110,9 @@ class CoursePage extends ConsumerWidget {
                     ],
                   ),
                 ],
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
+                _RatingRow(summary: summary),
+                const SizedBox(height: 8),
                 _Stats(summary: summary),
                 if (summary.finished) ...[
                   const SizedBox(height: 16),
@@ -111,14 +120,50 @@ class CoursePage extends ConsumerWidget {
                     margin: EdgeInsets.zero,
                     color: theme.colorScheme.primaryContainer,
                     child: ListTile(
-                      leading: const Icon(Icons.workspace_premium_outlined),
+                      leading: const Icon(Icons.emoji_events_outlined),
                       title: const Text('Kursu bitirdin'),
-                      subtitle: const Text('İcazetini gör'),
+                      subtitle: const Text('Tamamlama belgeni gör'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () =>
                           context.push(CertificatePage(progress: summary)),
                     ),
                   ),
+                ],
+                if (assignedMedreses(
+                  ref,
+                  course.id,
+                  studentOnly: true,
+                ).isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  _IcazetTile(summary: summary),
+                ],
+                if (course.outcomeList.isNotEmpty) ...[
+                  const SizedBox(height: 24),
+                  Text(
+                    'Bu kursta öğreneceklerin',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  for (final o in course.outcomeList)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.check,
+                            size: 20,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(o, style: theme.textTheme.bodyLarge),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
                 if (course.description.isNotEmpty) ...[
                   const SizedBox(height: 16),
@@ -320,8 +365,97 @@ class _LessonTile extends StatelessWidget {
         [
           'Ders $number',
           if (lesson.durationSeconds > 0) formatLength(lesson.durationSeconds),
+          if (lesson.questions.isNotEmpty) '${lesson.questions.length} soru',
           if (done) 'Tamamlandı',
         ].join(' · '),
+      ),
+    );
+  }
+}
+
+/// Ortalama puan ve değerlendirme sayısı; dokununca değerlendirmeler açılır.
+class _RatingRow extends ConsumerWidget {
+  const _RatingRow({required this.summary});
+
+  final CourseProgress summary;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final rating = switch (ref.watch(courseRatingsProvider)) {
+      AsyncData(value: Ok(:final value)) => value[summary.course.id],
+      _ => null,
+    };
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => context.push(CourseReviewsPage(progress: summary)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            if (rating != null) ...[
+              Text(
+                rating.average.toStringAsFixed(1),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 6),
+              RatingStars(rating: rating.average, size: 18),
+              const SizedBox(width: 6),
+            ],
+            Expanded(
+              child: Text(
+                rating == null
+                    ? 'Henüz değerlendirme yok'
+                    : '${rating.count} değerlendirme',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+            Icon(Icons.chevron_right, color: theme.colorScheme.primary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Hocanın verdiği kursta icazetin durumu; dokununca icazet sayfası.
+class _IcazetTile extends ConsumerWidget {
+  const _IcazetTile({required this.summary});
+
+  final CourseProgress summary;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final course = summary.course;
+    final statuses = [
+      for (final m in assignedMedreses(ref, course.id, studentOnly: true))
+        myIcazet(ref, m.id, course.id)?.status,
+    ];
+    final text = statuses.contains(IcazetStatus.approved)
+        ? 'Hocan icazetini onayladı'
+        : statuses.contains(IcazetStatus.pending)
+        ? 'Hocanın onayını bekliyor'
+        : statuses.contains(IcazetStatus.rejected)
+        ? 'Hocan geri çevirdi; notunu gör'
+        : summary.finished
+        ? 'Hocandan icazet iste'
+        : 'Kursu bitirince hocandan icazet isteyebilirsin';
+    return Card(
+      margin: EdgeInsets.zero,
+      child: ListTile(
+        leading: Icon(
+          statuses.contains(IcazetStatus.approved)
+              ? Icons.workspace_premium
+              : Icons.workspace_premium_outlined,
+        ),
+        title: const Text('İcazet'),
+        subtitle: Text(text),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => context.push(IcazetPage(progress: summary)),
       ),
     );
   }

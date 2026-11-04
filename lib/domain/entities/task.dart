@@ -13,6 +13,10 @@ enum TaskKind {
 
   /// Hocanın verdiği puan; öğrenci işaretlemez.
   teacher,
+
+  /// Hocanın verdiği Online Medrese kurslarında bitirilen dersler; sunucu
+  /// sayar, öğrenci işaretlemez.
+  course,
 }
 
 /// Sayfa görevinde hazır seçenek (ör. "1 cüz" = 20 sayfa).
@@ -104,6 +108,9 @@ final class TaskDefinition {
 
   /// Alınabilecek en yüksek puan.
   double get maxScore => score(cap);
+
+  /// Öğrenci kendisi işaretler (hocanın puanı ve kurs dersleri değil).
+  bool get selfMarked => kind != TaskKind.teacher && kind != TaskKind.course;
 }
 
 /// Öğrencinin bir gündeki girdisi; işaretlenmeyen = girdi yok.

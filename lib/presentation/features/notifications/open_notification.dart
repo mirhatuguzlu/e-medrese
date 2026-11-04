@@ -6,6 +6,7 @@ import 'package:e_medrese/data/repositories/task_repository.dart';
 import 'package:e_medrese/domain/entities/app_notification.dart';
 import 'package:e_medrese/domain/entities/task.dart';
 import 'package:e_medrese/presentation/features/announcements/announcements_page.dart';
+import 'package:e_medrese/presentation/features/courses/icazet_requests_page.dart';
 import 'package:e_medrese/presentation/features/courses/medrese_courses_page.dart';
 import 'package:e_medrese/presentation/features/posts/post_page.dart';
 import 'package:e_medrese/presentation/features/rewards/reward_requests_page.dart';
@@ -63,6 +64,12 @@ Future<void> openNotification(
       await context.push(RewardsPage(medrese: medrese));
     case 'course_assigned':
       ref.invalidate(assignmentsProvider);
+      await context.push(MedreseCoursesPage(medrese: medrese));
+    case 'icazet_request':
+      ref.invalidate(icazetRequestsProvider);
+      await context.push(IcazetRequestsPage(medrese: medrese));
+    case 'icazet_approved' || 'icazet_rejected' || 'lesson_comment':
+      ref.invalidate(icazetRequestsProvider);
       await context.push(MedreseCoursesPage(medrese: medrese));
     case 'reward_request':
       await context.push(RewardRequestsPage(medrese: medrese));

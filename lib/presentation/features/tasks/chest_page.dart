@@ -268,9 +268,11 @@ class _ScoreTallyState extends State<_ScoreTally>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(t.title),
-                                if (t.kind == TaskKind.teacher)
+                                if (!t.selfMarked)
                                   Text(
-                                    'Hocan verdi',
+                                    t.kind == TaskKind.course
+                                        ? 'Hocanın verdiği kurslardan'
+                                        : 'Hocan verdi',
                                     style: theme.textTheme.bodySmall,
                                   ),
                               ],

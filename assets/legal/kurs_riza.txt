@@ -6,13 +6,16 @@ Rıza verirsen:
 - Her ders için kaldığın yer, izlediğin en ileri nokta ve dersi tamamladığın zaman saklanır. Böylece kaldığın yerden devam edebilir, kurslardaki ilerlemeni görebilirsin.
 - İlk izleyişte dersin izlemediğin kısmına atlanamaz; bunu sağlamak için izlediğin en ileri nokta kullanılır.
 - Ders izlerken yazdığın notlar da saklanır; notlarını yalnız sen görürsün.
-- Üyesi olduğun bir medresenin hocası o medreseye bir kurs verirse, o kursta kaç dersi tamamladığın ve en son ne zaman izlediğin o medresenin hocalarına (kurucu ve hocalar) gösterilir. Diğer kurslardaki ilerlemeni ve notlarını hocalar görmez.
+- Derslerin tekrar sorularına verdiğin ilk cevaplar ve doğru olup olmadıkları saklanır.
+- Bir kursa verdiğin puan ve yorum saklanır. Bütün kullanıcılara adın olmadan, "Bir öğrenci" olarak gösterilir.
+- Üyesi olduğun bir medresenin hocası o medreseye bir kurs verirse, o kursta kaç dersi tamamladığın, en son ne zaman izlediğin, tekrar sorularında kaç doğru yaptığın ve icazet isteğin o medresenin hocalarına (kurucu ve hocalar) gösterilir. O kursta bir hafta içinde bitirdiğin her ders o haftanın görev puanına eklenir; haftalık toplam puanın, diğer görevlerde olduğu gibi medresenin sıralamasında görünür. Diğer kurslardaki ilerlemeni ve notlarını hocalar görmez.
+- İcazet istediğinde onaylayan hocanın adı ve medresenin adı icazet belgende yazar.
 - Veriler İrlanda'daki sunucularda (Supabase) saklanır.
 - Dersler YouTube'dan (Google LLC, ABD) oynatılır: açtığın videonun kimliği, IP adresin ve cihaz bilgin YouTube'a, yani yurt dışına iletilir. Çerezsiz oynatıcı (youtube-nocookie.com) kullanılır, hesap bilgilerin gönderilmez.
 
-Rıza vermek zorunlu değildir. Vermezsen uygulamanın diğer bölümlerini kullanmaya devam edersin; yalnızca dersleri izleyemezsin, kurs listesine ve açıklamalarına yine bakabilirsin.
+Rıza vermek zorunlu değildir. Vermezsen uygulamanın diğer bölümlerini kullanmaya devam edersin; yalnızca dersleri izleyemezsin, kurs listesine, açıklamalarına ve değerlendirmelere yine bakabilirsin.
 
-Rızanı istediğin zaman Profil > Online Medrese rızası sayfasından geri alabilirsin. Geri aldığında bütün ders ilerlemen ve notların hemen silinir; hocalar da artık ilerlemeni göremez.
+Rızanı istediğin zaman Profil > Online Medrese rızası sayfasından geri alabilirsin. Geri aldığında bütün ders ilerlemen, notların, soru cevapların, değerlendirmelerin ve icazet isteklerin hemen silinir; haftalık puanlarından kurs payı düşülür; hocalar da artık ilerlemeni göremez.
 
 18 yaşından küçüksen bu rızayı velinle birlikte, onun onayıyla vermelisin.
 

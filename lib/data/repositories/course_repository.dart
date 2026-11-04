@@ -4,6 +4,7 @@ import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:e_medrese/data/repositories/supabase_guard.dart';
 import 'package:e_medrese/domain/entities/course.dart';
+import 'package:e_medrese/domain/entities/feed.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -64,6 +65,70 @@ lessonNotesProvider = FutureProvider.autoDispose
       (ref, lessonId) => ref.watch(courseRepositoryProvider).notes(lessonId),
     );
 
+/// Tekrar sorularındaki ilk cevaplar.
+final questionResultsProvider =
+    FutureProvider<Result<QuestionResults, AppFailure>>((ref) {
+      if (ref.watch(sessionProvider).valueOrNull == null) return const Ok({});
+      return ref.watch(courseRepositoryProvider).questionResults();
+    });
+
+/// Medresenin bir ders hakkındaki tartışması.
+final AutoDisposeFutureProviderFamily<
+  Result<List<LessonComment>, AppFailure>,
+  ({String medreseId, String lessonId})
+>
+lessonCommentsProvider = FutureProvider.autoDispose
+    .family<
+      Result<List<LessonComment>, AppFailure>,
+      ({String medreseId, String lessonId})
+    >(
+      (ref, key) => ref
+          .watch(courseRepositoryProvider)
+          .lessonComments(medreseId: key.medreseId, lessonId: key.lessonId),
+    );
+
+/// Medresede bir kursun bütün derslerinde yazılanlar, yeniden eskiye.
+final AutoDisposeFutureProviderFamily<
+  Result<List<LessonComment>, AppFailure>,
+  ({String medreseId, Course course})
+>
+courseCommentsProvider = FutureProvider.autoDispose
+    .family<
+      Result<List<LessonComment>, AppFailure>,
+      ({String medreseId, Course course})
+    >(
+      (ref, key) => ref
+          .watch(courseRepositoryProvider)
+          .courseComments(
+            medreseId: key.medreseId,
+            lessonIds: [for (final l in key.course.lessons) l.id],
+          ),
+    );
+
+/// Kullanıcının icazet istekleri ve hocası olduğu medreselere gelenler.
+final icazetRequestsProvider =
+    FutureProvider<Result<List<IcazetRequest>, AppFailure>>((ref) {
+      if (ref.watch(sessionProvider).valueOrNull == null) return const Ok([]);
+      return ref.watch(courseRepositoryProvider).icazetRequests();
+    });
+
+/// Kursların ortalama puanları.
+final courseRatingsProvider =
+    FutureProvider<Result<Map<String, CourseRating>, AppFailure>>((ref) {
+      ref.watch(sessionProvider.select((s) => s.valueOrNull?.user.id));
+      return ref.watch(courseRepositoryProvider).ratings();
+    });
+
+/// Kursun değerlendirmeleri.
+final AutoDisposeFutureProviderFamily<
+  Result<List<CourseReview>, AppFailure>,
+  String
+>
+courseReviewsProvider = FutureProvider.autoDispose
+    .family<Result<List<CourseReview>, AppFailure>, String>(
+      (ref, courseId) => ref.watch(courseRepositoryProvider).reviews(courseId),
+    );
+
 /// Kullanıcı uygulama yöneticisi mi (kurs yönetimi).
 final courseAdminProvider = FutureProvider<Result<bool, AppFailure>>((ref) {
   if (ref.watch(sessionProvider).valueOrNull == null) return const Ok(false);
@@ -103,8 +168,10 @@ class CourseRepository {
         .from('courses')
         .select(
           'id, title, subtitle, description, teacher, category, cover_url, '
+          'level, outcomes, '
           'published, lessons(id, position, section, title, description, '
-          'youtube_id, duration_seconds)',
+          'youtube_id, duration_seconds, lesson_questions(id, lesson_id, '
+          'position, question, options, answer, explanation))',
         );
     if (onlyPublished) query = query.eq('published', true);
     final rows = await query
@@ -151,14 +218,18 @@ class CourseRepository {
     return row['completed_at'] != null;
   });
 
-  /// Kullanıcının geçerli (hocalarla paylaşımı da kapsayan, 2.) sürüm rızası
-  /// var mı. Eski sürüm rıza verenlere yeniden sorulur.
+  /// Geçerli rıza metninin sürümü (`assets/legal/kurs_riza.txt`). 3: tekrar
+  /// soruları, değerlendirmeler, icazet ve haftalık puan da kapsanır.
+  static const consentVersion = 3;
+
+  /// Kullanıcının geçerli sürüm rızası var mı. Eski sürüm rıza verenlere
+  /// yeniden sorulur.
   Future<Result<bool, AppFailure>> hasConsent() => guardSupabase(() async {
     final row = await _client
         .from('course_consents')
         .select('version')
         .maybeSingle();
-    return (row?['version'] as int? ?? 0) >= 2;
+    return (row?['version'] as int? ?? 0) >= consentVersion;
   });
 
   // Hocanın verdiği kurslar ------------------------------------------------
@@ -250,8 +321,10 @@ class CourseRepository {
       guardSupabase(() => _client.from('lesson_notes').delete().eq('id', id));
 
   /// Rıza verir.
-  Future<Result<void, AppFailure>> giveConsent() =>
-      guardSupabase(() => _client.rpc<void>('give_course_consent'));
+  Future<Result<void, AppFailure>> giveConsent() => guardSupabase(
+    () =>
+        _client.rpc<void>('give_course_consent', params: {'v': consentVersion}),
+  );
 
   /// Rızayı geri alır; bütün ders ilerlemesi silinir.
   Future<Result<void, AppFailure>> revokeConsent() =>
@@ -277,6 +350,8 @@ class CourseRepository {
     required String teacher,
     required CourseCategory category,
     required bool published,
+    CourseLevel? level,
+    String outcomes = '',
   }) => guardSupabase(() async {
     final row = {
       'title': title.trim(),
@@ -285,6 +360,8 @@ class CourseRepository {
       'teacher': teacher.trim(),
       'category': category.name,
       'published': published,
+      'level': level?.name,
+      'outcomes': outcomes.trim(),
     };
     if (id != null) {
       await _client.from('courses').update(row).eq('id', id);
@@ -345,6 +422,225 @@ class CourseRepository {
   /// Dersi ve öğrencilerin o dersteki ilerlemesini siler.
   Future<Result<void, AppFailure>> deleteLesson(String id) =>
       guardSupabase(() => _client.from('lessons').delete().eq('id', id));
+
+  // Tekrar soruları ----------------------------------------------------------
+
+  /// Kullanıcının ilk cevapları: soru kimliği -> doğru mu.
+  Future<Result<QuestionResults, AppFailure>> questionResults() =>
+      guardSupabase(() async {
+        final rows = await _client
+            .from('question_answers')
+            .select('question_id, correct');
+        return {
+          for (final r in rows)
+            r['question_id'] as String: r['correct'] as bool,
+        };
+      });
+
+  /// Sorunun ilk cevabını kaydeder; daha önce cevaplandıysa bir şey olmaz.
+  /// Doğruluk sunucuda hesaplanır; ders bitmemişse ya da rıza yoksa reddedilir.
+  Future<Result<void, AppFailure>> answerQuestion({
+    required String questionId,
+    required int choice,
+  }) => guardSupabase(
+    () => _client.from('question_answers').upsert({
+      'user_id': _client.auth.currentUser!.id,
+      'question_id': questionId,
+      'choice': choice,
+    }, ignoreDuplicates: true),
+  );
+
+  /// Soruyu ekler ([id] yoksa) ya da günceller (yönetici).
+  Future<Result<void, AppFailure>> saveQuestion({
+    required String? id,
+    required String lessonId,
+    required int position,
+    required String question,
+    required List<String> options,
+    required int answer,
+    required String explanation,
+  }) => guardSupabase(() async {
+    final row = {
+      'question': question.trim(),
+      'options': [for (final o in options) o.trim()],
+      'answer': answer,
+      'explanation': explanation.trim(),
+    };
+    if (id != null) {
+      await _client.from('lesson_questions').update(row).eq('id', id);
+    } else {
+      await _client.from('lesson_questions').insert({
+        ...row,
+        'lesson_id': lessonId,
+        'position': position,
+      });
+    }
+  });
+
+  /// Soruyu ve öğrencilerin cevaplarını siler (yönetici).
+  Future<Result<void, AppFailure>> deleteQuestion(String id) => guardSupabase(
+    () => _client.from('lesson_questions').delete().eq('id', id),
+  );
+
+  // Medrese içi ders tartışması ----------------------------------------------
+
+  /// [medreseId]'nin [lessonId] dersi hakkında yazılanlar, eskiden yeniye.
+  Future<Result<List<LessonComment>, AppFailure>> lessonComments({
+    required String medreseId,
+    required String lessonId,
+  }) => guardSupabase(() async {
+    final rows = await _client
+        .from('lesson_comments')
+        .select(
+          'id, author_id, seconds, body, created_at, '
+          'author:profiles(full_name)',
+        )
+        .eq('medrese_id', medreseId)
+        .eq('lesson_id', lessonId)
+        .order('created_at');
+    return rows.map(LessonComment.fromJson).toList();
+  });
+
+  /// [medreseId]'nin [lessonIds] derslerinde yazılanlar, yeniden eskiye.
+  Future<Result<List<LessonComment>, AppFailure>> courseComments({
+    required String medreseId,
+    required List<String> lessonIds,
+  }) => guardSupabase(() async {
+    final rows = await _client
+        .from('lesson_comments')
+        .select(
+          'id, lesson_id, author_id, seconds, body, created_at, '
+          'author:profiles(full_name)',
+        )
+        .eq('medrese_id', medreseId)
+        .inFilter('lesson_id', lessonIds)
+        .order('created_at', ascending: false)
+        .limit(200);
+    return rows.map(LessonComment.fromJson).toList();
+  });
+
+  /// Tartışmaya yazar; [seconds] verilirse videonun o anına bağlanır.
+  Future<Result<void, AppFailure>> addLessonComment({
+    required String medreseId,
+    required String lessonId,
+    required String body,
+    int? seconds,
+  }) => guardSupabase(
+    () => _client.from('lesson_comments').insert({
+      'medrese_id': medreseId,
+      'lesson_id': lessonId,
+      'body': body.trim(),
+      'seconds': ?seconds,
+    }),
+  );
+
+  /// Yazıyı siler (yazan ya da medresenin kurucusu/hocaları).
+  Future<Result<void, AppFailure>> deleteLessonComment(String id) =>
+      guardSupabase(
+        () => _client.from('lesson_comments').delete().eq('id', id),
+      );
+
+  /// Ders tartışmasındaki bir yazıyı ([lessonCommentId]) ya da bir
+  /// değerlendirmeyi ([reviewId]) şikayet eder.
+  Future<Result<void, AppFailure>> report({
+    required ReportReason reason,
+    required String note,
+    String? lessonCommentId,
+    String? reviewId,
+  }) => guardSupabase(
+    () => _client.rpc<void>(
+      'report_course_content',
+      params: {
+        'lc': lessonCommentId,
+        'r': reviewId,
+        'reason': reason.name,
+        'note': note.trim(),
+      },
+    ),
+  );
+
+  // İcazet --------------------------------------------------------------------
+
+  /// Kullanıcının istekleri ve hocası olduğu medreselere gelen istekler.
+  Future<Result<List<IcazetRequest>, AppFailure>> icazetRequests() =>
+      guardSupabase(() async {
+        final rows = await _client
+            .from('icazet_requests')
+            .select(
+              'id, medrese_id, course_id, user_id, status, note, '
+              'decided_by_name, decided_at, created_at, '
+              'student:profiles!icazet_requests_user_id_fkey(full_name)',
+            )
+            .order('created_at', ascending: false);
+        return rows.map(IcazetRequest.fromJson).toList();
+      });
+
+  /// Bitirilen, hocanın verdiği kurs için icazet ister.
+  Future<Result<void, AppFailure>> requestIcazet({
+    required String medreseId,
+    required String courseId,
+  }) => guardSupabase(
+    () => _client.rpc<void>(
+      'request_icazet',
+      params: {'m': medreseId, 'c': courseId},
+    ),
+  );
+
+  /// İsteği onaylar ya da geri çevirir (hocalar).
+  Future<Result<void, AppFailure>> decideIcazet({
+    required String id,
+    required bool approve,
+    required String note,
+  }) => guardSupabase(
+    () => _client.rpc<void>(
+      'decide_icazet',
+      params: {'r': id, 'approve': approve, 'note': note.trim()},
+    ),
+  );
+
+  // Değerlendirmeler ----------------------------------------------------------
+
+  /// Yayındaki kursların ortalama puanları, kurs kimliğine göre.
+  Future<Result<Map<String, CourseRating>, AppFailure>> ratings() =>
+      guardSupabase(() async {
+        final rows = await _client.rpc<List<dynamic>>('course_ratings');
+        return {
+          for (final r in rows.cast<Map<String, dynamic>>())
+            r['course_id'] as String: (
+              average: (r['average'] as num).toDouble(),
+              count: r['count'] as int,
+            ),
+        };
+      });
+
+  /// Kursun isimsiz değerlendirmeleri; kullanıcınınki başta.
+  Future<Result<List<CourseReview>, AppFailure>> reviews(String courseId) =>
+      guardSupabase(() async {
+        final rows = await _client.rpc<List<dynamic>>(
+          'course_reviews_of',
+          params: {'c': courseId},
+        );
+        return [
+          for (final r in rows)
+            CourseReview.fromJson(r as Map<String, dynamic>),
+        ];
+      });
+
+  /// Değerlendirmeyi yazar ya da günceller (en az bir ders bitmiş olmalı).
+  Future<Result<void, AppFailure>> saveReview({
+    required String courseId,
+    required int rating,
+    required String body,
+  }) => guardSupabase(
+    () => _client.rpc<void>(
+      'save_review',
+      params: {'c': courseId, 'rating': rating, 'body': body.trim()},
+    ),
+  );
+
+  /// Değerlendirmeyi siler (kendi değerlendirmesi ya da yönetici).
+  Future<Result<void, AppFailure>> deleteReview(String id) =>
+      guardSupabase(() => _client.from('course_reviews').delete().eq('id', id));
 
   /// Videonun YouTube'daki başlığı (oEmbed, anahtarsız); alınamazsa `null`.
   Future<String?> videoTitle(String youtubeId) async {

@@ -1,9 +1,11 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:e_medrese/data/repositories/consent_repository.dart';
+import 'package:e_medrese/data/repositories/course_repository.dart';
 import 'package:e_medrese/data/repositories/task_repository.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/task.dart';
+import 'package:e_medrese/presentation/features/courses/medrese_courses_page.dart';
 import 'package:e_medrese/presentation/features/legal/task_consent_page.dart';
 import 'package:e_medrese/presentation/features/rewards/goal_card.dart';
 import 'package:e_medrese/presentation/features/tasks/chest_page.dart';
@@ -20,6 +22,7 @@ IconData taskIcon(String taskId) => switch (taskId) {
   'kitap' => Icons.library_books_outlined,
   'cevsen' => Icons.import_contacts_outlined,
   'uyum' => Icons.handshake_outlined,
+  'kurs' => Icons.ondemand_video_outlined,
   _ => Icons.task_alt,
 };
 
@@ -84,6 +87,12 @@ class StudentTasksSection extends ConsumerWidget {
       AsyncData(value: Ok(:final value)) => value,
       _ => const <TaskEntry>[],
     };
+    final hasCourses = switch (ref.watch(assignmentsProvider)) {
+      AsyncData(value: Ok(:final value)) => value.any(
+        (a) => a.medreseId == medrese.id,
+      ),
+      _ => false,
+    };
     final theme = Theme.of(context);
 
     return Padding(
@@ -121,18 +130,26 @@ class StudentTasksSection extends ConsumerWidget {
               physics: const NeverScrollableScrollPhysics(),
               children: [
                 for (final t in tasks)
-                  _TaskTile(
-                    task: t,
-                    marked: entries.any(
-                      (e) =>
-                          e.taskId == t.id &&
-                          e.studentId == myId &&
-                          (t.kind == TaskKind.weekly || e.day == today),
+                  // Kurs görevi yalnız hocanın kurs verdiği medresede.
+                  if (t.kind != TaskKind.course || hasCourses)
+                    _TaskTile(
+                      task: t,
+                      marked: entries.any(
+                        (e) =>
+                            e.taskId == t.id &&
+                            e.studentId == myId &&
+                            (t.kind == TaskKind.weekly || e.day == today),
+                      ),
+                      onTap: () => context.push(
+                        t.kind == TaskKind.course
+                            ? MedreseCoursesPage(medrese: medrese)
+                            : TaskPage(
+                                medrese: medrese,
+                                task: t,
+                                program: program,
+                              ),
+                      ),
                     ),
-                    onTap: () => context.push(
-                      TaskPage(medrese: medrese, task: t, program: program),
-                    ),
-                  ),
               ],
             ),
         ],
@@ -246,7 +263,7 @@ class _TaskTile extends StatelessWidget {
               Row(
                 children: [
                   Icon(
-                    task.kind == TaskKind.teacher
+                    !task.selfMarked
                         ? Icons.lock_outline
                         : marked
                         ? Icons.check_circle
@@ -259,6 +276,7 @@ class _TaskTile extends StatelessWidget {
                     child: Text(
                       switch (task.kind) {
                         TaskKind.teacher => 'Hocan değerlendirir',
+                        TaskKind.course => 'Kurs derslerinle',
                         TaskKind.weekly when marked => 'Bu hafta yapıldı',
                         TaskKind.weekly => 'Bu hafta bekliyor',
                         _ when marked => 'Bugün yapıldı',

@@ -356,6 +356,12 @@ final List<TaskDefinition> testTasks = [
       'description': 'Hocanın haftalık değerlendirmesi.',
       'config': {'kind': 'teacher', 'target': 25, 'points': 25, 'cap': 25},
     },
+    {
+      'id': 'kurs',
+      'title': 'Online kurs',
+      'description': 'Hocanın verdiği kurslarda bitirdiğin her ders 5 puan.',
+      'config': {'kind': 'course', 'target': 1, 'points': 5, 'cap': 10},
+    },
   ])
     TaskDefinition.fromJson(json),
 ];
@@ -813,8 +819,16 @@ class FakeCourseRepository implements CourseRepository {
     required String teacher,
     required CourseCategory category,
     required bool published,
+    CourseLevel? level,
+    String outcomes = '',
   }) async {
-    calls.add('course $id $title ${category.name} $published');
+    calls.add(
+      [
+        'course $id $title ${category.name} $published',
+        ?level?.name,
+        if (outcomes.isNotEmpty) outcomes,
+      ].join(' '),
+    );
     final newId = id ?? 'new';
     courseList
       ..removeWhere((c) => c.id == newId)
@@ -875,4 +889,138 @@ class FakeCourseRepository implements CourseRepository {
 
   @override
   Future<String?> videoTitle(String youtubeId) async => title;
+
+  final questionResultMap = <String, bool>{};
+
+  @override
+  Future<Result<QuestionResults, AppFailure>> questionResults() async =>
+      Ok(Map.of(questionResultMap));
+
+  @override
+  Future<Result<void, AppFailure>> answerQuestion({
+    required String questionId,
+    required int choice,
+  }) async {
+    calls.add('answer $questionId $choice');
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> saveQuestion({
+    required String? id,
+    required String lessonId,
+    required int position,
+    required String question,
+    required List<String> options,
+    required int answer,
+    required String explanation,
+  }) async {
+    calls.add(
+      'question $id $lessonId $position $question '
+      '${options.join('|')} $answer $explanation',
+    );
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> deleteQuestion(String id) async {
+    calls.add('delete question $id');
+    return const Ok(null);
+  }
+
+  final commentList = <LessonComment>[];
+
+  @override
+  Future<Result<List<LessonComment>, AppFailure>> lessonComments({
+    required String medreseId,
+    required String lessonId,
+  }) async => Ok(commentList.where((c) => c.lessonId == lessonId).toList());
+
+  @override
+  Future<Result<List<LessonComment>, AppFailure>> courseComments({
+    required String medreseId,
+    required List<String> lessonIds,
+  }) async =>
+      Ok(commentList.where((c) => lessonIds.contains(c.lessonId)).toList());
+
+  @override
+  Future<Result<void, AppFailure>> addLessonComment({
+    required String medreseId,
+    required String lessonId,
+    required String body,
+    int? seconds,
+  }) async {
+    calls.add('comment $medreseId $lessonId $seconds $body');
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> deleteLessonComment(String id) async {
+    calls.add('delete comment $id');
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> report({
+    required ReportReason reason,
+    required String note,
+    String? lessonCommentId,
+    String? reviewId,
+  }) async {
+    calls.add('report $lessonCommentId $reviewId ${reason.name}');
+    return const Ok(null);
+  }
+
+  final icazetList = <IcazetRequest>[];
+
+  @override
+  Future<Result<List<IcazetRequest>, AppFailure>> icazetRequests() async =>
+      Ok(List.of(icazetList));
+
+  @override
+  Future<Result<void, AppFailure>> requestIcazet({
+    required String medreseId,
+    required String courseId,
+  }) async {
+    calls.add('icazet $medreseId $courseId');
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> decideIcazet({
+    required String id,
+    required bool approve,
+    required String note,
+  }) async {
+    calls.add('decide $id $approve $note');
+    return const Ok(null);
+  }
+
+  final ratingMap = <String, CourseRating>{};
+  final reviewList = <CourseReview>[];
+
+  @override
+  Future<Result<Map<String, CourseRating>, AppFailure>> ratings() async =>
+      Ok(Map.of(ratingMap));
+
+  @override
+  Future<Result<List<CourseReview>, AppFailure>> reviews(
+    String courseId,
+  ) async => Ok(List.of(reviewList));
+
+  @override
+  Future<Result<void, AppFailure>> saveReview({
+    required String courseId,
+    required int rating,
+    required String body,
+  }) async {
+    calls.add('review $courseId $rating $body');
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> deleteReview(String id) async {
+    calls.add('delete review $id');
+    return const Ok(null);
+  }
 }

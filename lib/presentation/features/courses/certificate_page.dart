@@ -5,13 +5,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-/// Kursu bitirenin icazeti: kim, hangi kursu, ne zaman bitirdi.
+/// Kursu bitirenin belgesi: kim, hangi kursu, ne zaman bitirdi. [icazet]
+/// verilirse hocanın onayladığı icazettir; yoksa tamamlama belgesidir.
 class CertificatePage extends ConsumerWidget {
-  /// Bitmiş [progress] kursunun icazeti.
-  const CertificatePage({required this.progress, super.key});
+  /// Bitmiş [progress] kursunun belgesi.
+  const CertificatePage({
+    required this.progress,
+    this.icazet,
+    this.medreseName = '',
+    super.key,
+  });
 
   /// Kurs ve ilerlemesi (bitmiş olmalı).
   final CourseProgress progress;
+
+  /// Hocanın onayladığı icazet; yoksa tamamlama belgesi.
+  final IcazetRequest? icazet;
+
+  /// İcazetin verildiği medrese.
+  final String medreseName;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -19,10 +31,12 @@ class CertificatePage extends ConsumerWidget {
     final scheme = theme.colorScheme;
     final course = progress.course;
     final name = currentUserName(ref);
-    final date = progress.lastCompleted;
+    final icazet = this.icazet;
+    final date = icazet?.decidedAt ?? progress.lastCompleted;
+    final title = icazet == null ? 'Tamamlama belgesi' : 'İcazet';
     final duration = course.durationSeconds;
     return Scaffold(
-      appBar: AppBar(title: const Text('İcazet')),
+      appBar: AppBar(title: Text(title)),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
@@ -43,9 +57,10 @@ class CertificatePage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'İCAZET',
+                    upperTr(title),
+                    textAlign: TextAlign.center,
                     style: theme.textTheme.titleLarge?.copyWith(
-                      letterSpacing: 6,
+                      letterSpacing: icazet == null ? 3 : 6,
                       fontWeight: FontWeight.bold,
                       color: scheme.primary,
                     ),
@@ -59,10 +74,7 @@ class CertificatePage extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(
-                    "Online Medrese'deki",
-                    style: theme.textTheme.bodyLarge,
-                  ),
+                  Text("Online Medrese'deki", style: theme.textTheme.bodyLarge),
                   const SizedBox(height: 4),
                   Text(
                     course.title,
@@ -73,7 +85,9 @@ class CertificatePage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'kursunun bütün derslerini tamamladı.',
+                    icazet == null
+                        ? 'kursunun bütün derslerini tamamladı.'
+                        : 'kursunu tamamladı; hocası icazetini onayladı.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyLarge,
                   ),
@@ -94,7 +108,14 @@ class CertificatePage extends ConsumerWidget {
                           value: DateFormat('dd.MM.yyyy').format(date),
                         ),
                       if (course.teacher.isNotEmpty)
-                        _Info(label: 'Hoca', value: course.teacher),
+                        _Info(label: 'Dersi veren', value: course.teacher),
+                      if (icazet != null && icazet.decidedByName.isNotEmpty)
+                        _Info(
+                          label: 'İcazet veren',
+                          value: displayName(icazet.decidedByName),
+                        ),
+                      if (medreseName.isNotEmpty)
+                        _Info(label: 'Medrese', value: medreseName),
                     ],
                   ),
                 ],
@@ -103,8 +124,11 @@ class CertificatePage extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Bu belge uygulama içinde kursu bitirdiğini gösterir; resmî bir '
-            'diploma ya da sertifika değildir.',
+            [
+              if (icazet != null)
+                'Belge no: ${icazet.id.substring(0, 8).toUpperCase()}',
+              _disclaimer,
+            ].join('\n'),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodySmall,
           ),
@@ -136,3 +160,7 @@ class _Info extends StatelessWidget {
     );
   }
 }
+
+const _disclaimer =
+    'Bu belge uygulama içinde kursu bitirdiğini gösterir; resmî bir diploma '
+    'ya da sertifika değildir.';

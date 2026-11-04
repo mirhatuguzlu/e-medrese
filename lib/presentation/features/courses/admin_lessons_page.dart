@@ -1,6 +1,7 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/course_repository.dart';
 import 'package:e_medrese/domain/entities/course.dart';
+import 'package:e_medrese/presentation/features/courses/admin_questions_page.dart';
 import 'package:e_medrese/presentation/features/courses/course_cover.dart';
 import 'package:e_medrese/presentation/features/courses/course_form_page.dart';
 import 'package:e_medrese/presentation/features/courses/lesson_form_page.dart';
@@ -161,7 +162,26 @@ class _AdminLessonsPageState extends ConsumerState<AdminLessonsPage> {
                             formatClock(lesson.durationSeconds),
                         ].join(' · '),
                       ),
-                      trailing: const Icon(Icons.drag_handle),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: 'Tekrar soruları',
+                            icon: Badge.count(
+                              count: lesson.questions.length,
+                              isLabelVisible: lesson.questions.isNotEmpty,
+                              child: const Icon(Icons.quiz_outlined),
+                            ),
+                            onPressed: () => context.push(
+                              AdminQuestionsPage(
+                                courseId: course.id,
+                                lessonId: lesson.id,
+                              ),
+                            ),
+                          ),
+                          const Icon(Icons.drag_handle),
+                        ],
+                      ),
                       onTap: () => context.push(
                         LessonFormPage(course: course, lesson: lesson),
                       ),

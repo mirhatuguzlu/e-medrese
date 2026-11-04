@@ -28,7 +28,9 @@ class _CourseFormPageState extends ConsumerState<CourseFormPage> {
   late final _description = TextEditingController(
     text: widget.course?.description,
   );
+  late final _outcomes = TextEditingController(text: widget.course?.outcomes);
   late CourseCategory? _category = widget.course?.category;
+  late CourseLevel? _level = widget.course?.level;
   late bool _published = widget.course?.published ?? false;
   bool _loading = false;
 
@@ -40,6 +42,7 @@ class _CourseFormPageState extends ConsumerState<CourseFormPage> {
     _subtitle.dispose();
     _teacher.dispose();
     _description.dispose();
+    _outcomes.dispose();
     super.dispose();
   }
 
@@ -60,6 +63,8 @@ class _CourseFormPageState extends ConsumerState<CourseFormPage> {
           teacher: _teacher.text,
           category: _category!,
           published: _published && _hasLessons,
+          level: _level,
+          outcomes: _outcomes.text,
         );
     if (!mounted) return;
     setState(() => _loading = false);
@@ -168,6 +173,30 @@ class _CourseFormPageState extends ConsumerState<CourseFormPage> {
               ],
               onChanged: (c) => setState(() => _category = c),
               validator: (c) => c == null ? 'Kategori seç.' : null,
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<CourseLevel?>(
+              initialValue: _level,
+              decoration: const InputDecoration(labelText: 'Seviye'),
+              items: [
+                const DropdownMenuItem(child: Text('Belirtilmedi')),
+                for (final l in CourseLevel.values)
+                  DropdownMenuItem(value: l, child: Text(l.label)),
+              ],
+              onChanged: (l) => setState(() => _level = l),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _outcomes,
+              decoration: const InputDecoration(
+                labelText: 'Bu kursta öğrenecekleri (isteğe bağlı)',
+                helperText: 'Her satıra bir kazanım yaz.',
+                alignLabelWithHint: true,
+              ),
+              textCapitalization: TextCapitalization.sentences,
+              maxLength: 3000,
+              minLines: 3,
+              maxLines: 8,
             ),
             const SizedBox(height: 24),
             TextFormField(

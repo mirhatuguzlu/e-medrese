@@ -5,6 +5,7 @@ import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/presentation/features/courses/assign_course_page.dart';
 import 'package:e_medrese/presentation/features/courses/assignment_progress_page.dart';
 import 'package:e_medrese/presentation/features/courses/course_cover.dart';
+import 'package:e_medrese/presentation/features/courses/icazet_requests_page.dart';
 import 'package:e_medrese/presentation/features/courses/online_medrese_page.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +23,16 @@ class MedreseCoursesPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final staff = medrese.myRole.isStaff;
+    final pendingIcazet = switch (ref.watch(icazetRequestsProvider)) {
+      AsyncData(value: Ok(:final value)) when staff =>
+        value
+            .where(
+              (r) =>
+                  r.medreseId == medrese.id && r.status == IcazetStatus.pending,
+            )
+            .length,
+      _ => 0,
+    };
     final assignments = ref.watch(assignmentsProvider);
     final courses = ref.watch(coursesProvider);
     final progress = switch (ref.watch(lessonProgressProvider)) {
@@ -51,7 +62,22 @@ class MedreseCoursesPage extends ConsumerWidget {
       _ => const AsyncLoading<Result<List<CourseAssignment>, AppFailure>>(),
     };
     return Scaffold(
-      appBar: AppBar(title: const Text('Online kurslar')),
+      appBar: AppBar(
+        title: const Text('Online kurslar'),
+        actions: [
+          if (staff)
+            IconButton(
+              tooltip: 'İcazet istekleri',
+              icon: Badge.count(
+                count: pendingIcazet,
+                isLabelVisible: pendingIcazet > 0,
+                child: const Icon(Icons.workspace_premium_outlined),
+              ),
+              onPressed: () =>
+                  context.push(IcazetRequestsPage(medrese: medrese)),
+            ),
+        ],
+      ),
       floatingActionButton: staff
           ? FloatingActionButton.extended(
               onPressed: () => context.push(AssignCoursePage(medrese: medrese)),
@@ -65,7 +91,8 @@ class MedreseCoursesPage extends ConsumerWidget {
           ref
             ..invalidate(assignmentsProvider)
             ..invalidate(coursesProvider)
-            ..invalidate(lessonProgressProvider);
+            ..invalidate(lessonProgressProvider)
+            ..invalidate(icazetRequestsProvider);
           await ref.read(assignmentsProvider.future);
         },
         emptyIcon: Icons.school_outlined,

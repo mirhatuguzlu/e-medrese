@@ -50,7 +50,8 @@ final class AppNotification {
   final String id;
 
   /// Tür: task_started, task_paused, task_resumed, task_finished,
-  /// announcement, period_ready, reminder, comment.
+  /// announcement, period_ready, reminder, comment, course_assigned,
+  /// icazet_request, icazet_approved, icazet_rejected, lesson_comment.
   final String kind;
 
   /// Başlık.

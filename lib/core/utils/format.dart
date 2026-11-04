@@ -49,3 +49,6 @@ String formatClock(int seconds) {
   final s = (seconds % 60).toString().padLeft(2, '0');
   return h == 0 ? '$m:$s' : '$h:${m.toString().padLeft(2, '0')}:$s';
 }
+
+/// Türkçe büyük harf: `toUpperCase` "i"yi "I" yapar, burada "İ" olur.
+String upperTr(String s) => s.replaceAll('i', 'İ').toUpperCase();

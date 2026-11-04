@@ -102,7 +102,7 @@ class _CourseConsentPageState extends ConsumerState<CourseConsentPage> {
                       controlAffinity: ListTileControlAffinity.leading,
                       contentPadding: EdgeInsets.zero,
                       title: const Text(
-                        'Okudum; ders ilerlemelerimin bu metinde yazdığı '
+                        'Okudum; Online Medrese verilerimin bu metinde yazdığı '
                         "şekilde işlenmesine ve YouTube'a iletilmesine açık "
                         'rıza veriyorum.',
                       ),

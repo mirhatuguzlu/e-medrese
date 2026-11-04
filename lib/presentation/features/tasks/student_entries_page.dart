@@ -41,8 +41,7 @@ class StudentEntriesPage extends ConsumerWidget {
             .whenData(
               (r) => r.map(
                 // Uyum puanı ayrı sayfada verilir.
-                (list) =>
-                    list.where((t) => t.kind != TaskKind.teacher).toList(),
+                (list) => list.where((t) => t.selfMarked).toList(),
               ),
             ),
         onRefresh: () => ref.refresh(taskDefinitionsProvider.future),

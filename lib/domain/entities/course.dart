@@ -32,6 +32,69 @@ enum CourseCategory {
   final String label;
 }
 
+/// Kursun seviyesi; `courses.level` değerleri.
+enum CourseLevel {
+  /// Başlangıç.
+  baslangic('Başlangıç'),
+
+  /// Orta.
+  orta('Orta'),
+
+  /// İleri.
+  ileri('İleri');
+
+  const CourseLevel(this.label);
+
+  /// Görünen ad.
+  final String label;
+}
+
+/// Dersin sonundaki çoktan seçmeli tekrar sorusu.
+final class LessonQuestion {
+  /// Soru.
+  const LessonQuestion({
+    required this.id,
+    required this.lessonId,
+    required this.position,
+    required this.question,
+    required this.options,
+    required this.answer,
+    required this.explanation,
+  });
+
+  /// `lesson_questions` satırından oluşturur.
+  factory LessonQuestion.fromJson(Map<String, dynamic> json) => LessonQuestion(
+    id: json['id'] as String,
+    lessonId: json['lesson_id'] as String,
+    position: json['position'] as int? ?? 0,
+    question: json['question'] as String,
+    options: (json['options'] as List<dynamic>).cast<String>(),
+    answer: json['answer'] as int,
+    explanation: json['explanation'] as String? ?? '',
+  );
+
+  /// Kimlik.
+  final String id;
+
+  /// Ders.
+  final String lessonId;
+
+  /// Dersteki sırası.
+  final int position;
+
+  /// Soru metni.
+  final String question;
+
+  /// Şıklar (2–5).
+  final List<String> options;
+
+  /// Doğru şıkkın sırası (0'dan).
+  final int answer;
+
+  /// Cevaptan sonra gösterilen açıklama (boş olabilir).
+  final String explanation;
+}
+
 /// YouTube'dan oynatılan tek ders.
 final class Lesson {
   /// Ders.
@@ -43,9 +106,10 @@ final class Lesson {
     required this.description,
     required this.youtubeId,
     required this.durationSeconds,
+    this.questions = const [],
   });
 
-  /// `lessons` satırından oluşturur.
+  /// `lessons` satırından (`lesson_questions(*)` ile) oluşturur.
   factory Lesson.fromJson(Map<String, dynamic> json) => Lesson(
     id: json['id'] as String,
     position: json['position'] as int,
@@ -54,7 +118,14 @@ final class Lesson {
     description: json['description'] as String? ?? '',
     youtubeId: json['youtube_id'] as String,
     durationSeconds: json['duration_seconds'] as int? ?? 0,
+    questions: [
+      for (final q in json['lesson_questions'] as List<dynamic>? ?? const [])
+        LessonQuestion.fromJson(q as Map<String, dynamic>),
+    ]..sort((a, b) => a.position.compareTo(b.position)),
   );
+
+  /// Tekrar soruları, sırasıyla.
+  final List<LessonQuestion> questions;
 
   /// Kimlik.
   final String id;
@@ -94,6 +165,8 @@ final class Course {
     required this.coverUrl,
     required this.lessons,
     this.published = true,
+    this.level,
+    this.outcomes = '',
   });
 
   /// `courses` satırından (`lessons(*)` ile) oluşturur.
@@ -110,7 +183,28 @@ final class Course {
         Lesson.fromJson(l as Map<String, dynamic>),
     ]..sort((a, b) => a.position.compareTo(b.position)),
     published: json['published'] as bool? ?? true,
+    level: switch (json['level']) {
+      final String l => CourseLevel.values.asNameMap()[l],
+      _ => null,
+    },
+    outcomes: json['outcomes'] as String? ?? '',
   );
+
+  /// Seviye; girilmediyse `null`.
+  final CourseLevel? level;
+
+  /// Kazanımlar, satır satır (boş olabilir).
+  final String outcomes;
+
+  /// Boş olmayan kazanım satırları.
+  List<String> get outcomeList => [
+    for (final line in outcomes.split('\n'))
+      if (line.trim().isNotEmpty) line.trim(),
+  ];
+
+  /// Bütün tekrar soruları.
+  int get questionCount =>
+      lessons.fold(0, (sum, l) => sum + l.questions.length);
 
   /// Kimlik.
   final String id;
@@ -366,6 +460,8 @@ final class StudentCourseProgress {
     required this.consent,
     required this.done,
     this.lastWatched,
+    this.answered = 0,
+    this.correct = 0,
   });
 
   /// `assignment_progress` satırından oluşturur.
@@ -379,7 +475,15 @@ final class StudentCourseProgress {
           final String at => DateTime.parse(at).toLocal(),
           _ => null,
         },
+        answered: json['answered'] as int? ?? 0,
+        correct: json['correct'] as int? ?? 0,
       );
+
+  /// Cevapladığı tekrar sorusu (ilk cevaplar).
+  final int answered;
+
+  /// İlk cevabı doğru olan soru sayısı.
+  final int correct;
 
   /// Öğrenci.
   final String userId;
@@ -432,3 +536,204 @@ final class LessonNote {
   /// Yazıldığı zaman.
   final DateTime createdAt;
 }
+
+/// Medresenin bir ders hakkındaki tartışmasında yazılan.
+final class LessonComment {
+  /// Yazı.
+  const LessonComment({
+    required this.id,
+    required this.authorId,
+    required this.authorName,
+    required this.body,
+    required this.createdAt,
+    this.seconds,
+    this.lessonId = '',
+  });
+
+  /// `lesson_comments` satırından (`author:profiles(full_name)` ile).
+  factory LessonComment.fromJson(Map<String, dynamic> json) => LessonComment(
+    id: json['id'] as String,
+    authorId: json['author_id'] as String,
+    authorName:
+        (json['author'] as Map<String, dynamic>?)?['full_name'] as String? ??
+        '',
+    body: json['body'] as String,
+    createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+    seconds: json['seconds'] as int?,
+    lessonId: json['lesson_id'] as String? ?? '',
+  );
+
+  /// Ders.
+  final String lessonId;
+
+  /// Kimlik.
+  final String id;
+
+  /// Yazan.
+  final String authorId;
+
+  /// Yazanın adı.
+  final String authorName;
+
+  /// Metin.
+  final String body;
+
+  /// Yazıldığı zaman.
+  final DateTime createdAt;
+
+  /// Bağlandığı video anı; yoksa `null`.
+  final int? seconds;
+}
+
+/// İcazet isteğinin durumu.
+enum IcazetStatus {
+  /// Hoca henüz karar vermedi.
+  pending,
+
+  /// Hoca onayladı.
+  approved,
+
+  /// Hoca geri çevirdi; yeniden istenebilir.
+  rejected,
+}
+
+/// Öğrencinin, hocanın verdiği kursu bitirince istediği icazet.
+final class IcazetRequest {
+  /// İstek.
+  const IcazetRequest({
+    required this.id,
+    required this.medreseId,
+    required this.courseId,
+    required this.userId,
+    required this.studentName,
+    required this.status,
+    required this.note,
+    required this.decidedByName,
+    required this.createdAt,
+    this.decidedAt,
+  });
+
+  /// `icazet_requests` satırından (`student:profiles(full_name)` ile).
+  factory IcazetRequest.fromJson(Map<String, dynamic> json) => IcazetRequest(
+    id: json['id'] as String,
+    medreseId: json['medrese_id'] as String,
+    courseId: json['course_id'] as String,
+    userId: json['user_id'] as String,
+    studentName:
+        (json['student'] as Map<String, dynamic>?)?['full_name'] as String? ??
+        '',
+    status: IcazetStatus.values.byName(json['status'] as String),
+    note: json['note'] as String? ?? '',
+    decidedByName: json['decided_by_name'] as String? ?? '',
+    createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+    decidedAt: switch (json['decided_at']) {
+      final String at => DateTime.parse(at).toLocal(),
+      _ => null,
+    },
+  );
+
+  /// Kimlik.
+  final String id;
+
+  /// Medrese.
+  final String medreseId;
+
+  /// Kurs.
+  final String courseId;
+
+  /// İsteyen öğrenci.
+  final String userId;
+
+  /// Öğrencinin adı.
+  final String studentName;
+
+  /// Durum.
+  final IcazetStatus status;
+
+  /// Hocanın notu (boş olabilir).
+  final String note;
+
+  /// Karar veren hocanın adı.
+  final String decidedByName;
+
+  /// İstenme zamanı.
+  final DateTime createdAt;
+
+  /// Karar zamanı.
+  final DateTime? decidedAt;
+}
+
+/// Kursa verilen isimsiz değerlendirme.
+final class CourseReview {
+  /// Değerlendirme.
+  const CourseReview({
+    required this.id,
+    required this.rating,
+    required this.body,
+    required this.createdAt,
+    required this.mine,
+  });
+
+  /// `course_reviews_of` satırından oluşturur.
+  factory CourseReview.fromJson(Map<String, dynamic> json) => CourseReview(
+    id: json['id'] as String,
+    rating: json['rating'] as int,
+    body: json['body'] as String? ?? '',
+    createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+    mine: json['mine'] as bool? ?? false,
+  );
+
+  /// Kimlik.
+  final String id;
+
+  /// 1–5 yıldız.
+  final int rating;
+
+  /// Yorum (boş olabilir).
+  final String body;
+
+  /// Son yazıldığı zaman.
+  final DateTime createdAt;
+
+  /// Giriş yapan kullanıcının değerlendirmesi.
+  final bool mine;
+}
+
+/// Kursun ortalama puanı.
+typedef CourseRating = ({double average, int count});
+
+/// [course] başlığında, hocasında, açıklamasında, kategorisinde ya da ders
+/// adlarında [query]'nin bütün kelimeleri geçiyor mu (Türkçe büyük/küçük
+/// harf ve şapka farkı gözetmez).
+bool courseMatches(Course course, String query) {
+  final words = foldTurkish(query).split(RegExp(r'\s+'))
+    ..removeWhere((w) => w.isEmpty);
+  if (words.isEmpty) return true;
+  final text = foldTurkish(
+    [
+      course.title,
+      course.subtitle,
+      course.teacher,
+      course.category.label,
+      course.description,
+      for (final l in course.lessons) l.title,
+    ].join(' '),
+  );
+  return words.every(text.contains);
+}
+
+/// Aramada karşılaştırma için: küçük harf, şapkasız; İ, I ve ı hep "i"
+/// (klavyede hangisi yazılırsa yazılsın bulunsun).
+String foldTurkish(String s) {
+  const from = 'İIıÂÎÛâîû';
+  const to = 'iiiaiuaiu';
+  final buffer = StringBuffer();
+  for (final ch in s.split('')) {
+    final i = from.indexOf(ch);
+    buffer.write(i >= 0 ? to[i] : ch);
+  }
+  return buffer.toString().toLowerCase();
+}
+
+/// Tekrar sorularında ilk cevaplar: soru kimliği -> doğru mu.
+typedef QuestionResults = Map<String, bool>;

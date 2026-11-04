@@ -4,8 +4,12 @@ import 'dart:math';
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/course_repository.dart';
 import 'package:e_medrese/domain/entities/course.dart';
+import 'package:e_medrese/domain/entities/medrese.dart';
+import 'package:e_medrese/presentation/features/courses/icazet_page.dart';
+import 'package:e_medrese/presentation/features/courses/lesson_discussion_page.dart';
 import 'package:e_medrese/presentation/features/courses/lesson_note_page.dart';
 import 'package:e_medrese/presentation/features/courses/lesson_notes_page.dart';
+import 'package:e_medrese/presentation/features/courses/lesson_quiz_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -293,6 +297,32 @@ class _LessonPageState extends ConsumerState<LessonPage>
     unawaited(_player?.playVideo());
   }
 
+  Future<void> _openQuiz() async {
+    final lesson = _lesson;
+    if (lesson == null) return;
+    _player?.exitFullScreen();
+    unawaited(_player?.pauseVideo());
+    await context.push(LessonQuizPage(lesson: lesson));
+  }
+
+  Future<void> _openDiscussion(Medrese medrese) async {
+    final lesson = _lesson;
+    if (lesson == null) return;
+    unawaited(_player?.pauseVideo());
+    final seconds = await Navigator.of(context).push<int>(
+      MaterialPageRoute(
+        builder: (_) => LessonDiscussionPage(
+          medrese: medrese,
+          lesson: lesson,
+          seconds: _playback.position.floor(),
+        ),
+      ),
+    );
+    if (seconds == null) return;
+    _seek(seconds.toDouble());
+    unawaited(_player?.playVideo());
+  }
+
   void _nextRate() {
     _rate = _rates[(_rates.indexOf(_rate) + 1) % _rates.length];
     _playback
@@ -433,6 +463,7 @@ class _LessonPageState extends ConsumerState<LessonPage>
               playback: _playback,
               fullscreen: fullscreen,
               hasNext: next != null,
+              onQuestions: lesson.questions.isEmpty ? null : _openQuiz,
               onPlayPause: _togglePlay,
               onSeek: _seek,
               onRate: _nextRate,
@@ -500,6 +531,33 @@ class _LessonPageState extends ConsumerState<LessonPage>
                     ),
                   ],
                 ),
+                if (lesson.questions.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  ListenableBuilder(
+                    listenable: _playback,
+                    builder: (context, _) => _QuizButton(
+                      lesson: lesson,
+                      completed: _playback.completed,
+                      onPressed: _openQuiz,
+                    ),
+                  ),
+                ],
+                for (final m in assignedMedreses(ref, course.id))
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(44),
+                      ),
+                      onPressed: () => _openDiscussion(m),
+                      icon: const Icon(Icons.forum_outlined),
+                      label: Text(
+                        'Ders tartışması · ${m.name}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
                 if (lesson.description.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text(lesson.description, style: theme.textTheme.bodyLarge),
@@ -590,11 +648,16 @@ class _Controls extends StatefulWidget {
     required this.onCaptions,
     required this.onFullscreen,
     required this.onNext,
+    this.onQuestions,
   });
 
   final _Playback playback;
   final bool fullscreen;
   final bool hasNext;
+
+  /// Dersin tekrar soruları varsa açar; varsa sonraki derse kendiliğinden
+  /// geçilmez.
+  final VoidCallback? onQuestions;
   final VoidCallback onPlayPause;
   final ValueChanged<double> onSeek;
   final VoidCallback onRate;
@@ -610,6 +673,17 @@ class _ControlsState extends State<_Controls> {
   bool _visible = true;
   double? _drag;
   Timer? _hide;
+  Timer? _tick;
+  int? _countdown;
+
+  /// "Burada kal" dendi; video yeniden oynayana kadar sayılmaz.
+  bool _stayed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.playback.addListener(_onPlayback);
+  }
 
   void _show() {
     setState(() => _visible = true);
@@ -623,7 +697,9 @@ class _ControlsState extends State<_Controls> {
 
   @override
   void dispose() {
+    widget.playback.removeListener(_onPlayback);
     _hide?.cancel();
+    _tick?.cancel();
     super.dispose();
   }
 
@@ -863,21 +939,70 @@ class _ControlsState extends State<_Controls> {
                 icon: const Icon(Icons.replay),
                 label: const Text('Tekrar izle'),
               ),
-              if (widget.hasNext) ...[
+              if (widget.onQuestions case final onQuestions?) ...[
+                const SizedBox(width: 12),
+                FilledButton.icon(
+                  onPressed: onQuestions,
+                  icon: const Icon(Icons.quiz_outlined),
+                  label: const Text('Soruları çöz'),
+                ),
+              ] else if (widget.hasNext) ...[
                 const SizedBox(width: 12),
                 FilledButton.icon(
                   onPressed: widget.onNext,
                   icon: const Icon(Icons.skip_next_rounded),
-                  label: const Text('Sonraki ders'),
+                  label: Text(
+                    _countdown == null
+                        ? 'Sonraki ders'
+                        : 'Sonraki ders ($_countdown)',
+                  ),
                 ),
               ],
             ],
           ),
+          if (_countdown != null)
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.white70),
+              onPressed: _cancelCountdown,
+              child: const Text('Burada kal'),
+            ),
         ],
       ),
     ),
   );
+
+  // Sorusu olmayan ders bitince sıradaki ders 5 sn sonra kendiliğinden açılır.
+  void _onPlayback() {
+    final p = widget.playback;
+    final auto = p.ended && widget.hasNext && widget.onQuestions == null;
+    if (auto && _countdown == null && !_stayed) {
+      setState(() => _countdown = _autoNextSeconds);
+      _tick = Timer.periodic(const Duration(seconds: 1), (t) {
+        if (!mounted) return t.cancel();
+        if (_countdown! <= 1) {
+          t.cancel();
+          setState(() => _countdown = null);
+          widget.onNext();
+        } else {
+          setState(() => _countdown = _countdown! - 1);
+        }
+      });
+    } else if (!p.ended) {
+      _stayed = false;
+      if (_countdown != null) _cancelCountdown();
+    }
+  }
+
+  void _cancelCountdown() {
+    _tick?.cancel();
+    setState(() {
+      _countdown = null;
+      _stayed = true;
+    });
+  }
 }
+
+const _autoNextSeconds = 5;
 
 class _Failed extends StatelessWidget {
   const _Failed();
@@ -902,3 +1027,39 @@ class _Failed extends StatelessWidget {
 /// Hız: "1", "1.25", "0.75".
 String formatRate(double rate) =>
     rate == rate.roundToDouble() ? '${rate.round()}' : '$rate';
+
+/// Tekrar soruları düğmesi: ders bitince açılır; ilk cevapların sonucunu
+/// gösterir.
+class _QuizButton extends ConsumerWidget {
+  const _QuizButton({
+    required this.lesson,
+    required this.completed,
+    required this.onPressed,
+  });
+
+  final Lesson lesson;
+  final bool completed;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final total = lesson.questions.length;
+    final results = switch (ref.watch(questionResultsProvider)) {
+      AsyncData(value: Ok(:final value)) => [
+        for (final q in lesson.questions) ?value[q.id],
+      ],
+      _ => const <bool>[],
+    };
+    final label = !completed
+        ? 'Tekrar soruları ($total) · dersi bitirince açılır'
+        : results.length == total
+        ? 'Tekrar soruları · ${results.where((c) => c).length}/$total doğru'
+        : 'Tekrar sorularını çöz ($total)';
+    return FilledButton.tonalIcon(
+      style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
+      onPressed: completed ? onPressed : null,
+      icon: Icon(completed ? Icons.quiz_outlined : Icons.lock_outline),
+      label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+    );
+  }
+}

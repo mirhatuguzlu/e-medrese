@@ -2,6 +2,7 @@ import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/course_repository.dart';
 import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
+import 'package:e_medrese/presentation/features/courses/course_discussions_page.dart';
 import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
 import 'package:flutter/material.dart';
@@ -54,6 +55,13 @@ class AssignmentProgressPage extends ConsumerWidget {
       appBar: AppBar(
         title: Text(course.title),
         actions: [
+          IconButton(
+            tooltip: 'Ders tartışmaları',
+            icon: const Icon(Icons.forum_outlined),
+            onPressed: () => context.push(
+              CourseDiscussionsPage(medrese: medrese, course: course),
+            ),
+          ),
           IconButton(
             tooltip: 'Kursu geri al',
             icon: const Icon(Icons.remove_circle_outline),
@@ -110,6 +118,8 @@ class AssignmentProgressPage extends ConsumerWidget {
                           'son izleme ${formatDateTime(s.lastWatched!)}'
                         else
                           'henüz başlamadı',
+                        if (s.answered > 0)
+                          'sorular ${s.correct}/${s.answered} doğru',
                       ].join(' · '),
                       style: theme.textTheme.bodySmall,
                     ),

@@ -1,21 +1,42 @@
 import 'package:e_medrese/core/core.dart';
+import 'package:e_medrese/data/repositories/course_repository.dart';
 import 'package:e_medrese/data/repositories/feed_repository.dart';
 import 'package:e_medrese/domain/entities/feed.dart';
 import 'package:e_medrese/presentation/widgets/loading_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Bir paylaşımı ya da yorumu şikayet etme sayfası (5651, 5846).
+/// Bir paylaşımı, yorumu, ders tartışmasındaki yazıyı ya da kurs
+/// değerlendirmesini şikayet etme sayfası (5651, 5846).
 class ReportPage extends ConsumerStatefulWidget {
-  /// [postId] ya da [commentId]'den tam biri verilir.
-  const ReportPage({this.postId, this.commentId, super.key})
-    : assert((postId == null) != (commentId == null), 'tam biri verilmeli');
+  /// [postId], [commentId], [lessonCommentId] ya da [reviewId]'den tam biri
+  /// verilir.
+  const ReportPage({
+    this.postId,
+    this.commentId,
+    this.lessonCommentId,
+    this.reviewId,
+    super.key,
+  }) : assert(
+         (postId != null ? 1 : 0) +
+                 (commentId != null ? 1 : 0) +
+                 (lessonCommentId != null ? 1 : 0) +
+                 (reviewId != null ? 1 : 0) ==
+             1,
+         'tam biri verilmeli',
+       );
 
   /// Şikayet edilen paylaşım.
   final String? postId;
 
   /// Şikayet edilen yorum.
   final String? commentId;
+
+  /// Şikayet edilen ders tartışması yazısı.
+  final String? lessonCommentId;
+
+  /// Şikayet edilen kurs değerlendirmesi.
+  final String? reviewId;
 
   @override
   ConsumerState<ReportPage> createState() => _ReportPageState();
@@ -39,14 +60,23 @@ class _ReportPageState extends ConsumerState<ReportPage> {
       return;
     }
     setState(() => _loading = true);
-    final result = await ref
-        .read(feedRepositoryProvider)
-        .report(
-          postId: widget.postId,
-          commentId: widget.commentId,
-          reason: reason,
-          note: _note.text,
-        );
+    final result = widget.postId != null || widget.commentId != null
+        ? await ref
+              .read(feedRepositoryProvider)
+              .report(
+                postId: widget.postId,
+                commentId: widget.commentId,
+                reason: reason,
+                note: _note.text,
+              )
+        : await ref
+              .read(courseRepositoryProvider)
+              .report(
+                lessonCommentId: widget.lessonCommentId,
+                reviewId: widget.reviewId,
+                reason: reason,
+                note: _note.text,
+              );
     if (!mounted) return;
     setState(() => _loading = false);
     switch (result) {

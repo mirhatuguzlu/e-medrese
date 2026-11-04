@@ -1,6 +1,18 @@
 # Changelog
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
+## 2.8.0+26 — 2026-11-08
+- Tekrar soruları: yöneticiler derslere çoktan seçmeli soru ekler (2–5 şık, açıklama). Öğrenci dersi bitirince çözer; yanlışta doğrusu ve açıklaması görünür. İlk cevap kaydedilir, yeniden çözmek serbest. Hocalar verdikleri kursta doğru sayısını görür.
+- Medrese içi ders tartışması: hocanın verdiği kursun derslerinde yalnız medrese üyelerinin gördüğü soru-cevap; yazı videonun o anına bağlanabilir, ana dokununca video oraya gider. Hocanın yazısı "Hoca" rozetli; hocalar kursun bütün tartışmalarını tek sayfada görür. Şikayet ve silme var; bildirim gider.
+- Hoca onaylı icazet: verilen kursu bitiren öğrenci icazet ister, hoca notuyla onaylar ya da geri çevirir (geri çevrilen yeniden istenir). İcazet belgesinde onaylayan hoca, medrese ve belge numarası yazar. Hoca onayı olmayan kurslarda "Tamamlama belgesi" verilir.
+- Görev puanı: hocanın verdiği kurslarda bir haftada bitirilen her ders 5 puan (en fazla 10 ders) "Online kurs" görevi olarak haftalık puana ve sıralamaya eklenir. Görev kartı yalnız kurs verilen medresede görünür.
+- İsimsiz kurs değerlendirmesi: en az bir dersini bitiren 1–5 yıldız ve yorum yazar; adlar gösterilmez. Puan katalogda ve kurs sayfasında görünür; değerlendirmeler şikayet edilebilir.
+- Kurs seviyesi (başlangıç/orta/ileri) ve "Bu kursta öğreneceklerin" listesi.
+- Kurs arama (başlık, hoca, konu, ders adları; seviyeye göre) ve "Kurslarım" sayfası (devam edenler, bitenler, toplam izleme).
+- Sorusu olmayan ders bitince sonraki ders 5 sn sonra kendiliğinden açılır ("Burada kal" ile durdurulur); sorusu varsa "Soruları çöz" çıkar.
+- Düzeltme: kategori ve seviye başlıklarında Türkçe büyük harf (SİYER, HADİS).
+- Online Medrese rıza metni (sürüm 3) ve aydınlatma metni yeni verilerle güncellendi; önceki rızayı verenlere bir kez yeniden sorulur. Rıza geri alınınca soru cevapları, değerlendirmeler, icazet istekleri silinir, haftalık puanlardan kurs payı düşülür.
+
 ## 2.7.0+25 — 2026-11-07
 - Düzeltme: ders ilerlemesi 1. dakikada takılıyor, ders tamamlanmıyordu (sunucu doğrulaması kaydı her seferinde yeni sayıyordu). Kalınan yer ve tamamlanma artık doğru kaydediliyor; sunucu kabul etmezse uygulama yeniden deniyor.
 - Tam ekranda durum ve gezinme çubukları gizleniyor, ekran yatay dönüyor.

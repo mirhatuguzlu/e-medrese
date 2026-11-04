@@ -435,14 +435,14 @@ void _assignmentTests() {
     expect(repo.calls, ['unassign m1 c1']);
   });
 
-  testWidgets('kurs bitince icazet', (tester) async {
+  testWidgets('kurs bitince tamamlama belgesi', (tester) async {
     for (final l in _course.lessons) {
       repo.progressMap[l.id] = _p(l.id, day: 6, done: true);
     }
     await pump(tester, const CoursePage(courseId: 'c1'));
     await tester.tap(find.text('Kursu bitirdin'));
     await tester.pumpAndSettle();
-    expect(find.text('İCAZET'), findsOneWidget);
+    expect(find.text('TAMAMLAMA BELGESİ'), findsOneWidget);
     expect(find.text('Temel Akaid'), findsOneWidget);
     expect(find.text('06.11.2026'), findsOneWidget);
   });

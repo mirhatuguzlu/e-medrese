@@ -79,7 +79,16 @@ class TaskRepository {
             .from('task_definitions')
             .select('id, title, description, config')
             .order('sort');
-        return rows.map(TaskDefinition.fromJson).toList();
+        // Bu sürümün tanımadığı yeni görev türleri atlanır.
+        final kinds = TaskKind.values.asNameMap();
+        return rows
+            .where(
+              (r) => kinds.containsKey(
+                (r['config'] as Map<String, dynamic>)['kind'],
+              ),
+            )
+            .map(TaskDefinition.fromJson)
+            .toList();
       });
 
   /// Medresenin programı.

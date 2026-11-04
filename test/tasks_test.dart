@@ -1,6 +1,7 @@
 import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:e_medrese/data/repositories/medrese_repository.dart';
 import 'package:e_medrese/data/repositories/task_repository.dart';
+import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/member.dart';
 import 'package:e_medrese/domain/entities/task.dart';
@@ -45,6 +46,7 @@ void main() {
     TaskProgram? program,
     List<WeeklyScore> scores = const [],
     FakeConsentRepository? consent,
+    FakeCourseRepository? courses,
   }) async {
     tasks = FakeTaskRepository(taskProgram: program)..scoreList.addAll(scores);
     // Bütün kartlar ve günler ekrana sığsın.
@@ -54,7 +56,7 @@ void main() {
       ProviderScope(
         key: UniqueKey(),
         overrides: [
-          ...pushOverrides(consent: consent),
+          ...pushOverrides(consent: consent, courses: courses),
           sessionProvider.overrideWith((ref) => Stream.value(testSession)),
           medreseRepositoryProvider.overrideWithValue(medreses),
           taskRepositoryProvider.overrideWithValue(tasks),
@@ -95,9 +97,37 @@ void main() {
     // Dönem sürerken puan gösterilmez.
     expect(find.textContaining('puan'), findsNothing);
     for (final t in testTasks) {
-      expect(find.text(t.title), findsOneWidget);
+      // Kurs görevi yalnız hocanın kurs verdiği medresede.
+      expect(
+        find.text(t.title),
+        t.kind == TaskKind.course ? findsNothing : findsOneWidget,
+      );
     }
     expect(find.byType(GridView), findsOneWidget);
+  });
+
+  testWidgets('hoca kurs verdiyse kurs görevi görünür, kurslara götürür', (
+    tester,
+  ) async {
+    medreses.medreses.add(_medrese(MemberRole.student));
+    final courses = FakeCourseRepository()
+      ..assignmentList.add(
+        CourseAssignment(
+          medreseId: 'm1',
+          medreseName: 'Süleymaniye',
+          courseId: 'c1',
+          createdAt: DateTime(2026, 10, 27),
+        ),
+      );
+    await pump(
+      tester,
+      const TasksTabPage(),
+      program: _program,
+      courses: courses,
+    );
+    expect(find.text('Kurs derslerinle'), findsOneWidget);
+    await openTask(tester, 'Online kurs');
+    expect(find.text('Online kurslar'), findsOneWidget);
   });
 
   testWidgets('açık rıza yoksa görevler yerine rıza istenir', (tester) async {

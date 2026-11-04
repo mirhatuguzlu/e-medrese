@@ -206,7 +206,7 @@ DateTime earliestDeadline({
 }) {
   final own = [
     for (final t in tasks)
-      if (t.kind != TaskKind.teacher) t,
+      if (t.selfMarked) t,
   ];
   final daysLeft = [
     for (var i = 0; i < 7; i++) periodStart.add(Duration(days: i)),
@@ -246,7 +246,7 @@ GoalPlan planGoal({
   final namaz = tasks.where((t) => t.id == 'namaz').toList();
   final others = [
     for (final t in tasks)
-      if (t.id != 'namaz' && t.kind != TaskKind.teacher) t,
+      if (t.id != 'namaz' && t.selfMarked) t,
   ];
   final othersMax = others.fold<double>(0, (s, t) => s + t.maxScore);
   final namazMax = namaz.fold<double>(0, (s, t) => s + t.maxScore);

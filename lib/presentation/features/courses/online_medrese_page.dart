@@ -5,7 +5,10 @@ import 'package:e_medrese/presentation/features/courses/admin_courses_page.dart'
 import 'package:e_medrese/presentation/features/courses/course_consent_page.dart';
 import 'package:e_medrese/presentation/features/courses/course_cover.dart';
 import 'package:e_medrese/presentation/features/courses/course_page.dart';
+import 'package:e_medrese/presentation/features/courses/course_reviews_page.dart';
+import 'package:e_medrese/presentation/features/courses/course_search_page.dart';
 import 'package:e_medrese/presentation/features/courses/lesson_page.dart';
+import 'package:e_medrese/presentation/features/courses/my_courses_page.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -26,7 +29,8 @@ class _OnlineMedresePageState extends ConsumerState<OnlineMedresePage> {
     ref
       ..invalidate(coursesProvider)
       ..invalidate(lessonProgressProvider)
-      ..invalidate(assignmentsProvider);
+      ..invalidate(assignmentsProvider)
+      ..invalidate(courseRatingsProvider);
     await ref.read(coursesProvider.future);
   }
 
@@ -58,6 +62,16 @@ class _OnlineMedresePageState extends ConsumerState<OnlineMedresePage> {
       appBar: AppBar(
         title: const Text('Online Medrese'),
         actions: [
+          IconButton(
+            tooltip: 'Kurs ara',
+            icon: const Icon(Icons.search),
+            onPressed: () => context.push(const CourseSearchPage()),
+          ),
+          IconButton(
+            tooltip: 'Kurslarım',
+            icon: const Icon(Icons.bookmark_outline),
+            onPressed: () => context.push(const MyCoursesPage()),
+          ),
           if (ref.watch(courseAdminProvider) case AsyncData(
             value: Ok(value: true),
           ))
@@ -264,7 +278,7 @@ class _ResumeCard extends ConsumerWidget {
 }
 
 /// Katalogdaki kurs kartı: kapak, başlık, hoca, ders sayısı ve ilerleme.
-class CourseCard extends StatelessWidget {
+class CourseCard extends ConsumerWidget {
   /// [progress] kursunun kartı.
   const CourseCard({required this.progress, this.assignment, super.key});
 
@@ -275,10 +289,18 @@ class CourseCard extends StatelessWidget {
   final CourseAssignment? assignment;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final course = progress.course;
     final duration = course.durationSeconds;
+    final rating = switch (ref.watch(courseRatingsProvider)) {
+      AsyncData(value: Ok(:final value)) => value[course.id],
+      _ => null,
+    };
+    final meta = [
+      if (course.teacher.isNotEmpty) course.teacher,
+      if (course.level case final l?) l.label,
+    ].join(' · ');
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () => context.push(CoursePage(courseId: course.id)),
@@ -332,8 +354,22 @@ class CourseCard extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          if (course.teacher.isNotEmpty)
-            Text(course.teacher, style: theme.textTheme.bodyMedium),
+          if (meta.isNotEmpty) Text(meta, style: theme.textTheme.bodyMedium),
+          if (rating != null)
+            Row(
+              children: [
+                Text(
+                  rating.average.toStringAsFixed(1),
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                RatingStars(rating: rating.average, size: 14),
+                const SizedBox(width: 4),
+                Text('(${rating.count})', style: theme.textTheme.bodySmall),
+              ],
+            ),
           if (course.subtitle.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 2),
