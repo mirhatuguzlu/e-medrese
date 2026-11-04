@@ -1,6 +1,11 @@
 # Changelog
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
+## 2.5.0+23 — 2026-11-05
+- Online Medrese açıldı: YouTube derslerinden oluşan kurslar. Akışta "Kaldığın yerden devam et" kartı, kategoriler ve ilerlemeli kurs kartları; kurs sayfasında bölümlü ders listesi ve sıradaki dersi açan düğme.
+- Ders oynatıcı kendi düğmeleriyle: oynat/duraklat, 10 sn geri, hız (0.75x–2x), tam ekran, iki kez dokunarak sarma. İlk izleyişte izlenmemiş kısma sarılamaz; geri sarmak serbest. Dersin %90'ı izlenince ders tamamlanır, sonra serbestçe sarılır. Kalınan yer kaydedilir.
+- Ders ilerlemesi için ayrı açık rıza (Profil > Online Medrese rızası); geri alınınca ilerleme silinir. Aydınlatma metnine ders ilerlemesi ve YouTube eklendi.
+
 ## 2.4.0+22 — 2026-11-04
 - Zorunlu güncelleme: GitHub'da yeni bir sürüm çıktıysa uygulama "Bu sürüm artık mevcut değil" sayfasını gösteriyor ve güncellenene kadar kullanılamıyor. "Uygulamayı güncelle" düğmesi son APK'yı indiriyor. Kontrol her açılışta ve uygulama öne her geldiğinde yapılıyor; internet yoksa uygulama kilitlenmiyor.
 - Aydınlatma metnine GitHub sürüm kontrolü eklendi.

@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/consent_repository.dart';
+import 'package:e_medrese/data/repositories/course_repository.dart';
 import 'package:e_medrese/data/repositories/feed_repository.dart';
 import 'package:e_medrese/data/repositories/medrese_repository.dart';
 import 'package:e_medrese/data/repositories/notification_repository.dart';
 import 'package:e_medrese/data/repositories/reward_repository.dart';
 import 'package:e_medrese/data/repositories/task_repository.dart';
 import 'package:e_medrese/domain/entities/app_notification.dart';
+import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/domain/entities/feed.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/member.dart';
@@ -568,8 +570,10 @@ List<Override> pushOverrides({
   FakePushService? push,
   FakeConsentRepository? consent,
   FakeRewardRepository? rewards,
+  FakeCourseRepository? courses,
 }) => [
   rewardRepositoryProvider.overrideWithValue(rewards ?? FakeRewardRepository()),
+  courseRepositoryProvider.overrideWithValue(courses ?? FakeCourseRepository()),
   // Testler GitHub'a sürüm sormasın.
   updateRequiredProvider.overrideWith((ref) async => false),
   consentRepositoryProvider.overrideWithValue(
@@ -688,6 +692,52 @@ class FakeRewardRepository implements RewardRepository {
   @override
   Future<Result<void, AppFailure>> clearGoal(String medreseId) async {
     myGoal = null;
+    return const Ok(null);
+  }
+}
+
+class FakeCourseRepository implements CourseRepository {
+  FakeCourseRepository({this.consent = true});
+
+  final courseList = <Course>[];
+  final progressMap = <String, LessonProgress>{};
+  bool consent;
+  final calls = <String>[];
+
+  @override
+  Future<Result<List<Course>, AppFailure>> courses() async =>
+      Ok(List.of(courseList));
+
+  @override
+  Future<Result<Map<String, LessonProgress>, AppFailure>> progress() async =>
+      Ok(Map.of(progressMap));
+
+  @override
+  Future<Result<void, AppFailure>> saveProgress({
+    required String lessonId,
+    required int positionSeconds,
+    required int watchedSeconds,
+    required bool completed,
+  }) async {
+    calls.add('save $lessonId $positionSeconds $watchedSeconds $completed');
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<bool, AppFailure>> hasConsent() async => Ok(consent);
+
+  @override
+  Future<Result<void, AppFailure>> giveConsent() async {
+    calls.add('give');
+    consent = true;
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> revokeConsent() async {
+    calls.add('revoke');
+    consent = false;
+    progressMap.clear();
     return const Ok(null);
   }
 }

@@ -29,6 +29,9 @@ Future<Result<T, AppFailure>> guardSupabase<T>(
       (_, 'task consent required') => const ValidationFailure(
         'Öğrenci görev takibine açık rıza vermedi.',
       ),
+      (_, 'course consent required') => const ValidationFailure(
+        'Ders ilerlemesi için önce açık rıza vermelisin.',
+      ),
       (_, 'transfer ownership first') => const ValidationFailure(
         'Kurucusu olduğun medreselerde önce başka bir üyeyi kurucu yap.',
       ),

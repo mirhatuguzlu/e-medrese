@@ -1,0 +1,18 @@
+# Online Medrese Açık Rıza Metni
+
+Online Medrese'de hangi Kur'an, akaid, fıkıh, hadis, siyer, Risale-i Nur gibi dini derslere başladığın ve ne kadarını izlediğin dini inancını gösterebilir. Bu bilgiler 6698 sayılı KVKK'nın 6. maddesine göre özel nitelikli kişisel veridir ve yalnızca açık rızanla işlenir.
+
+Rıza verirsen:
+- Her ders için kaldığın yer, izlediğin en ileri nokta ve dersi tamamladığın zaman saklanır. Böylece kaldığın yerden devam edebilir, kurslardaki ilerlemeni görebilirsin.
+- İlk izleyişte dersin izlemediğin kısmına atlanamaz; bunu sağlamak için izlediğin en ileri nokta kullanılır.
+- Bu bilgileri şimdilik yalnız sen görürsün.
+- Veriler İrlanda'daki sunucularda (Supabase) saklanır.
+- Dersler YouTube'dan (Google LLC, ABD) oynatılır: açtığın videonun kimliği, IP adresin ve cihaz bilgin YouTube'a, yani yurt dışına iletilir. Çerezsiz oynatıcı (youtube-nocookie.com) kullanılır, hesap bilgilerin gönderilmez.
+
+Rıza vermek zorunlu değildir. Vermezsen uygulamanın diğer bölümlerini kullanmaya devam edersin; yalnızca dersleri izleyemezsin, kurs listesine ve açıklamalarına yine bakabilirsin.
+
+Rızanı istediğin zaman Profil > Online Medrese rızası sayfasından geri alabilirsin. Geri aldığında bütün ders ilerlemen hemen silinir.
+
+18 yaşından küçüksen bu rızayı velinle birlikte, onun onayıyla vermelisin.
+
+Ayrıntılar için aydınlatma metnini okuyabilirsin.

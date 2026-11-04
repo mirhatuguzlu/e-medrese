@@ -143,6 +143,8 @@ void main() {
     await tester.tap(find.byTooltip('Profil'));
     await tester.pumpAndSettle();
 
+    await tester.drag(find.byType(ListView).last, const Offset(0, -1000));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Hesabı sil'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Hesabımı kalıcı olarak sil'));

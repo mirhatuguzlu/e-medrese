@@ -2,7 +2,7 @@ name: e_medrese
 description: "E-Medrese - İslami eğitim ve öğrenim platformu."
 publish_to: 'none'
 
-version: 2.4.0+22
+version: 2.5.0+23
 
 environment:
   sdk: ^3.12.2
@@ -52,6 +52,7 @@ dependencies:
   video_player: ^2.9.2
   just_audio: ^0.9.46
   supabase_flutter: ^2.18.3
+  youtube_player_iframe: ^6.0.2
 
 dev_dependencies:
   build_runner: ^2.4.15

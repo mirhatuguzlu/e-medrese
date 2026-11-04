@@ -1,5 +1,6 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
+import 'package:e_medrese/presentation/features/courses/course_consent_page.dart';
 import 'package:e_medrese/presentation/features/legal/legal_text_page.dart';
 import 'package:e_medrese/presentation/features/legal/task_consent_page.dart';
 import 'package:e_medrese/presentation/features/profile/delete_account_page.dart';
@@ -57,6 +58,11 @@ class ProfilePage extends ConsumerWidget {
             leading: const Icon(Icons.fact_check_outlined),
             title: const Text('Görev takibi rızası'),
             onTap: () => context.push(const TaskConsentPage()),
+          ),
+          ListTile(
+            leading: const Icon(Icons.school_outlined),
+            title: const Text('Online Medrese rızası'),
+            onTap: () => context.push(const CourseConsentPage()),
           ),
           ListTile(
             leading: const Icon(Icons.info_outline),

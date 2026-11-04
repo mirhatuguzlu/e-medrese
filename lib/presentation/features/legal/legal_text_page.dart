@@ -6,6 +6,9 @@ const privacyNoticeAsset = 'assets/legal/aydinlatma_metni.txt';
 /// Görev takibi açık rıza metni.
 const taskConsentAsset = 'assets/legal/acik_riza.txt';
 
+/// Online Medrese (ders ilerlemesi) açık rıza metni.
+const courseConsentAsset = 'assets/legal/kurs_riza.txt';
+
 /// Künye ve iletişim.
 const imprintAsset = 'assets/legal/kunye.txt';
 
