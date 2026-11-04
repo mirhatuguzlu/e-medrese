@@ -1,6 +1,5 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/course_repository.dart';
-import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/presentation/features/courses/question_form_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
