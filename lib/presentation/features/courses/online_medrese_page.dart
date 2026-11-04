@@ -1,6 +1,7 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/course_repository.dart';
 import 'package:e_medrese/domain/entities/course.dart';
+import 'package:e_medrese/presentation/features/courses/admin_courses_page.dart';
 import 'package:e_medrese/presentation/features/courses/course_consent_page.dart';
 import 'package:e_medrese/presentation/features/courses/course_cover.dart';
 import 'package:e_medrese/presentation/features/courses/course_page.dart';
@@ -36,7 +37,19 @@ class _OnlineMedresePageState extends ConsumerState<OnlineMedresePage> {
     };
     final courses = ref.watch(coursesProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Online Medrese')),
+      appBar: AppBar(
+        title: const Text('Online Medrese'),
+        actions: [
+          if (ref.watch(courseAdminProvider) case AsyncData(
+            value: Ok(value: true),
+          ))
+            IconButton(
+              tooltip: 'Kurs yönetimi',
+              icon: const Icon(Icons.video_settings_outlined),
+              onPressed: () => context.push(const AdminCoursesPage()),
+            ),
+        ],
+      ),
       body: ResultListView<Course>(
         value: switch (courses) {
           AsyncData(value: Ok(:final value)) => AsyncData(

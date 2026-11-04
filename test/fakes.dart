@@ -740,4 +740,86 @@ class FakeCourseRepository implements CourseRepository {
     progressMap.clear();
     return const Ok(null);
   }
+
+  bool admin = false;
+  String? title;
+
+  @override
+  Future<Result<List<Course>, AppFailure>> allCourses() async =>
+      Ok(List.of(courseList));
+
+  @override
+  Future<Result<bool, AppFailure>> isAdmin() async => Ok(admin);
+
+  @override
+  Future<Result<String, AppFailure>> saveCourse({
+    required String? id,
+    required String title,
+    required String subtitle,
+    required String description,
+    required String teacher,
+    required CourseCategory category,
+    required bool published,
+  }) async {
+    calls.add('course $id $title ${category.name} $published');
+    final newId = id ?? 'new';
+    courseList
+      ..removeWhere((c) => c.id == newId)
+      ..add(
+        Course(
+          id: newId,
+          title: title,
+          subtitle: subtitle,
+          description: description,
+          teacher: teacher,
+          category: category,
+          coverUrl: '',
+          lessons: const [],
+          published: published,
+        ),
+      );
+    return Ok(newId);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> deleteCourse(String id) async {
+    calls.add('delete course $id');
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> saveLesson({
+    required String? id,
+    required String courseId,
+    required int position,
+    required String section,
+    required String title,
+    required String description,
+    required String youtubeId,
+    required int durationSeconds,
+  }) async {
+    calls.add(
+      'lesson $id $courseId $position $title $youtubeId '
+      '$durationSeconds',
+    );
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> reorderLessons(
+    String courseId,
+    List<String> lessonIds,
+  ) async {
+    calls.add('reorder ${lessonIds.join(',')}');
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> deleteLesson(String id) async {
+    calls.add('delete lesson $id');
+    return const Ok(null);
+  }
+
+  @override
+  Future<String?> videoTitle(String youtubeId) async => title;
 }

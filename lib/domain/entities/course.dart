@@ -93,6 +93,7 @@ final class Course {
     required this.category,
     required this.coverUrl,
     required this.lessons,
+    this.published = true,
   });
 
   /// `courses` satırından (`lessons(*)` ile) oluşturur.
@@ -108,6 +109,7 @@ final class Course {
       for (final l in json['lessons'] as List<dynamic>? ?? const [])
         Lesson.fromJson(l as Map<String, dynamic>),
     ]..sort((a, b) => a.position.compareTo(b.position)),
+    published: json['published'] as bool? ?? true,
   );
 
   /// Kimlik.
@@ -115,6 +117,9 @@ final class Course {
 
   /// Başlık.
   final String title;
+
+  /// Öğrencilere görünüyor; değilse taslak.
+  final bool published;
 
   /// Kısa açıklama (boş olabilir).
   final String subtitle;
@@ -261,4 +266,44 @@ final class CourseProgress {
         lessons.where(open).firstOrNull ??
         lessons.first;
   }
+}
+
+/// YouTube linkinden (watch, youtu.be, shorts, embed, live) ya da çıplak
+/// kimlikten 11 karakterlik video kimliği; bulunamazsa `null`.
+String? parseYoutubeId(String input) {
+  final text = input.trim();
+  final id = RegExp(r'^[A-Za-z0-9_-]{11}$');
+  if (id.hasMatch(text)) return text;
+  final uri = Uri.tryParse(text.contains('://') ? text : 'https://$text');
+  if (uri == null) return null;
+  final host = uri.host.replaceFirst(RegExp(r'^(www\.|m\.)'), '');
+  final candidate = switch (host) {
+    'youtu.be' => uri.pathSegments.firstOrNull,
+    'youtube.com' || 'youtube-nocookie.com' || 'music.youtube.com' =>
+      uri.pathSegments.firstOrNull == 'watch'
+          ? uri.queryParameters['v']
+          : uri.pathSegments.length > 1 &&
+                const {
+                  'shorts',
+                  'embed',
+                  'live',
+                  'v',
+                }.contains(uri.pathSegments.first)
+          ? uri.pathSegments[1]
+          : null,
+    _ => null,
+  };
+  return candidate != null && id.hasMatch(candidate) ? candidate : null;
+}
+
+/// "12:34", "1:02:03" ya da dakika ("45") biçimindeki süreyi saniyeye
+/// çevirir; geçersizse `null`.
+int? parseDuration(String input) {
+  final parts = input.trim().split(':');
+  if (parts.length > 3) return null;
+  final numbers = parts.map(int.tryParse).toList();
+  if (numbers.any((n) => n == null || n < 0)) return null;
+  if (numbers.length == 1) return numbers.first! * 60;
+  if (numbers.skip(1).any((n) => n! > 59)) return null;
+  return numbers.fold<int>(0, (sum, n) => sum * 60 + n!);
 }

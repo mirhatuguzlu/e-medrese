@@ -1,6 +1,11 @@
 # Changelog
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
+## 2.6.0+24 — 2026-11-05
+- Kurs yönetimi: uygulama yöneticileri Online Medrese sayfasındaki düğmeyle kurs açar, bilgisini düzenler, yayına alır ya da siler. Ders, YouTube linki yapıştırılarak eklenir (başlık YouTube'dan gelir); dersler sürüklenerek sıralanır.
+- Video oynarken ekran kararmıyor; duraklayınca YouTube önerileri görünmüyor.
+- Sunucu ders ilerlemesini doğruluyor: izlenen süre gerçek zamandan hızlı artamaz, ders ancak %90'ı izlenince tamamlanır.
+
 ## 2.5.0+23 — 2026-11-05
 - Online Medrese açıldı: YouTube derslerinden oluşan kurslar. Akışta "Kaldığın yerden devam et" kartı, kategoriler ve ilerlemeli kurs kartları; kurs sayfasında bölümlü ders listesi ve sıradaki dersi açan düğme.
 - Ders oynatıcı kendi düğmeleriyle: oynat/duraklat, 10 sn geri, hız (0.75x–2x), tam ekran, iki kez dokunarak sarma. İlk izleyişte izlenmemiş kısma sarılamaz; geri sarmak serbest. Dersin %90'ı izlenince ders tamamlanır, sonra serbestçe sarılır. Kalınan yer kaydedilir.

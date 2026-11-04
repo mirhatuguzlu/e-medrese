@@ -7,6 +7,7 @@ import 'package:e_medrese/domain/entities/course.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
 /// Ders sayfası: YouTube oynatıcı kendi düğmelerimizle. İlk izleyişte
@@ -158,6 +159,10 @@ class _LessonPageState extends ConsumerState<LessonPage>
       if (p.locked) _complete();
     }
     if (wasPlaying && !p.playing) unawaited(_save());
+    // Oynarken ekran kararmasın.
+    if (wasPlaying != p.playing) {
+      unawaited(WakelockPlus.toggle(enable: p.playing));
+    }
     p.changed();
   }
 
@@ -278,6 +283,7 @@ class _LessonPageState extends ConsumerState<LessonPage>
       unawaited(s.cancel());
     }
     unawaited(_save());
+    unawaited(WakelockPlus.disable());
     unawaited(_player?.close());
     _playback.dispose();
     super.dispose();
@@ -510,7 +516,8 @@ class _ControlsState extends State<_Controls> {
     final value = (_drag ?? p.position).clamp(0, duration).toDouble();
     const white = Colors.white;
     return ColoredBox(
-      color: Colors.black38,
+      // Duraklayınca YouTube'un önerdiği videolar görünmesin.
+      color: p.playing ? Colors.black38 : Colors.black87,
       child: Stack(
         children: [
           Positioned(

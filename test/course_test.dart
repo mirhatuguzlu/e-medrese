@@ -26,7 +26,11 @@ final _course = Course(
   teacher: 'Hoca Efendi',
   category: CourseCategory.akaid,
   coverUrl: '',
-  lessons: [_lesson(1, section: 'Giriş'), _lesson(2), _lesson(3)],
+  lessons: [
+    _lesson(1, section: 'Giriş'),
+    _lesson(2),
+    _lesson(3),
+  ],
 );
 
 LessonProgress _p(
@@ -119,6 +123,32 @@ void main() {
     expect(c.category, CourseCategory.fikih);
   });
 
+  test('YouTube linkinden video kimliği', () {
+    const id = 'dQw4w9WgXcQ';
+    for (final link in [
+      id,
+      'https://www.youtube.com/watch?v=$id&t=42s',
+      'youtube.com/watch?feature=share&v=$id',
+      'https://youtu.be/$id?si=abc',
+      'https://m.youtube.com/shorts/$id',
+      'https://www.youtube.com/embed/$id',
+      'https://www.youtube.com/live/$id',
+    ]) {
+      expect(parseYoutubeId(link), id, reason: link);
+    }
+    expect(parseYoutubeId('https://vimeo.com/12345678901'), isNull);
+    expect(parseYoutubeId('https://youtube.com/watch?v=short'), isNull);
+    expect(parseYoutubeId(''), isNull);
+  });
+
+  test('süre girişi', () {
+    expect(parseDuration('12:34'), 754);
+    expect(parseDuration('1:02:03'), 3723);
+    expect(parseDuration('45'), 2700);
+    expect(parseDuration('12:75'), isNull);
+    expect(parseDuration('abc'), isNull);
+  });
+
   test('süre biçimleri', () {
     expect(formatLength(30), '1 dk');
     expect(formatLength(12 * 60), '12 dk');
@@ -197,6 +227,90 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Kursa başla'), findsOneWidget);
       expect(repo.calls, isEmpty);
+    });
+
+    testWidgets('yönetim düğmesi yalnız yöneticiye görünür', (tester) async {
+      await pump(tester);
+      expect(find.byTooltip('Kurs yönetimi'), findsNothing);
+    });
+
+    testWidgets("yönetici linkle ders ekler; başlık YouTube'dan gelir", (
+      tester,
+    ) async {
+      repo
+        ..admin = true
+        ..title = 'YouTube başlığı';
+      await pump(tester);
+      await tester.tap(find.byTooltip('Kurs yönetimi'));
+      await tester.pumpAndSettle();
+      expect(find.text('Yayında · 3 ders · Akaid'), findsOneWidget);
+      await tester.tap(find.text('Temel Akaid'));
+      await tester.pumpAndSettle();
+      expect(find.text('1. Ders başlığı 1'), findsOneWidget);
+      await tester.tap(find.text('Ders ekle'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'YouTube linki'),
+        'https://youtu.be/dQw4w9WgXcQ',
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('YouTube başlığı'), findsOneWidget);
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Süre'),
+        '12:34',
+      );
+      await tester.tap(find.text('Dersi ekle'));
+      await tester.pumpAndSettle();
+      expect(repo.calls, ['lesson null c1 4 YouTube başlığı dQw4w9WgXcQ 754']);
+    });
+
+    testWidgets('geçersiz linkle ders eklenmez', (tester) async {
+      repo.admin = true;
+      await pump(tester);
+      await tester.tap(find.byTooltip('Kurs yönetimi'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Temel Akaid'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ders ekle'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'YouTube linki'),
+        'https://vimeo.com/1',
+      );
+      await tester.tap(find.text('Dersi ekle'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Geçerli bir YouTube video linki yapıştır.'),
+        findsOneWidget,
+      );
+      expect(repo.calls, isEmpty);
+    });
+
+    testWidgets('yeni kurs taslak açılır, ders sayfasına geçilir', (
+      tester,
+    ) async {
+      repo.admin = true;
+      await pump(tester);
+      await tester.tap(find.byTooltip('Kurs yönetimi'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Yeni kurs'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Kurs adı'),
+        'Siyer-i Nebi',
+      );
+      await tester.tap(find.text('Kategori'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Siyer').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Kursu aç'));
+      await tester.pumpAndSettle();
+      expect(repo.calls, ['course null Siyer-i Nebi siyer false']);
+      expect(find.text('Taslak'), findsOneWidget);
+      expect(
+        find.text('Henüz ders yok. YouTube linkiyle ilk dersi ekle.'),
+        findsOneWidget,
+      );
     });
   });
 }
