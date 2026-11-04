@@ -1,6 +1,9 @@
 # Changelog
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
+## 2.9.1+28 — 2026-11-05
+- Güncelleme ekranı yenilendi: düz beyaz sayfa yerine renkli zemin ve kart; uygulamanın bozulduğu izlenimi vermiyor.
+
 ## 2.9.0+27 — 2026-11-09
 - Kurs kaydetme: kurs sayfasındaki yer imiyle kaydedilen kurslar "Kurslarım"da "Kaydettiklerin" altında. Kayıtlar yalnız telefonda tutulur; hesap silinince telefondan da silinir.
 - Ders kaynakları: yöneticiler derse PDF ya da web sayfası linki ekler (yalnız https); öğrenci ders sayfasındaki "Ders kaynakları"ndan açar.

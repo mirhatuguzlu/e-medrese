@@ -32,14 +32,14 @@ void main() {
     tester,
   ) async {
     await pumpApp(tester, update: true);
-    expect(find.text('Bu sürüm artık mevcut değil'), findsOneWidget);
+    expect(find.text('Yeni sürüm hazır'), findsOneWidget);
     expect(find.text('Uygulamayı güncelle'), findsOneWidget);
     expect(find.text('Hesabına giriş yap'), findsNothing);
   });
 
   testWidgets('güncelse uygulama açılır', (tester) async {
     await pumpApp(tester, update: false);
-    expect(find.text('Bu sürüm artık mevcut değil'), findsNothing);
+    expect(find.text('Yeni sürüm hazır'), findsNothing);
     expect(find.text('Hesabına giriş yap'), findsOneWidget);
   });
 }
