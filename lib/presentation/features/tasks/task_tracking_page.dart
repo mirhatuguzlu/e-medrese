@@ -11,6 +11,7 @@ import 'package:e_medrese/presentation/features/tasks/uyum_page.dart';
 import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
 import 'package:e_medrese/presentation/widgets/loading_button.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
+import 'package:e_medrese/presentation/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -203,9 +204,7 @@ class _Students extends ConsumerWidget {
             emptyIcon: Icons.groups_outlined,
             emptyText: 'Medresede henüz öğrenci yok.',
             itemBuilder: (context, s) => ListTile(
-              leading: CircleAvatar(
-                child: Text(displayName(s.name).characters.first),
-              ),
+              leading: ProfilePhoto(name: s.name, photoPath: s.photoPath),
               title: Text(displayName(s.name)),
               subtitle: Text(switch (grades[s.userId]) {
                 final g? => 'Uyum: ${formatPoints(g.points)}/${UyumGrade.max}',

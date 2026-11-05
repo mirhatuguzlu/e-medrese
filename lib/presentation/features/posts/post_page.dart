@@ -8,6 +8,7 @@ import 'package:e_medrese/presentation/features/posts/posts_page.dart';
 import 'package:e_medrese/presentation/features/report/report_page.dart';
 import 'package:e_medrese/presentation/widgets/author_label.dart';
 import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
+import 'package:e_medrese/presentation/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -174,6 +175,7 @@ class _PostPageState extends ConsumerState<PostPage> {
               child: ListView(
                 children: [
                   PostContent(
+                    medreseId: widget.medrese.id,
                     post: _post,
                     author: _author(_post.authorId, _post.authorName),
                   ),
@@ -192,6 +194,11 @@ class _PostPageState extends ConsumerState<PostPage> {
                     AsyncData(value: Ok(value: final list)) => [
                       for (final c in list)
                         ListTile(
+                          leading: MemberPhoto(
+                            medreseId: widget.medrese.id,
+                            userId: c.authorId,
+                            name: c.authorName,
+                          ),
                           title: Text(
                             _author(c.authorId, c.authorName),
                             style: theme.textTheme.titleSmall,

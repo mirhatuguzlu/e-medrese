@@ -1,6 +1,7 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/course_repository.dart';
 import 'package:e_medrese/domain/entities/course.dart';
+import 'package:e_medrese/presentation/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -69,6 +70,16 @@ class _IcazetDecisionPageState extends ConsumerState<IcazetDecisionPage> {
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: MemberPhoto(
+              medreseId: r.medreseId,
+              userId: r.userId,
+              name: r.studentName,
+              radius: 32,
+            ),
+          ),
+          const SizedBox(height: 12),
           Text(
             displayName(r.studentName),
             style: theme.textTheme.headlineSmall?.copyWith(

@@ -7,6 +7,7 @@ import 'package:e_medrese/presentation/features/report/report_page.dart';
 import 'package:e_medrese/presentation/widgets/author_label.dart';
 import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
+import 'package:e_medrese/presentation/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -141,6 +142,11 @@ class _LessonDiscussionPageState extends ConsumerState<LessonDiscussionPage> {
                   name: c.authorName,
                 );
                 return ListTile(
+                  leading: MemberPhoto(
+                    medreseId: widget.medrese.id,
+                    userId: c.authorId,
+                    name: c.authorName,
+                  ),
                   title: Row(
                     children: [
                       Flexible(

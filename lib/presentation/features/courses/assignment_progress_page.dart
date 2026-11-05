@@ -5,6 +5,7 @@ import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/presentation/features/courses/course_discussions_page.dart';
 import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
+import 'package:e_medrese/presentation/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -96,6 +97,11 @@ class AssignmentProgressPage extends ConsumerWidget {
           );
         },
         itemBuilder: (context, s) => ListTile(
+          leading: MemberPhoto(
+            medreseId: medrese.id,
+            userId: s.userId,
+            name: s.name,
+          ),
           title: Text(displayName(s.name)),
           subtitle: !s.consent
               ? const Text('İlerlemesini paylaşmaya rıza vermedi.')

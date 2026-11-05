@@ -3,6 +3,7 @@ import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:e_medrese/data/repositories/task_repository.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/presentation/features/tasks/student_tasks_section.dart';
+import 'package:e_medrese/presentation/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -69,11 +70,23 @@ class _RankingPageState extends ConsumerState<RankingPage> {
                     for (final (i, s) in ranked.indexed)
                       ListTile(
                         selected: s.studentId == myId,
-                        leading: CircleAvatar(
-                          backgroundColor: i < _medals.length
-                              ? _medals[i]
-                              : null,
-                          child: Text('${i + 1}'),
+                        leading: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircleAvatar(
+                              radius: 14,
+                              backgroundColor: i < _medals.length
+                                  ? _medals[i]
+                                  : null,
+                              child: Text('${i + 1}'),
+                            ),
+                            const SizedBox(width: 8),
+                            MemberPhoto(
+                              medreseId: widget.medrese.id,
+                              userId: s.studentId,
+                              name: s.studentName,
+                            ),
+                          ],
                         ),
                         title: Text(
                           s.studentId == myId

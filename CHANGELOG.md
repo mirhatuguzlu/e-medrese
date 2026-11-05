@@ -1,6 +1,9 @@
 # Changelog
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
+## 2.11.1+34 — 2026-11-05
+- Profil fotoğrafları her yerde: duyurular, paylaşımlar ve yorumlar, ders tartışmaları, sıralama, görev takibi, kurs ilerlemesi, icazet ve ödül istekleri.
+
 ## 2.11.0+33 — 2026-11-05
 - Profil yenilendi: adını değiştirebilir, galeriden profil fotoğrafı ekleyip kaldırabilirsin. Fotoğrafın medresendeki üyelere, üye listesinde ve üye sayfasında görünür; hesabını silince o da silinir. Profilde e-postan, medreselerin ve rolün, üyelik tarihin de yazar.
 - Ayarlar: Profil sayfasının sağ üstündeki düğmeyle açılır. Tema (telefona uy, açık, koyu), yazı boyutu, bildirim izni, önbelleği temizleme ve Uygulama hakkında (sürüm, güncelleme denetimi, web sitesi) var. Aydınlatma metni, rızalar, künye ve hesap silme de Ayarlar'a taşındı.

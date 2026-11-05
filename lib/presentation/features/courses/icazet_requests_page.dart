@@ -4,6 +4,7 @@ import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/presentation/features/courses/icazet_decision_page.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
+import 'package:e_medrese/presentation/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -51,11 +52,11 @@ class IcazetRequestsPage extends ConsumerWidget {
         itemBuilder: (context, r) {
           final course = titles[r.courseId] ?? 'Kurs yayından kalktı';
           return ListTile(
-            leading: Icon(switch (r.status) {
-              IcazetStatus.pending => Icons.hourglass_top,
-              IcazetStatus.approved => Icons.verified,
-              IcazetStatus.rejected => Icons.block,
-            }),
+            leading: MemberPhoto(
+              medreseId: r.medreseId,
+              userId: r.userId,
+              name: r.studentName,
+            ),
             title: Text(displayName(r.studentName)),
             subtitle: Text(
               [
@@ -70,9 +71,11 @@ class IcazetRequestsPage extends ConsumerWidget {
                 },
               ].join(' · '),
             ),
-            trailing: r.status == IcazetStatus.pending
-                ? const Icon(Icons.chevron_right)
-                : null,
+            trailing: Icon(switch (r.status) {
+              IcazetStatus.pending => Icons.chevron_right,
+              IcazetStatus.approved => Icons.verified,
+              IcazetStatus.rejected => Icons.block,
+            }),
             onTap: r.status == IcazetStatus.pending
                 ? () => context.push(
                     IcazetDecisionPage(request: r, courseTitle: course),

@@ -5,6 +5,7 @@ import 'package:e_medrese/domain/entities/reward.dart';
 import 'package:e_medrese/presentation/features/rewards/reject_reward_page.dart';
 import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
+import 'package:e_medrese/presentation/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -64,13 +65,18 @@ class RewardRequestsPage extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               ListTile(
-                leading: Icon(switch (c) {
+                leading: MemberPhoto(
+                  medreseId: medrese.id,
+                  userId: c.studentId,
+                  name: c.studentName,
+                ),
+                title: Text('${displayName(c.studentName)} · ${c.title}'),
+                subtitle: Text('${formatPoints(c.points)} puan · $when'),
+                trailing: Icon(switch (c) {
                   RewardClaim(pending: true) => Icons.redeem,
                   RewardClaim(deliveredAt: _?) => Icons.check_circle_outline,
                   _ => Icons.block,
                 }),
-                title: Text('${displayName(c.studentName)} · ${c.title}'),
-                subtitle: Text('${formatPoints(c.points)} puan · $when'),
               ),
               if (c.pending)
                 Padding(

@@ -5,6 +5,7 @@ import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/presentation/features/courses/lesson_discussion_page.dart';
 import 'package:e_medrese/presentation/widgets/author_label.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
+import 'package:e_medrese/presentation/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -44,6 +45,11 @@ class CourseDiscussionsPage extends ConsumerWidget {
         itemBuilder: (context, c) {
           final lesson = lessons[c.lessonId];
           return ListTile(
+            leading: MemberPhoto(
+              medreseId: medrese.id,
+              userId: c.authorId,
+              name: c.authorName,
+            ),
             title: Text(
               authorLabel(
                 ref,

@@ -7,6 +7,7 @@ import 'package:e_medrese/presentation/features/announcements/new_announcement_p
 import 'package:e_medrese/presentation/widgets/author_label.dart';
 import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
+import 'package:e_medrese/presentation/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -89,6 +90,13 @@ class AnnouncementsPage extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
+                      MemberPhoto(
+                        medreseId: medrese.id,
+                        userId: a.authorId,
+                        name: a.authorName,
+                        radius: 12,
+                      ),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           '$author · $date',
