@@ -173,8 +173,12 @@ class FakeFeedRepository implements FeedRepository {
   Future<Result<void, AppFailure>> createPost({
     required String medreseId,
     required String body,
+    List<PostFileDraft> files = const [],
   }) async {
     calls.add('post $body');
+    for (final f in files) {
+      calls.add('file ${f.name}');
+    }
     postList.insert(
       0,
       Post(
@@ -226,6 +230,18 @@ class FakeFeedRepository implements FeedRepository {
     calls.add('edit post $body');
     final i = postList.indexWhere((p) => p.id == id);
     postList[i] = postList[i].withBody(body);
+    return const Ok(null);
+  }
+
+  @override
+  String fileUrl(PostFile f) => 'https://files/${f.path}';
+
+  @override
+  Map<String, String> get fileHeaders => const {};
+
+  @override
+  Future<Result<void, AppFailure>> recordDownload(PostFile f) async {
+    calls.add('download ${f.id}');
     return const Ok(null);
   }
 
@@ -571,6 +587,10 @@ class FakePushService implements PushService {
 
   @override
   Future<void> unregister() async => calls.add('unregister');
+
+  @override
+  Future<void> showLocal(String title, String body) async =>
+      calls.add('local $title');
 
   @override
   Stream<void> get received => const Stream.empty();

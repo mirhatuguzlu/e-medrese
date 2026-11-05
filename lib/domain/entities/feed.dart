@@ -58,9 +58,11 @@ final class Post {
     required this.createdAt,
     required this.edited,
     required this.commentCount,
+    this.files = const [],
   });
 
-  /// `posts` satırından (`author:...`, `comments(count)` ile) oluşturur.
+  /// `posts` satırından (`author:...`, `comments(count)`, `post_files(...)`
+  /// ile) oluşturur.
   factory Post.fromJson(Map<String, dynamic> json) => Post(
     id: json['id'] as String,
     body: json['body'] as String,
@@ -73,6 +75,11 @@ final class Post {
                 as Map<String, dynamic>?)?['count']
             as int? ??
         0,
+    files:
+        ((json['post_files'] as List<dynamic>?) ?? [])
+            .map((f) => PostFile.fromJson(f as Map<String, dynamic>))
+            .toList()
+          ..sort((a, b) => a.position.compareTo(b.position)),
   );
 
   /// Kimlik.
@@ -96,6 +103,9 @@ final class Post {
   /// Yorum sayısı.
   final int commentCount;
 
+  /// Ekli dosyalar, sırasıyla.
+  final List<PostFile> files;
+
   /// Metni değiştirilmiş kopya (düzenlemeden sonra).
   Post withBody(String body) => Post(
     id: id,
@@ -105,6 +115,7 @@ final class Post {
     createdAt: createdAt,
     edited: true,
     commentCount: commentCount,
+    files: files,
   );
 }
 
@@ -168,4 +179,88 @@ enum ReportReason {
 
   /// Ekranda görünen ad.
   final String label;
+}
+
+/// Paylaşıma eklenebilen dosya türü.
+enum PostFileKind {
+  /// Fotoğraf.
+  image(['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic']),
+
+  /// Video.
+  video(['mp4', 'mov', '3gp', 'webm']),
+
+  /// Ses.
+  audio(['mp3', 'm4a', 'aac', 'ogg', 'wav', 'opus', 'amr']),
+
+  /// PDF.
+  pdf(['pdf']);
+
+  const PostFileKind(this.extensions);
+
+  /// Bu türün dosya uzantıları (küçük harf).
+  final List<String> extensions;
+
+  /// Eklenebilen bütün uzantılar.
+  static List<String> get allExtensions => [
+    for (final k in values) ...k.extensions,
+  ];
+
+  /// [fileName]'in türü; eklenemiyorsa `null`.
+  static PostFileKind? of(String fileName) {
+    final ext = fileName.split('.').last.toLowerCase();
+    return values.where((k) => k.extensions.contains(ext)).firstOrNull;
+  }
+
+  /// Sunucuya bildirilen içerik türü (kovanın izin listesinde olmalı).
+  static String mimeOf(String fileName) =>
+      switch (fileName.split('.').last.toLowerCase()) {
+        'jpg' || 'jpeg' => 'image/jpeg',
+        'mov' => 'video/quicktime',
+        '3gp' => 'video/3gpp',
+        'mp3' => 'audio/mpeg',
+        'm4a' => 'audio/mp4',
+        'pdf' => 'application/pdf',
+        final ext => '${of(fileName)?.name}/$ext',
+      };
+}
+
+/// Paylaşıma eklenmiş dosya.
+final class PostFile {
+  /// Dosya.
+  const PostFile({
+    required this.id,
+    required this.position,
+    required this.kind,
+    required this.name,
+    required this.path,
+    required this.size,
+  });
+
+  /// `post_files` satırından oluşturur.
+  factory PostFile.fromJson(Map<String, dynamic> json) => PostFile(
+    id: json['id'] as String,
+    position: json['position'] as int,
+    kind: PostFileKind.values.byName(json['kind'] as String),
+    name: json['name'] as String,
+    path: json['path'] as String,
+    size: json['size'] as int,
+  );
+
+  /// Kimlik.
+  final String id;
+
+  /// Paylaşımdaki sırası (1–5).
+  final int position;
+
+  /// Tür.
+  final PostFileKind kind;
+
+  /// Asıl dosya adı.
+  final String name;
+
+  /// "post-files" kovasındaki yol.
+  final String path;
+
+  /// Bayt.
+  final int size;
 }

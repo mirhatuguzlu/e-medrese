@@ -65,9 +65,18 @@ class AuthRepository {
   /// Hesabı ve bütün verilerini siler, sonra oturumu kapatır. Başka üyesi
   /// olan bir medresenin kurucusuysa önce kurucu devretmesi gerekir.
   Future<Result<void, AppFailure>> deleteAccount() async {
-    final deleted = await guardSupabase(
-      () => _client.rpc<void>('delete_my_account'),
-    );
+    final deleted = await guardSupabase(() async {
+      // Paylaşım dosyaları Storage'da durur, hesapla birlikte silinmez.
+      final files = await _client
+          .from('post_files')
+          .select('path, posts!inner(author_id)')
+          .eq('posts.author_id', _client.auth.currentUser!.id);
+      final paths = [for (final f in files) f['path'] as String];
+      if (paths.isNotEmpty) {
+        await _client.storage.from('post-files').remove(paths);
+      }
+      await _client.rpc<void>('delete_my_account');
+    });
     if (deleted is Err) return deleted;
     return signOut();
   }

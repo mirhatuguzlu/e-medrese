@@ -52,3 +52,8 @@ String formatClock(int seconds) {
 
 /// Türkçe büyük harf: `toUpperCase` "i"yi "I" yapar, burada "İ" olur.
 String upperTr(String s) => s.replaceAll('i', 'İ').toUpperCase();
+
+/// Dosya boyutu: "820 KB", "12,4 MB".
+String formatBytes(int bytes) => bytes < 1024 * 1024
+    ? '${(bytes / 1024).ceil()} KB'
+    : '${(bytes / (1024 * 1024)).toStringAsFixed(1).replaceAll('.', ',')} MB';

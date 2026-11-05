@@ -47,6 +47,8 @@ function pushText(p: Pending): { title: string; body: string } {
   switch (p.kind) {
     case 'announcement':
       return { title: 'Yeni duyuru', body: 'Görmek için dokun.' };
+    case 'post_download':
+      return { title: 'Dosyan indirildi', body: 'Görmek için dokun.' };
     case 'comment':
       return { title: 'Paylaşımına yorum geldi', body: 'Görmek için dokun.' };
     case 'reward':

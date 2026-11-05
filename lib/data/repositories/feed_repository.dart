@@ -1,8 +1,14 @@
+import 'dart:io';
+
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/supabase_guard.dart';
 import 'package:e_medrese/domain/entities/feed.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
+
+/// Paylaşıma eklenecek, telefondan seçilmiş dosya.
+typedef PostFileDraft = ({String path, String name, int size});
 
 /// Uygulama genelindeki [FeedRepository].
 final feedRepositoryProvider = Provider<FeedRepository>(
@@ -51,6 +57,11 @@ class FeedRepository {
 
   // shortcut: son 50 kayıt, sayfalama yok; akış uzayınca range() ile sayfala.
   static const _limit = 50;
+
+  static const _files = 'post-files';
+
+  static const _fileColumns =
+      'post_files(id, position, kind, name, path, size)';
 
   /// En yeni duyurular.
   Future<Result<List<Announcement>, AppFailure>> announcements(
@@ -106,7 +117,7 @@ class FeedRepository {
             .select(
               'id, body, author_id, created_at, edited_at, '
               'author:profiles(full_name), '
-              'comments(count)',
+              'comments(count), $_fileColumns',
             )
             .eq('medrese_id', medreseId)
             .order('created_at', ascending: false)
@@ -121,23 +132,59 @@ class FeedRepository {
         .select(
           'id, body, author_id, created_at, edited_at, '
           'author:profiles(full_name), '
-          'comments(count)',
+          'comments(count), $_fileColumns',
         )
         .eq('id', id)
         .maybeSingle();
     return row == null ? null : Post.fromJson(row);
   });
 
-  /// Paylaşım yapar.
+  /// [body] yazısı ve [files] dosyalarıyla paylaşım yapar. Bir dosya
+  /// yüklenemezse paylaşım ve yüklenenler silinir.
   Future<Result<void, AppFailure>> createPost({
     required String medreseId,
     required String body,
-  }) => guardSupabase(
-    () => _client.from('posts').insert({
-      'medrese_id': medreseId,
-      'body': body.trim(),
-    }),
-  );
+    List<PostFileDraft> files = const [],
+  }) => guardSupabase(() async {
+    final post = await _client
+        .from('posts')
+        .insert({'medrese_id': medreseId, 'body': body.trim()})
+        .select('id')
+        .single();
+    final uploaded = <String>[];
+    try {
+      final rows = <Map<String, dynamic>>[];
+      for (final (i, f) in files.indexed) {
+        final ext = f.name.split('.').last.toLowerCase();
+        final path = '$medreseId/${const Uuid().v4()}.$ext';
+        await _client.storage
+            .from(_files)
+            .upload(
+              path,
+              File(f.path),
+              fileOptions: FileOptions(
+                contentType: PostFileKind.mimeOf(f.name),
+              ),
+            );
+        uploaded.add(path);
+        rows.add({
+          'post_id': post['id'],
+          'position': i + 1,
+          'kind': PostFileKind.of(f.name)!.name,
+          'name': f.name,
+          'path': path,
+          'size': f.size,
+        });
+      }
+      if (rows.isNotEmpty) await _client.from('post_files').insert(rows);
+    } on Object {
+      await _client.from('posts').delete().eq('id', post['id'] as String);
+      if (uploaded.isNotEmpty) {
+        await _client.storage.from(_files).remove(uploaded);
+      }
+      rethrow;
+    }
+  });
 
   /// Paylaşımı düzenler (yalnızca yazan).
   Future<Result<void, AppFailure>> updatePost({
@@ -145,9 +192,38 @@ class FeedRepository {
     required String body,
   }) => _changeOne(_client.from('posts').update({'body': body.trim()}), id);
 
-  /// Paylaşımı siler (yazan ya da hocalar).
+  /// Paylaşımı ve dosyalarını siler (yazan ya da hocalar).
   Future<Result<void, AppFailure>> deletePost(String id) =>
-      _changeOne(_client.from('posts').delete(), id);
+      guardSupabase(() async {
+        final files = await _client
+            .from('post_files')
+            .select('path')
+            .eq('post_id', id);
+        final rows = await _client
+            .from('posts')
+            .delete()
+            .eq('id', id)
+            .select('id');
+        if (rows.isEmpty) {
+          throw const PostgrestException(message: 'not allowed');
+        }
+        final paths = [for (final f in files) f['path'] as String];
+        if (paths.isNotEmpty) await _client.storage.from(_files).remove(paths);
+      });
+
+  /// Dosyanın adresi; [fileHeaders] ile açılır (kova özel).
+  String fileUrl(PostFile f) =>
+      '${_client.storage.url}/object/authenticated/$_files/${f.path}';
+
+  /// [fileUrl]'i açmak için oturum belirteci.
+  Map<String, String> get fileHeaders => {
+    'Authorization': 'Bearer ${_client.auth.currentSession?.accessToken}',
+  };
+
+  /// İndirmeyi kaydeder; ilk indirişte paylaşana bildirim gider.
+  Future<Result<void, AppFailure>> recordDownload(PostFile f) => guardSupabase(
+    () => _client.rpc<void>('record_post_download', params: {'f': f.id}),
+  );
 
   /// [userId]'nin bu medresedeki paylaşım sayısı.
   Future<Result<int, AppFailure>> postCount({

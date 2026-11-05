@@ -95,6 +95,21 @@ class PushService {
     );
   }
 
+  /// Telefonda yerel bildirim gösterir (ör. indirme bitti).
+  Future<void> showLocal(String title, String body) async {
+    try {
+      await _start();
+      await _local.show(
+        DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title,
+        body,
+        NotificationDetails(
+          android: AndroidNotificationDetails(_channel.id, _channel.name),
+        ),
+      );
+    } on Exception catch (_) {}
+  }
+
   /// Çıkıştan önce: bu cihaza artık bildirim gelmesin.
   Future<void> unregister() async {
     try {

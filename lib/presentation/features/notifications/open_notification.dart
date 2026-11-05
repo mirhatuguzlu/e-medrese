@@ -89,7 +89,7 @@ Future<void> openNotification(
       await context.push(MedreseCoursesPage(medrese: medrese));
     case 'reward_request':
       await context.push(RewardRequestsPage(medrese: medrese));
-    case 'comment' when n.postId != null:
+    case 'comment' || 'post_download' when n.postId != null:
       final post = await ref.read(feedRepositoryProvider).post(n.postId!);
       if (!context.mounted) return;
       switch (post) {

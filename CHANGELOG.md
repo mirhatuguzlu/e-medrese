@@ -1,6 +1,11 @@
 # Changelog
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
+## 2.13.0+36 — 2026-11-05
+- Paylaşımlara dosya: her üye paylaşıma fotoğraf, video, ses ya da PDF ekler (en çok 5 dosya, her biri en çok 50 MB); yazı isteğe bağlı. Dosyalar uygulama içinde açılır (fotoğraf yakınlaştırılır, video ve ses oynatılır, PDF okunur).
+- İndirme: dosya sayfasının sağ üstündeki düğmeyle telefonun İndirilenler/e-Medrese klasörüne iner; indirene "İndirildi" bildirimi çıkar, paylaşana ilk indirişte "Dosyan indirildi" bildirimi gider (kişi başına bir kez).
+- Aydınlatma metni güncellendi (paylaşım dosyaları, indirme kaydı).
+
 ## 2.12.0+35 — 2026-11-05
 - Ders kaynakları artık link değil PDF dosyası: yönetici telefondan PDF seçip yükler (en çok 50 MB), öğrenci ders sayfasında tarayıcıya gitmeden uygulama içinde açar. Eski linkler kaldırıldı.
 - Aydınlatma metni güncellendi (ders kaynakları).

@@ -15,9 +15,10 @@ E-posta: dev.mirhat@gmail.com
 Kimlik: ad soyadın (Google hesabından gelir, uygulamada değiştirebilirsin) ve yüklersen profil fotoğrafın. Profil fotoğrafını yalnızca sen galeriden seçip yüklersin; zorunlu değildir.
 İletişim: Google hesabındaki e-posta adresi.
 Medrese bilgileri: üyesi olduğun medreseler, rolün (kurucu, hoca, öğrenci), katılma tarihin.
-Kullanıcı içerikleri: yazdığın duyurular, paylaşımlar, yorumlar, Online Medrese ders tartışmalarına yazdıkların, kurs değerlendirmelerin ve gönderdiğin şikayetler.
+Kullanıcı içerikleri: yazdığın duyurular, paylaşımlar, yorumlar, paylaşımlara eklediğin fotoğraf, video, ses ve PDF dosyaları, Online Medrese ders tartışmalarına yazdıkların, kurs değerlendirmelerin ve gönderdiğin şikayetler.
 Görev takibi verileri (yalnızca açık rıza verirsen): işaretlediğin namaz vakitleri, Kur'an-ı Kerim, Risale-i Nur, Cevşen ve diğer kitap okumaların, derse katılımın ve bunlardan hesaplanan haftalık puanların. Bu veriler dini inancını gösterebildiği için KVKK m.6 kapsamında özel nitelikli kişisel veridir.
 Online Medrese ders ilerlemesi (yalnızca ayrı açık rıza verirsen): başladığın dersler, her derste kaldığın yer, izlediğin en ileri nokta, dersi tamamladığın zaman, kaydettiğin kurslar, derslere yazdığın notlar, tekrar sorularına verdiğin ilk cevaplar ve doğru olup olmadıkları, kurslara verdiğin puan ve yorumlar ve icazet isteklerin. Hangi dini dersi izlediğin dini inancını gösterebildiği için bu da KVKK m.6 kapsamında özel nitelikli kişisel veridir.
+İndirme kaydı: bir paylaşımdaki dosyayı indirdiğinde hangi dosyayı ne zaman indirdiğin kaydedilir; ilk indirişte paylaşana adınla ve dosyanın adıyla bildirim gider. İndirilen dosya telefonunun İndirilenler/e-Medrese klasörüne kaydedilir.
 Hoca değerlendirmesi: hocanın sana verdiği haftalık uyum puanı ve notu.
 Cihaz bilgisi: bildirim göndermek için telefonunun bildirim adresi (Firebase bildirim belirteci).
 Ders videoları: Online Medrese dersleri YouTube oynatıcısıyla (çerezsiz youtube-nocookie.com) açılır; kurs ve ders kapak görselleri YouTube sunucularından yüklenir. Bu sırada YouTube telefonunun IP adresini, cihaz ve tarayıcı bilgisini ve açılan videoyu görür; hesap bilgilerin gönderilmez. Ders kaynakları (PDF) e-Medrese sunucularından uygulama içinde açılır; başka bir siteye gidilmez.
@@ -40,7 +41,7 @@ Kişisel veriler mobil uygulama üzerinden, elektronik ortamda, otomatik yollarl
 
 # 5. Verilerin aktarıldığı kişiler
 
-Aynı medresenin üyeleri: adın, profil fotoğrafın, paylaşımların, yorumların, duyurular ve Online Medrese ders tartışmalarına yazdıkların medresendeki üyelere görünür. Görev takibi verilerini ve puanlarını medresenin kurucusu ve hocaları görür; haftalık toplam puanın sıralamada medresedeki üyelere görünür. Hocanın medresene verdiği bir Online Medrese kursunda kaç dersi tamamladığını, son izleme zamanını, tekrar sorularındaki doğru sayını ve icazet isteğini (Online Medrese rızan varsa) o medresenin kurucusu ve hocaları görür; bu kursta bir haftada bitirdiğin dersler o haftanın görev puanına eklenir. Diğer kurslarını ve notlarını görmezler. Kurs değerlendirmelerin bütün kullanıcılara adın olmadan görünür.
+Aynı medresenin üyeleri: adın, profil fotoğrafın, paylaşımların ve eklediğin dosyalar (görüp indirebilirler), yorumların, duyurular ve Online Medrese ders tartışmalarına yazdıkların medresendeki üyelere görünür. Görev takibi verilerini ve puanlarını medresenin kurucusu ve hocaları görür; haftalık toplam puanın sıralamada medresedeki üyelere görünür. Hocanın medresene verdiği bir Online Medrese kursunda kaç dersi tamamladığını, son izleme zamanını, tekrar sorularındaki doğru sayını ve icazet isteğini (Online Medrese rızan varsa) o medresenin kurucusu ve hocaları görür; bu kursta bir haftada bitirdiğin dersler o haftanın görev puanına eklenir. Diğer kurslarını ve notlarını görmezler. Kurs değerlendirmelerin bütün kullanıcılara adın olmadan görünür.
 Hizmet sağlayıcılar: Supabase Inc. (veritabanı ve sunucular, AB / İrlanda); Google LLC ve Google Ireland Ltd. (Google ile giriş ve Firebase bildirim hizmeti; sunucuları ABD dahil farklı ülkelerde olabilir); GitHub Inc. (ABD; uygulamanın sürüm kontrolü ve güncelleme dosyasının indirilmesi); Google LLC (YouTube, ABD; Online Medrese ders videolarının oynatılması ve kapak görselleri). Bildirimlerde yazdığın metin Google'a gönderilmez; yalnızca "Yeni duyuru" gibi genel bir metin gider.
 Yetkili kamu kurum ve kuruluşları ile yargı mercileri: kanunen istenmesi halinde.
 
@@ -50,7 +51,7 @@ Sunucular Türkiye dışında (İrlanda), Google, YouTube ve GitHub hizmetleri A
 
 # 7. Saklama süreleri
 
-Hesap, medrese ve içerik verileri hesabın açık olduğu sürece saklanır; hesabını sildiğinde silinir. Profil fotoğrafın kaldırdığında ya da hesabını sildiğinde silinir.
+Hesap, medrese ve içerik verileri hesabın açık olduğu sürece saklanır; hesabını sildiğinde silinir. Paylaşıma eklediğin dosyalar ve indirme kayıtları paylaşım ya da hesabın silinince silinir. Profil fotoğrafın kaldırdığında ya da hesabını sildiğinde silinir.
 Görev takibi verileri ve Online Medrese verileri rızanı geri alana ya da hesabını silene kadar saklanır; rızanı geri aldığında girdilerin, puanların, ders ilerlemen, kaydettiğin kurslar, ders notların, soru cevapların, değerlendirmelerin ve icazet isteklerin hemen silinir, haftalık puanlarından da kurs payı düşülür.
 Bildirim adresi çıkış yaptığında ya da uygulama silindiğinde silinir.
 Trafik bilgisi (içerik oluşturma kayıtları, IP adresi) 5651 sayılı Kanun uyarınca 2 yıl saklanır ve sonra otomatik silinir; hesabını silsen de bu süre boyunca saklanır.
