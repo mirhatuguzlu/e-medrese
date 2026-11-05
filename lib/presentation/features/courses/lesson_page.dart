@@ -10,10 +10,10 @@ import 'package:e_medrese/presentation/features/courses/lesson_discussion_page.d
 import 'package:e_medrese/presentation/features/courses/lesson_note_page.dart';
 import 'package:e_medrese/presentation/features/courses/lesson_notes_page.dart';
 import 'package:e_medrese/presentation/features/courses/lesson_quiz_page.dart';
+import 'package:e_medrese/presentation/features/files/pdf_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
@@ -300,11 +300,14 @@ class _LessonPageState extends ConsumerState<LessonPage>
 
   Future<void> _openResource(LessonResource r) async {
     unawaited(_player?.pauseVideo());
-    final opened = await launchUrl(
-      Uri.parse(r.url),
-      mode: LaunchMode.externalApplication,
-    );
-    if (!opened && mounted) context.showMessage('Kaynak açılamadı.');
+    final result = await ref.read(courseRepositoryProvider).resourceUrl(r);
+    if (!mounted) return;
+    switch (result) {
+      case Ok(:final value):
+        await context.push(PdfPage(title: r.title, url: value));
+      case Err(:final error):
+        context.showMessage(error.message);
+    }
   }
 
   Future<void> _openQuiz() async {
@@ -583,15 +586,9 @@ class _LessonPageState extends ConsumerState<LessonPage>
                   for (final r in lesson.resources)
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: Icon(
-                        r.isPdf ? Icons.picture_as_pdf_outlined : Icons.link,
-                      ),
+                      leading: const Icon(Icons.picture_as_pdf_outlined),
                       title: Text(r.title),
-                      subtitle: Text(
-                        Uri.parse(r.url).host,
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      trailing: const Icon(Icons.open_in_new),
+                      trailing: const Icon(Icons.chevron_right),
                       onTap: () => _openResource(r),
                     ),
                 ],

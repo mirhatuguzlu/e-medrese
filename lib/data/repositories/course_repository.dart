@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
@@ -9,6 +10,7 @@ import 'package:e_medrese/domain/entities/feed.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 /// Uygulama genelindeki [CourseRepository].
 final courseRepositoryProvider = Provider<CourseRepository>(
@@ -512,25 +514,43 @@ class CourseRepository {
 
   // Ders kaynakları ----------------------------------------------------------
 
-  /// Derse kaynak linki ekler (yönetici).
+  static const _lessonFiles = 'lesson-files';
+
+  /// Derse [file] PDF'ini [title] adıyla ekler (yönetici).
   Future<Result<void, AppFailure>> addResource({
     required String lessonId,
     required int position,
     required String title,
-    required String url,
-  }) => guardSupabase(
-    () => _client.from('lesson_resources').insert({
+    required File file,
+  }) => guardSupabase(() async {
+    final path = '$lessonId/${const Uuid().v4()}.pdf';
+    await _client.storage
+        .from(_lessonFiles)
+        .upload(
+          path,
+          file,
+          fileOptions: const FileOptions(contentType: 'application/pdf'),
+        );
+    await _client.from('lesson_resources').insert({
       'lesson_id': lessonId,
       'position': position,
       'title': title.trim(),
-      'url': url,
-    }),
-  );
+      'url': path,
+    });
+  });
 
-  /// Kaynağı siler (yönetici).
-  Future<Result<void, AppFailure>> deleteResource(String id) => guardSupabase(
-    () => _client.from('lesson_resources').delete().eq('id', id),
-  );
+  /// Kaynağı ve dosyasını siler (yönetici).
+  Future<Result<void, AppFailure>> deleteResource(LessonResource r) =>
+      guardSupabase(() async {
+        await _client.from('lesson_resources').delete().eq('id', r.id);
+        await _client.storage.from(_lessonFiles).remove([r.path]);
+      });
+
+  /// Kaynağın bir saat geçerli indirme adresi.
+  Future<Result<String, AppFailure>> resourceUrl(LessonResource r) =>
+      guardSupabase(
+        () => _client.storage.from(_lessonFiles).createSignedUrl(r.path, 3600),
+      );
 
   // Medrese içi ders tartışması ----------------------------------------------
 

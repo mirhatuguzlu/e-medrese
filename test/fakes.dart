@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:e_medrese/core/core.dart';
@@ -996,17 +997,21 @@ class FakeCourseRepository implements CourseRepository {
     required String lessonId,
     required int position,
     required String title,
-    required String url,
+    required File file,
   }) async {
-    calls.add('resource $lessonId $position $title $url');
+    calls.add('resource $lessonId $position $title ${file.path}');
     return const Ok(null);
   }
 
   @override
-  Future<Result<void, AppFailure>> deleteResource(String id) async {
-    calls.add('delete resource $id');
+  Future<Result<void, AppFailure>> deleteResource(LessonResource r) async {
+    calls.add('delete resource ${r.id}');
     return const Ok(null);
   }
+
+  @override
+  Future<Result<String, AppFailure>> resourceUrl(LessonResource r) async =>
+      Ok('https://files/${r.path}');
 
   final commentList = <LessonComment>[];
 

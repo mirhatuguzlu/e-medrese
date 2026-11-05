@@ -1,13 +1,16 @@
+import 'dart:io';
+
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/course_repository.dart';
 import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
 import 'package:e_medrese/presentation/widgets/loading_button.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Bir dersin kaynaklarını yönetme (uygulama yöneticileri): PDF ya da web
-/// sayfası linki eklenir, silinir. Dosya yüklenmez.
+/// Bir dersin kaynaklarını yönetme (uygulama yöneticileri): telefondan PDF
+/// seçilip eklenir, silinir.
 class AdminResourcesPage extends ConsumerStatefulWidget {
   /// [courseId] kursunun [lessonId] dersinin kaynakları.
   const AdminResourcesPage({
@@ -29,13 +32,15 @@ class AdminResourcesPage extends ConsumerStatefulWidget {
 class _AdminResourcesPageState extends ConsumerState<AdminResourcesPage> {
   final _formKey = GlobalKey<FormState>();
   final _title = TextEditingController();
-  final _url = TextEditingController();
+  PlatformFile? _file;
   bool _loading = false;
+
+  /// Kovanın sınırı (50 MB).
+  static const int _maxBytes = 50 * 1024 * 1024;
 
   @override
   void dispose() {
     _title.dispose();
-    _url.dispose();
     super.dispose();
   }
 
@@ -43,8 +48,34 @@ class _AdminResourcesPageState extends ConsumerState<AdminResourcesPage> {
     ..invalidate(adminCoursesProvider)
     ..invalidate(coursesProvider);
 
+  Future<void> _pick() async {
+    final file = await FilePicker.pickFile(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+    if (file == null) return;
+    final size = await file.xFile.length();
+    if (!mounted) return;
+    if (size > _maxBytes) {
+      context.showMessage('PDF en çok 50 MB olabilir.');
+      return;
+    }
+    setState(() => _file = file);
+    if (_title.text.trim().isEmpty) {
+      _title.text = file.name.replaceFirst(
+        RegExp(r'\.pdf$', caseSensitive: false),
+        '',
+      );
+    }
+  }
+
   Future<void> _add(Lesson lesson) async {
     if (!_formKey.currentState!.validate()) return;
+    final path = _file?.path;
+    if (path == null) {
+      context.showMessage('Önce bir PDF seç.');
+      return;
+    }
     setState(() => _loading = true);
     final result = await ref
         .read(courseRepositoryProvider)
@@ -52,14 +83,14 @@ class _AdminResourcesPageState extends ConsumerState<AdminResourcesPage> {
           lessonId: lesson.id,
           position: (lesson.resources.lastOrNull?.position ?? 0) + 1,
           title: _title.text,
-          url: normalizeResourceUrl(_url.text)!,
+          file: File(path),
         );
     if (!mounted) return;
     setState(() => _loading = false);
     switch (result) {
       case Ok():
         _title.clear();
-        _url.clear();
+        setState(() => _file = null);
         _refresh();
       case Err(:final error):
         context.showMessage(error.message);
@@ -74,9 +105,7 @@ class _AdminResourcesPageState extends ConsumerState<AdminResourcesPage> {
       action: 'Sil',
     );
     if (!ok || !mounted) return;
-    final result = await ref
-        .read(courseRepositoryProvider)
-        .deleteResource(r.id);
+    final result = await ref.read(courseRepositoryProvider).deleteResource(r);
     if (!mounted) return;
     if (result case Err(:final error)) context.showMessage(error.message);
     _refresh();
@@ -109,22 +138,15 @@ class _AdminResourcesPageState extends ConsumerState<AdminResourcesPage> {
             const Padding(
               padding: EdgeInsets.all(24),
               child: Text(
-                "Bu derste kaynak yok. Ders notu PDF'i ya da okunacak bir "
-                'sayfanın linkini ekle; öğrenciler ders sayfasından açar.',
+                "Bu derste kaynak yok. Ders notu PDF'ini telefonundan seç; "
+                'öğrenciler ders sayfasında uygulama içinde açar.',
                 textAlign: TextAlign.center,
               ),
             ),
           for (final r in lesson.resources)
             ListTile(
-              leading: Icon(
-                r.isPdf ? Icons.picture_as_pdf_outlined : Icons.link,
-              ),
+              leading: const Icon(Icons.picture_as_pdf_outlined),
               title: Text(r.title),
-              subtitle: Text(
-                r.url,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
               trailing: IconButton(
                 tooltip: 'Kaynağı sil',
                 icon: const Icon(Icons.delete_outline),
@@ -140,35 +162,32 @@ class _AdminResourcesPageState extends ConsumerState<AdminResourcesPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Kaynak ekle',
+                    'PDF ekle',
                     style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.upload_file),
+                    label: Text(_file?.name ?? 'PDF seç'),
+                    onPressed: _loading ? null : _pick,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'En çok 50 MB. Telif hakkı sahibinin izin verdiği '
+                    'dosyaları ekle.',
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
                     controller: _title,
                     decoration: const InputDecoration(
                       labelText: 'Kaynağın adı',
-                      hintText: 'ör. Ders notu (PDF)',
+                      hintText: 'ör. Ders notu',
                     ),
                     textCapitalization: TextCapitalization.sentences,
                     maxLength: 200,
                     validator: (v) =>
                         (v ?? '').trim().isEmpty ? 'Kaynağın adını yaz.' : null,
-                  ),
-                  TextFormField(
-                    controller: _url,
-                    decoration: const InputDecoration(
-                      labelText: 'Link',
-                      hintText: 'https://…',
-                      helperText:
-                          'Yalnız https linkleri. Telif hakkı sahibinin '
-                          'izin verdiği içerikleri ekle.',
-                      helperMaxLines: 2,
-                    ),
-                    keyboardType: TextInputType.url,
-                    validator: (v) => normalizeResourceUrl(v ?? '') == null
-                        ? 'Geçerli bir https linki yapıştır.'
-                        : null,
                   ),
                   const SizedBox(height: 16),
                   LoadingButton(

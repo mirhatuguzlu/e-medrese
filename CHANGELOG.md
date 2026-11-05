@@ -1,6 +1,10 @@
 # Changelog
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
+## 2.12.0+35 — 2026-11-05
+- Ders kaynakları artık link değil PDF dosyası: yönetici telefondan PDF seçip yükler (en çok 50 MB), öğrenci ders sayfasında tarayıcıya gitmeden uygulama içinde açar. Eski linkler kaldırıldı.
+- Aydınlatma metni güncellendi (ders kaynakları).
+
 ## 2.11.1+34 — 2026-11-05
 - Profil fotoğrafları her yerde: duyurular, paylaşımlar ve yorumlar, ders tartışmaları, sıralama, görev takibi, kurs ilerlemesi, icazet ve ödül istekleri.
 

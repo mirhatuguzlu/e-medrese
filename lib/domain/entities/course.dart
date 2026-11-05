@@ -746,14 +746,14 @@ String foldTurkish(String s) {
 /// Tekrar sorularında ilk cevaplar: soru kimliği -> doğru mu.
 typedef QuestionResults = Map<String, bool>;
 
-/// Yöneticinin derse eklediği kaynak: PDF ya da web sayfası linki.
+/// Yöneticinin derse eklediği PDF.
 final class LessonResource {
   /// Kaynak.
   const LessonResource({
     required this.id,
     required this.position,
     required this.title,
-    required this.url,
+    required this.path,
   });
 
   /// `lesson_resources` satırından oluşturur.
@@ -761,7 +761,7 @@ final class LessonResource {
     id: json['id'] as String,
     position: json['position'] as int? ?? 0,
     title: json['title'] as String,
-    url: json['url'] as String,
+    path: json['url'] as String,
   );
 
   /// Kimlik.
@@ -773,26 +773,6 @@ final class LessonResource {
   /// Görünen ad.
   final String title;
 
-  /// https linki.
-  final String url;
-
-  /// Link PDF dosyası mı.
-  bool get isPdf =>
-      Uri.tryParse(url)?.path.toLowerCase().endsWith('.pdf') ?? false;
-}
-
-/// Kaynak linki geçerliyse temizlenmiş hali: yalnız https ve alan adı olan
-/// linkler (sunucu da aynı kuralı uygular); geçersizse `null`. Şemasız
-/// yazılana https eklenir.
-String? normalizeResourceUrl(String input) {
-  final text = input.trim();
-  if (text.isEmpty || text.contains(RegExp(r'\s')) || text.length > 2000) {
-    return null;
-  }
-  final url = text.contains('://') ? text : 'https://$text';
-  final uri = Uri.tryParse(url);
-  if (uri == null || uri.scheme != 'https' || !uri.host.contains('.')) {
-    return null;
-  }
-  return url;
+  /// "lesson-files" kovasındaki yol (`url` sütununda durur).
+  final String path;
 }

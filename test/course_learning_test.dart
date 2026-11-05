@@ -118,26 +118,6 @@ void main() {
       expect(courseMatches(_siyer, 'SİYER'), isTrue);
     });
 
-    test('kaynak linki: yalnız https, şemasız olana https eklenir', () {
-      expect(
-        normalizeResourceUrl(' site.com/a.pdf '),
-        'https://site.com/a.pdf',
-      );
-      expect(normalizeResourceUrl('https://x.org'), 'https://x.org');
-      expect(normalizeResourceUrl('http://x.org'), isNull);
-      expect(normalizeResourceUrl('javascript:alert(1)'), isNull);
-      expect(normalizeResourceUrl('https://localhost'), isNull);
-      expect(normalizeResourceUrl('https://a.com/b c'), isNull);
-      expect(normalizeResourceUrl(''), isNull);
-      const pdf = LessonResource(
-        id: 'r',
-        position: 1,
-        title: 'Not',
-        url: 'https://a.com/Not.PDF?v=2',
-      );
-      expect(pdf.isPdf, isTrue);
-    });
-
     test('Türkçe büyük harf', () {
       expect(upperTr('Siyer · İleri'), 'SİYER · İLERİ');
       expect(upperTr('Fıkıh'), 'FIKIH');
@@ -753,7 +733,7 @@ void main() {
       expect(repo.calls, isEmpty);
     });
 
-    testWidgets('yönetici derse https kaynak ekler; geçersiz link olmaz', (
+    testWidgets('yönetici derse PDF seçmeden kaynak ekleyemez', (
       tester,
     ) async {
       repo.admin = true;
@@ -762,26 +742,15 @@ void main() {
         const AdminResourcesPage(courseId: 'c1', lessonId: 'l2'),
       );
       expect(find.textContaining('Bu derste kaynak yok'), findsOneWidget);
+      expect(find.text('PDF seç'), findsOneWidget);
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Kaynağın adı'),
         'Ders notu',
       );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Link'),
-        'http://site.com/a.pdf',
-      );
       await tester.tap(find.text('Kaynağı ekle'));
       await tester.pumpAndSettle();
-      expect(find.text('Geçerli bir https linki yapıştır.'), findsOneWidget);
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Link'),
-        'site.com/notlar/a.pdf',
-      );
-      await tester.tap(find.text('Kaynağı ekle'));
-      await tester.pumpAndSettle();
-      expect(repo.calls, [
-        'resource l2 1 Ders notu https://site.com/notlar/a.pdf',
-      ]);
+      expect(find.text('Önce bir PDF seç.'), findsOneWidget);
+      expect(repo.calls, isEmpty);
     });
   });
 }
