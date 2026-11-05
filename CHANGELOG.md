@@ -1,6 +1,9 @@
 # Changelog
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
+## 2.10.2+31 — 2026-11-05
+- Yeni uygulama simgesi: yeşil zemin üzerinde altın mihrap, yıldız ve açık kitap. Bildirimlerde de aynı şeklin tek renkli hali görünür.
+
 ## 2.10.1+30 — 2026-11-05
 - 2.9.0'da telefona kaydedilen kurslar, Online Medrese rızası (sürüm 4) verilince hesaba taşınır ve telefondan silinir; hesap silinince telefonda kalanlar da silinir.
 - Aydınlatma metninin güncelleme tarihi düzeltildi.

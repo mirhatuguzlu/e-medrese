@@ -53,7 +53,7 @@ class PushService {
     _started = true;
     await _local.initialize(
       const InitializationSettings(
-        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        android: AndroidInitializationSettings('@drawable/ic_notification'),
       ),
       // Uygulama açıkken gösterilenin yükü mesaj verisidir (_show).
       onDidReceiveNotificationResponse: (r) => _taps.add(
