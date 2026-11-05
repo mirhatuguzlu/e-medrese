@@ -1,15 +1,17 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
-import 'package:e_medrese/presentation/features/courses/course_consent_page.dart';
-import 'package:e_medrese/presentation/features/legal/legal_text_page.dart';
-import 'package:e_medrese/presentation/features/legal/task_consent_page.dart';
-import 'package:e_medrese/presentation/features/profile/delete_account_page.dart';
+import 'package:e_medrese/data/repositories/medrese_repository.dart';
+import 'package:e_medrese/data/repositories/profile_repository.dart';
+import 'package:e_medrese/presentation/features/profile/edit_name_page.dart';
+import 'package:e_medrese/presentation/features/profile/profile_photo_page.dart';
+import 'package:e_medrese/presentation/features/settings/settings_page.dart';
 import 'package:e_medrese/presentation/widgets/user_avatar.dart';
 import 'package:e_medrese/services/push_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
-/// Profil sayfası. Ayarlar gibi hesap sayfalarına buradan gidilir.
+/// Profil sayfası: kişisel bilgiler. Ayarlar sağ üstteki düğmeyle açılır.
 class ProfilePage extends ConsumerWidget {
   /// Profil sayfası.
   const ProfilePage({super.key});
@@ -19,9 +21,23 @@ class ProfilePage extends ConsumerWidget {
     final theme = Theme.of(context);
     final name = currentUserName(ref);
     final email = currentUserEmail(ref);
+    final profile = ref.watch(myProfileProvider).valueOrNull;
+    final medreses = switch (ref.watch(myMedresesProvider)) {
+      AsyncData(value: Ok(:final value)) => value,
+      _ => null,
+    };
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil')),
+      appBar: AppBar(
+        title: const Text('Profil'),
+        actions: [
+          IconButton(
+            tooltip: 'Ayarlar',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push(const SettingsPage()),
+          ),
+        ],
+      ),
       body: ListView(
         // Alttaki havada duran menünün altında kalmasın.
         padding: EdgeInsets.only(
@@ -29,7 +45,12 @@ class ProfilePage extends ConsumerWidget {
           bottom: 32 + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
-          const Center(child: UserAvatar(radius: 48)),
+          Center(
+            child: GestureDetector(
+              onTap: () => context.push(const ProfilePhotoPage()),
+              child: const UserAvatar(radius: 48),
+            ),
+          ),
           const SizedBox(height: 16),
           Text(
             name.isNotEmpty ? name : email,
@@ -42,44 +63,54 @@ class ProfilePage extends ConsumerWidget {
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium,
             ),
-          const SizedBox(height: 32),
-          const Divider(),
-          ListTile(
-            leading: const Icon(Icons.privacy_tip_outlined),
-            title: const Text('Aydınlatma metni'),
-            onTap: () => context.push(
-              const LegalTextPage(
-                title: 'Aydınlatma metni',
-                asset: privacyNoticeAsset,
-              ),
+          const SizedBox(height: 24),
+          Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.badge_outlined),
+                  title: const Text('Ad soyad'),
+                  subtitle: Text(displayName(name)),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push(const EditNamePage()),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_camera_outlined),
+                  title: const Text('Profil fotoğrafı'),
+                  subtitle: Text(
+                    profile?.photoPath == null ? 'Eklenmedi' : 'Eklendi',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => context.push(const ProfilePhotoPage()),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.mail_outline),
+                  title: const Text('E-posta'),
+                  subtitle: Text('$email · Google ile giriş'),
+                ),
+                if (medreses != null && medreses.isNotEmpty)
+                  ListTile(
+                    leading: const Icon(Icons.mosque_outlined),
+                    title: const Text('Medreselerim'),
+                    subtitle: Text(
+                      medreses
+                          .map((m) => '${m.name} (${m.myRole.label})')
+                          .join(', '),
+                    ),
+                  ),
+                if (profile != null)
+                  ListTile(
+                    leading: const Icon(Icons.event_outlined),
+                    title: const Text('Üyelik tarihi'),
+                    subtitle: Text(
+                      DateFormat('dd.MM.yyyy').format(profile.createdAt),
+                    ),
+                  ),
+              ],
             ),
           ),
-          ListTile(
-            leading: const Icon(Icons.fact_check_outlined),
-            title: const Text('Görev takibi rızası'),
-            onTap: () => context.push(const TaskConsentPage()),
-          ),
-          ListTile(
-            leading: const Icon(Icons.school_outlined),
-            title: const Text('Online Medrese rızası'),
-            onTap: () => context.push(const CourseConsentPage()),
-          ),
-          ListTile(
-            leading: const Icon(Icons.info_outline),
-            title: const Text('Künye ve iletişim'),
-            onTap: () => context.push(
-              const LegalTextPage(
-                title: 'Künye ve iletişim',
-                asset: imprintAsset,
-              ),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.person_remove_outlined),
-            title: const Text('Hesabı sil'),
-            onTap: () => context.push(const DeleteAccountPage()),
-          ),
-          const Divider(),
+          const SizedBox(height: 16),
           ListTile(
             leading: Icon(Icons.logout, color: theme.colorScheme.error),
             title: Text(

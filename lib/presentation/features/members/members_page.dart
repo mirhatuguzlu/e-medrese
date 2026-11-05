@@ -7,6 +7,7 @@ import 'package:e_medrese/presentation/features/members/add_member_page.dart';
 import 'package:e_medrese/presentation/features/members/member_page.dart';
 import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
 import 'package:e_medrese/presentation/widgets/result_view.dart';
+import 'package:e_medrese/presentation/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -64,9 +65,7 @@ class MembersPage extends ConsumerWidget {
         emptyIcon: Icons.groups_outlined,
         emptyText: 'Henüz üye yok.',
         itemBuilder: (context, m) => ListTile(
-          leading: CircleAvatar(
-            child: Text(displayName(m.name).characters.first.toUpperCase()),
-          ),
+          leading: ProfilePhoto(name: m.name, photoPath: m.photoPath),
           title: Text(
             m.userId == myId
                 ? '${displayName(m.name)} (sen)'

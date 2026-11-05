@@ -85,7 +85,7 @@ class MedreseRepository {
       guardSupabase(() async {
         final rows = await _client
             .from('medrese_members')
-            .select('user_id, role, joined_at, profiles(full_name)')
+            .select('user_id, role, joined_at, profiles(full_name, avatar_url)')
             .eq('medrese_id', medreseId);
         return rows.map(Member.fromJson).toList()..sort(
           (a, b) => a.role != b.role

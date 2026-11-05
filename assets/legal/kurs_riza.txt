@@ -16,7 +16,7 @@ Rıza verirsen:
 
 Rıza vermek zorunlu değildir. Vermezsen uygulamanın diğer bölümlerini kullanmaya devam edersin; yalnızca dersleri izleyemez ve kurs kaydedemezsin; kurs listesine, açıklamalarına ve değerlendirmelere yine bakabilirsin.
 
-Rızanı istediğin zaman Profil > Online Medrese rızası sayfasından geri alabilirsin. Geri aldığında bütün ders ilerlemen, kaydettiğin kurslar, notların, soru cevapların, değerlendirmelerin ve icazet isteklerin hemen silinir; haftalık puanlarından kurs payı düşülür; hocalar da artık ilerlemeni göremez.
+Rızanı istediğin zaman Profil > Ayarlar > Online Medrese rızası sayfasından geri alabilirsin. Geri aldığında bütün ders ilerlemen, kaydettiğin kurslar, notların, soru cevapların, değerlendirmelerin ve icazet isteklerin hemen silinir; haftalık puanlarından kurs payı düşülür; hocalar da artık ilerlemeni göremez.
 
 18 yaşından küçüksen bu rızayı velinle birlikte, onun onayıyla vermelisin.
 

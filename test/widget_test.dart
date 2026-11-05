@@ -64,6 +64,7 @@ void main() {
       ProviderScope(
         overrides: [
           ...pushOverrides(),
+          await prefsOverride(),
           authRepositoryProvider.overrideWithValue(auth),
           myMedresesProvider.overrideWith((ref) => const Ok([])),
         ],
@@ -86,7 +87,7 @@ void main() {
 
     await tester.tap(find.byTooltip('Profil'));
     await tester.pumpAndSettle();
-    expect(find.text('Ali Veli'), findsOneWidget);
+    expect(find.text('Ali Veli'), findsWidgets);
     expect(find.text('ali@b.com'), findsOneWidget);
     // Listenin sonuna in: son satır alttaki menünün üstünde durur.
     await tester.drag(find.byType(ListView).last, const Offset(0, -1000));
@@ -134,7 +135,7 @@ void main() {
     expect(find.textContaining('Veri sorumlusu'), findsOneWidget);
   });
 
-  testWidgets('profilden hesap silinir, giriş ekranına dönülür', (
+  testWidgets('ayarlardan hesap silinir, giriş ekranına dönülür', (
     tester,
   ) async {
     await pumpApp(tester);
@@ -142,9 +143,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Profil'));
     await tester.pumpAndSettle();
-
-    await tester.drag(find.byType(ListView).last, const Offset(0, -1000));
+    await tester.tap(find.byTooltip('Ayarlar'));
     await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(find.text('Hesabı sil'), 200);
     await tester.tap(find.text('Hesabı sil'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Hesabımı kalıcı olarak sil'));

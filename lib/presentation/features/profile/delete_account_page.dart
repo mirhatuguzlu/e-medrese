@@ -1,6 +1,7 @@
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
 import 'package:e_medrese/data/repositories/legacy_saved_courses.dart';
+import 'package:e_medrese/data/repositories/profile_repository.dart';
 import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
 import 'package:e_medrese/presentation/widgets/loading_button.dart';
 import 'package:e_medrese/services/push_service.dart';
@@ -33,7 +34,16 @@ class _DeleteAccountPageState extends ConsumerState<DeleteAccountPage> {
     // Silmeden önce: token silmek için oturum gerekiyor.
     await ref.read(pushServiceProvider).unregister();
     final userId = ref.read(sessionProvider).valueOrNull?.user.id;
-    final result = await ref.read(authRepositoryProvider).deleteAccount();
+    // Fotoğraf Storage'da durur, hesapla birlikte silinmez; önce silinir.
+    final profile = await ref
+        .read(myProfileProvider.future)
+        .catchError((Object _) => null);
+    final photo = profile?.photoPath == null
+        ? const Ok<void, AppFailure>(null)
+        : await ref.read(profileRepositoryProvider).removePhoto();
+    final result = photo is Err
+        ? photo
+        : await ref.read(authRepositoryProvider).deleteAccount();
     // 2.9'dan telefonda kalan kurs kayıtları da silinsin.
     if (result is Ok && userId != null) {
       await ref.read(legacySavedCoursesProvider).remove(userId);
@@ -56,7 +66,8 @@ class _DeleteAccountPageState extends ConsumerState<DeleteAccountPage> {
         padding: const EdgeInsets.all(24),
         children: [
           const Text(
-            'Hesabını silersen adın, e-postan, medrese üyeliklerin, '
+            'Hesabını silersen adın, e-postan, profil fotoğrafın, medrese '
+            'üyeliklerin, '
             'paylaşımların, yorumların, duyuruların, görev girdilerin, '
             'puanların ve bildirimlerin kalıcı olarak silinir.\n\n'
             'Kurucusu olduğun ve başka üyesi bulunan bir medrese varsa önce '

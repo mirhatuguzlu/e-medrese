@@ -12,7 +12,7 @@ E-posta: dev.mirhat@gmail.com
 
 # 2. İşlenen kişisel veriler
 
-Kimlik: Google hesabındaki ad soyad.
+Kimlik: ad soyadın (Google hesabından gelir, uygulamada değiştirebilirsin) ve yüklersen profil fotoğrafın. Profil fotoğrafını yalnızca sen galeriden seçip yüklersin; zorunlu değildir.
 İletişim: Google hesabındaki e-posta adresi.
 Medrese bilgileri: üyesi olduğun medreseler, rolün (kurucu, hoca, öğrenci), katılma tarihin.
 Kullanıcı içerikleri: yazdığın duyurular, paylaşımlar, yorumlar, Online Medrese ders tartışmalarına yazdıkların, kurs değerlendirmelerin ve gönderdiğin şikayetler.
@@ -40,7 +40,7 @@ Kişisel veriler mobil uygulama üzerinden, elektronik ortamda, otomatik yollarl
 
 # 5. Verilerin aktarıldığı kişiler
 
-Aynı medresenin üyeleri: adın, paylaşımların, yorumların, duyurular ve Online Medrese ders tartışmalarına yazdıkların medresendeki üyelere görünür. Görev takibi verilerini ve puanlarını medresenin kurucusu ve hocaları görür; haftalık toplam puanın sıralamada medresedeki üyelere görünür. Hocanın medresene verdiği bir Online Medrese kursunda kaç dersi tamamladığını, son izleme zamanını, tekrar sorularındaki doğru sayını ve icazet isteğini (Online Medrese rızan varsa) o medresenin kurucusu ve hocaları görür; bu kursta bir haftada bitirdiğin dersler o haftanın görev puanına eklenir. Diğer kurslarını ve notlarını görmezler. Kurs değerlendirmelerin bütün kullanıcılara adın olmadan görünür.
+Aynı medresenin üyeleri: adın, profil fotoğrafın, paylaşımların, yorumların, duyurular ve Online Medrese ders tartışmalarına yazdıkların medresendeki üyelere görünür. Görev takibi verilerini ve puanlarını medresenin kurucusu ve hocaları görür; haftalık toplam puanın sıralamada medresedeki üyelere görünür. Hocanın medresene verdiği bir Online Medrese kursunda kaç dersi tamamladığını, son izleme zamanını, tekrar sorularındaki doğru sayını ve icazet isteğini (Online Medrese rızan varsa) o medresenin kurucusu ve hocaları görür; bu kursta bir haftada bitirdiğin dersler o haftanın görev puanına eklenir. Diğer kurslarını ve notlarını görmezler. Kurs değerlendirmelerin bütün kullanıcılara adın olmadan görünür.
 Hizmet sağlayıcılar: Supabase Inc. (veritabanı ve sunucular, AB / İrlanda); Google LLC ve Google Ireland Ltd. (Google ile giriş ve Firebase bildirim hizmeti; sunucuları ABD dahil farklı ülkelerde olabilir); GitHub Inc. (ABD; uygulamanın sürüm kontrolü ve güncelleme dosyasının indirilmesi); Google LLC (YouTube, ABD; Online Medrese ders videolarının oynatılması ve kapak görselleri). Bildirimlerde yazdığın metin Google'a gönderilmez; yalnızca "Yeni duyuru" gibi genel bir metin gider.
 Yetkili kamu kurum ve kuruluşları ile yargı mercileri: kanunen istenmesi halinde.
 
@@ -50,7 +50,7 @@ Sunucular Türkiye dışında (İrlanda), Google, YouTube ve GitHub hizmetleri A
 
 # 7. Saklama süreleri
 
-Hesap, medrese ve içerik verileri hesabın açık olduğu sürece saklanır; hesabını sildiğinde silinir.
+Hesap, medrese ve içerik verileri hesabın açık olduğu sürece saklanır; hesabını sildiğinde silinir. Profil fotoğrafın kaldırdığında ya da hesabını sildiğinde silinir.
 Görev takibi verileri ve Online Medrese verileri rızanı geri alana ya da hesabını silene kadar saklanır; rızanı geri aldığında girdilerin, puanların, ders ilerlemen, kaydettiğin kurslar, ders notların, soru cevapların, değerlendirmelerin ve icazet isteklerin hemen silinir, haftalık puanlarından da kurs payı düşülür.
 Bildirim adresi çıkış yaptığında ya da uygulama silindiğinde silinir.
 Trafik bilgisi (içerik oluşturma kayıtları, IP adresi) 5651 sayılı Kanun uyarınca 2 yıl saklanır ve sonra otomatik silinir; hesabını silsen de bu süre boyunca saklanır.
@@ -64,4 +64,4 @@ Trafik bilgisi (içerik oluşturma kayıtları, IP adresi) 5651 sayılı Kanun u
 
 Kişisel verinin işlenip işlenmediğini öğrenme, işlenmişse bilgi isteme, işleme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme, yurt içinde ya da yurt dışında aktarıldığı kişileri bilme, eksik ya da yanlış işlenmişse düzeltilmesini, KVKK m.7'deki şartlarla silinmesini ya da yok edilmesini ve bu işlemlerin aktarıldığı kişilere bildirilmesini isteme, münhasıran otomatik sistemlerle analiz edilmesi sonucu aleyhine bir sonuç çıkmasına itiraz etme, kanuna aykırı işleme nedeniyle zarara uğrarsan zararın giderilmesini isteme haklarına sahipsin.
 
-Hesabını uygulamada Profil > Hesabı sil ile, görev takibi rızanı Profil > Görev takibi rızası ile, ders ilerlemeni, kaydettiğin kursları, notlarını, soru cevaplarını, değerlendirmelerini ve icazet isteklerini Profil > Online Medrese rızası ile kendin silebilirsin. Diğer talepler için Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ'e uygun olarak dev.mirhat@gmail.com adresine ya da yukarıdaki adrese yazılı başvurabilirsin. Başvurun en geç 30 gün içinde ücretsiz yanıtlanır.
+Hesabını uygulamada Profil > Ayarlar > Hesabı sil ile, görev takibi rızanı Profil > Ayarlar > Görev takibi rızası ile, ders ilerlemeni, kaydettiğin kursları, notlarını, soru cevaplarını, değerlendirmelerini ve icazet isteklerini Profil > Ayarlar > Online Medrese rızası ile kendin silebilirsin. Diğer talepler için Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ'e uygun olarak dev.mirhat@gmail.com adresine ya da yukarıdaki adrese yazılı başvurabilirsin. Başvurun en geç 30 gün içinde ücretsiz yanıtlanır.

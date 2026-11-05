@@ -2,7 +2,7 @@ name: e_medrese
 description: "E-Medrese - İslami eğitim ve öğrenim platformu."
 publish_to: 'none'
 
-version: 2.10.3+32
+version: 2.11.0+33
 
 environment:
   sdk: ^3.12.2
@@ -23,6 +23,7 @@ dependencies:
   firebase_core: ^3.13.0
   firebase_messaging: ^15.2.4
   flutter_animate: ^4.5.2
+  flutter_cache_manager: ^3.4.1
   flutter_cached_pdfview: ^0.4.3
   flutter_local_notifications: ^18.0.1
   flutter_riverpod: ^2.6.1

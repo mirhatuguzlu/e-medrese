@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/consent_repository.dart';
@@ -7,18 +9,23 @@ import 'package:e_medrese/data/repositories/feed_repository.dart';
 import 'package:e_medrese/data/repositories/legacy_saved_courses.dart';
 import 'package:e_medrese/data/repositories/medrese_repository.dart';
 import 'package:e_medrese/data/repositories/notification_repository.dart';
+import 'package:e_medrese/data/repositories/profile_repository.dart';
 import 'package:e_medrese/data/repositories/reward_repository.dart';
+import 'package:e_medrese/data/repositories/settings_repository.dart';
 import 'package:e_medrese/data/repositories/task_repository.dart';
 import 'package:e_medrese/domain/entities/app_notification.dart';
 import 'package:e_medrese/domain/entities/course.dart';
 import 'package:e_medrese/domain/entities/feed.dart';
 import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/member.dart';
+import 'package:e_medrese/domain/entities/profile.dart';
 import 'package:e_medrese/domain/entities/reward.dart';
 import 'package:e_medrese/domain/entities/task.dart';
 import 'package:e_medrese/services/push_service.dart';
 import 'package:e_medrese/services/update_service.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 const testMedrese = Medrese(
@@ -594,7 +601,11 @@ List<Override> pushOverrides({
   FakeRewardRepository? rewards,
   FakeCourseRepository? courses,
   FakeLegacySavedCourses? legacy,
+  FakeProfileRepository? profile,
 }) => [
+  profileRepositoryProvider.overrideWithValue(
+    profile ?? FakeProfileRepository(),
+  ),
   rewardRepositoryProvider.overrideWithValue(rewards ?? FakeRewardRepository()),
   courseRepositoryProvider.overrideWithValue(courses ?? FakeCourseRepository()),
   legacySavedCoursesProvider.overrideWithValue(
@@ -1093,3 +1104,60 @@ class FakeCourseRepository implements CourseRepository {
     return const Ok(null);
   }
 }
+
+/// Telefonda tutulan ayarlar için boş [SharedPreferences].
+Future<Override> prefsOverride([Map<String, Object> values = const {}]) async {
+  SharedPreferences.setMockInitialValues(values);
+  return sharedPreferencesProvider.overrideWithValue(
+    await SharedPreferences.getInstance(),
+  );
+}
+
+class FakeProfileRepository implements ProfileRepository {
+  FakeProfileRepository({this.name = 'Ali Veli', this.photoPath});
+
+  String name;
+  String? photoPath;
+  final calls = <String>[];
+
+  @override
+  Future<Result<Profile, AppFailure>> profile(String userId) async => Ok(
+    Profile(
+      name: name,
+      photoPath: photoPath,
+      createdAt: DateTime(2026, 10, 28),
+    ),
+  );
+
+  @override
+  Future<Result<void, AppFailure>> updateName(String name) async {
+    calls.add('name $name');
+    this.name = name;
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> uploadPhoto(
+    Uint8List bytes, {
+    required String extension,
+  }) async {
+    calls.add('upload');
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void, AppFailure>> removePhoto() async {
+    calls.add('removePhoto');
+    photoPath = null;
+    return const Ok(null);
+  }
+
+  @override
+  ImageProvider photo(String path) => MemoryImage(_pixel);
+}
+
+/// 1x1 saydam PNG.
+final Uint8List _pixel = base64Decode(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42m'
+  'NkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+);

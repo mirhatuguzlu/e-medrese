@@ -1,9 +1,14 @@
+import 'package:e_medrese/core/core.dart';
 import 'package:e_medrese/data/repositories/auth_repository.dart';
+import 'package:e_medrese/data/repositories/profile_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Giriş yapmış kullanıcının adı (yoksa boş).
+/// Giriş yapmış kullanıcının adı (yoksa boş). Profilde değiştirilen ad
+/// önce gelir; profil yüklenmediyse Google hesabındaki ad.
 String currentUserName(WidgetRef ref) {
+  final profileName = ref.watch(myProfileProvider).valueOrNull?.name.trim();
+  if (profileName != null && profileName.isNotEmpty) return profileName;
   final user = ref.watch(sessionProvider).valueOrNull?.user;
   return (user?.userMetadata?['full_name'] as String?)?.trim() ?? '';
 }
@@ -12,7 +17,7 @@ String currentUserName(WidgetRef ref) {
 String currentUserEmail(WidgetRef ref) =>
     ref.watch(sessionProvider).valueOrNull?.user.email ?? '';
 
-/// Giriş yapmış kullanıcının baş harfli avatarı.
+/// Giriş yapmış kullanıcının fotoğrafı ya da baş harfli avatarı.
 class UserAvatar extends ConsumerWidget {
   /// [radius] boyutunda avatar.
   const UserAvatar({this.radius = 16, super.key});
@@ -23,12 +28,43 @@ class UserAvatar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final name = currentUserName(ref);
-    final initial =
-        (name.isNotEmpty ? name : currentUserEmail(ref)).characters.firstOrNull;
+    return ProfilePhoto(
+      name: name.isNotEmpty ? name : currentUserEmail(ref),
+      photoPath: ref.watch(myProfileProvider).valueOrNull?.photoPath,
+      radius: radius,
+    );
+  }
+}
+
+/// Bir kullanıcının fotoğrafı; yoksa adının baş harfi.
+class ProfilePhoto extends ConsumerWidget {
+  /// [name] ve isteğe bağlı [photoPath] ile.
+  const ProfilePhoto({
+    required this.name,
+    required this.photoPath,
+    this.radius = 20,
+    super.key,
+  });
+
+  /// Ad (baş harfi için).
+  final String name;
+
+  /// "avatars" kovasındaki yol; yoksa `null`.
+  final String? photoPath;
+
+  /// Yarıçap.
+  final double radius;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final path = photoPath;
     return CircleAvatar(
       radius: radius,
+      foregroundImage: path == null
+          ? null
+          : ref.watch(profileRepositoryProvider).photo(path),
       child: Text(
-        initial?.toUpperCase() ?? '?',
+        displayName(name).characters.first.toUpperCase(),
         style: TextStyle(fontSize: radius * 0.9),
       ),
     );

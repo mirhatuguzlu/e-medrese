@@ -5,6 +5,7 @@ import 'package:e_medrese/domain/entities/medrese.dart';
 import 'package:e_medrese/domain/entities/member.dart';
 import 'package:e_medrese/presentation/widgets/confirm_dialog.dart';
 import 'package:e_medrese/presentation/widgets/loading_button.dart';
+import 'package:e_medrese/presentation/widgets/user_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -115,12 +116,10 @@ class _MemberPageState extends ConsumerState<MemberPage> {
         padding: const EdgeInsets.symmetric(vertical: 32),
         children: [
           Center(
-            child: CircleAvatar(
+            child: ProfilePhoto(
+              name: m.name,
+              photoPath: m.photoPath,
               radius: 48,
-              child: Text(
-                displayName(m.name).characters.first.toUpperCase(),
-                style: const TextStyle(fontSize: 40),
-              ),
             ),
           ),
           const SizedBox(height: 16),

@@ -10,7 +10,7 @@ Rıza verirsen:
 
 Rıza vermek zorunlu değildir. Vermezsen uygulamanın diğer bölümlerini kullanmaya devam edersin; yalnızca görev takibi kapalı kalır.
 
-Rızanı istediğin zaman Profil > Görev takibi rızası sayfasından geri alabilirsin. Geri aldığında bütün görev girdilerin ve haftalık puanların hemen silinir.
+Rızanı istediğin zaman Profil > Ayarlar > Görev takibi rızası sayfasından geri alabilirsin. Geri aldığında bütün görev girdilerin ve haftalık puanların hemen silinir.
 
 18 yaşından küçüksen bu rızayı velinle birlikte, onun onayıyla vermelisin.
 

@@ -8,17 +8,21 @@ final class Member {
     required this.name,
     required this.role,
     required this.joinedAt,
+    this.photoPath,
   });
 
-  /// `medrese_members` satırından (`profiles(full_name)` ile) oluşturur.
-  factory Member.fromJson(Map<String, dynamic> json) => Member(
-    userId: json['user_id'] as String,
-    name:
-        (json['profiles'] as Map<String, dynamic>?)?['full_name'] as String? ??
-        '',
-    role: MemberRole.values.byName(json['role'] as String),
-    joinedAt: DateTime.parse(json['joined_at'] as String).toLocal(),
-  );
+  /// `medrese_members` satırından (`profiles(full_name, avatar_url)` ile)
+  /// oluşturur.
+  factory Member.fromJson(Map<String, dynamic> json) {
+    final profile = json['profiles'] as Map<String, dynamic>?;
+    return Member(
+      userId: json['user_id'] as String,
+      name: profile?['full_name'] as String? ?? '',
+      photoPath: profile?['avatar_url'] as String?,
+      role: MemberRole.values.byName(json['role'] as String),
+      joinedAt: DateTime.parse(json['joined_at'] as String).toLocal(),
+    );
+  }
 
   /// Kullanıcı kimliği.
   final String userId;
@@ -31,4 +35,7 @@ final class Member {
 
   /// Medreseye katılma zamanı.
   final DateTime joinedAt;
+
+  /// Fotoğrafın "avatars" kovasındaki yolu; yoksa `null`.
+  final String? photoPath;
 }
