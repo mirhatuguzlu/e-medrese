@@ -1,6 +1,9 @@
 # Changelog
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
+## 2.10.3+32 — 2026-11-05
+- Ana ekranda uygulamanın adı "e_medrese" yerine "e-Medrese" yazar.
+
 ## 2.10.2+31 — 2026-11-05
 - Yeni uygulama simgesi: yeşil zemin üzerinde altın mihrap, yıldız ve açık kitap. Bildirimlerde de aynı şeklin tek renkli hali görünür.
 
