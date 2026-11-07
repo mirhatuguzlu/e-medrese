@@ -155,8 +155,6 @@ class _FileTile extends ConsumerWidget {
               errorWidget: (_, _, _) => const Icon(Icons.image_outlined),
             ),
           ),
-          PostFileKind.video => const Icon(Icons.movie_outlined),
-          PostFileKind.audio => const Icon(Icons.audiotrack_outlined),
           PostFileKind.pdf => const Icon(Icons.picture_as_pdf_outlined),
         },
         title: Text(file.name, maxLines: 1, overflow: TextOverflow.ellipsis),

@@ -27,12 +27,12 @@ class _FakeDownloads implements DownloadService {
   }
 }
 
-const _audio = PostFile(
+const _pdf = PostFile(
   id: 'f1',
   position: 1,
-  kind: PostFileKind.audio,
-  name: 'ders.mp3',
-  path: 'm1/x.mp3',
+  kind: PostFileKind.pdf,
+  name: 'ders.pdf',
+  path: 'm1/x.pdf',
   size: 3 * 1024 * 1024,
 );
 
@@ -40,12 +40,12 @@ void main() {
   test('dosya türü, içerik türü, boyut ve aynı ad', () {
     expect(PostFileKind.of('Not.PDF'), PostFileKind.pdf);
     expect(PostFileKind.of('a.jpeg'), PostFileKind.image);
-    expect(PostFileKind.of('a.m4a'), PostFileKind.audio);
+    expect(PostFileKind.of('a.mp4'), isNull);
+    expect(PostFileKind.of('a.mp3'), isNull);
     expect(PostFileKind.of('a.exe'), isNull);
     expect(PostFileKind.mimeOf('a.JPG'), 'image/jpeg');
     expect(PostFileKind.mimeOf('a.png'), 'image/png');
-    expect(PostFileKind.mimeOf('a.mov'), 'video/quicktime');
-    expect(PostFileKind.mimeOf('a.ogg'), 'audio/ogg');
+    expect(PostFileKind.mimeOf('a.pdf'), 'application/pdf');
     expect(formatBytes(800 * 1024), '800 KB');
     expect(formatBytes(12 * 1024 * 1024 + 400 * 1024), '12,4 MB');
     final taken = {'a.pdf', 'a (1).pdf'};
@@ -93,14 +93,14 @@ void main() {
           createdAt: DateTime(2026),
           edited: false,
           commentCount: 0,
-          files: const [_audio],
+          files: const [_pdf],
         ),
       );
     await tester.pumpWidget(
       app(const PostsPage(medrese: testMedrese), feed: feed),
     );
     await tester.pumpAndSettle();
-    expect(find.text('ders.mp3'), findsOneWidget);
+    expect(find.text('ders.pdf'), findsOneWidget);
     expect(find.text('3,0 MB'), findsOneWidget);
   });
 
@@ -112,7 +112,7 @@ void main() {
     final push = FakePushService();
     await tester.pumpWidget(
       app(
-        const PostFilePage(file: _audio),
+        const PostFilePage(file: _pdf),
         feed: feed,
         extra: [downloadServiceProvider.overrideWithValue(downloads)],
         push: push,
@@ -121,7 +121,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('İndir'));
     await tester.pumpAndSettle();
-    expect(downloads.names, ['ders.mp3']);
+    expect(downloads.names, ['ders.pdf']);
     expect(feed.calls, ['download f1']);
     expect(push.calls, ['local İndirildi']);
   });

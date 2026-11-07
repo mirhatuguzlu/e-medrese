@@ -186,12 +186,6 @@ enum PostFileKind {
   /// Fotoğraf.
   image(['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic']),
 
-  /// Video.
-  video(['mp4', 'mov', '3gp', 'webm']),
-
-  /// Ses.
-  audio(['mp3', 'm4a', 'aac', 'ogg', 'wav', 'opus', 'amr']),
-
   /// PDF.
   pdf(['pdf']);
 
@@ -215,10 +209,6 @@ enum PostFileKind {
   static String mimeOf(String fileName) =>
       switch (fileName.split('.').last.toLowerCase()) {
         'jpg' || 'jpeg' => 'image/jpeg',
-        'mov' => 'video/quicktime',
-        '3gp' => 'video/3gpp',
-        'mp3' => 'audio/mpeg',
-        'm4a' => 'audio/mp4',
         'pdf' => 'application/pdf',
         final ext => '${of(fileName)?.name}/$ext',
       };

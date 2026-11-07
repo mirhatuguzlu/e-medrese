@@ -1,6 +1,10 @@
 # Changelog
 
 Sürüm biçimi `x.y.z+build`: `z` hata düzeltme, `y` yeni özellik, `x` geriye uyumsuz büyük değişiklik.
+## 2.13.1+37 — 2026-11-07
+- Paylaşımlara artık yalnız fotoğraf ve PDF eklenir; video ve ses kaldırıldı (depolama alanı sınırlı).
+- Aydınlatma metni güncellendi.
+
 ## 2.13.0+36 — 2026-11-05
 - Paylaşımlara dosya: her üye paylaşıma fotoğraf, video, ses ya da PDF ekler (en çok 5 dosya, her biri en çok 50 MB); yazı isteğe bağlı. Dosyalar uygulama içinde açılır (fotoğraf yakınlaştırılır, video ve ses oynatılır, PDF okunur).
 - İndirme: dosya sayfasının sağ üstündeki düğmeyle telefonun İndirilenler/e-Medrese klasörüne iner; indirene "İndirildi" bildirimi çıkar, paylaşana ilk indirişte "Dosyan indirildi" bildirimi gider (kişi başına bir kez).

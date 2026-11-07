@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Paylaşım yapma ya da [editing] verilirse düzenleme (yazan) sayfası.
 ///
-/// Yeni paylaşıma fotoğraf, video, ses ve PDF eklenebilir. Düzenlemede
+/// Yeni paylaşıma fotoğraf ve PDF eklenebilir. Düzenlemede
 /// yalnız yazı değişir; yeni metinle kapanır.
 class NewPostPage extends ConsumerStatefulWidget {
   /// [medrese]'de paylaş.
@@ -126,8 +126,6 @@ class _NewPostPageState extends ConsumerState<NewPostPage> {
                   contentPadding: EdgeInsets.zero,
                   leading: Icon(switch (PostFileKind.of(f.name)) {
                     PostFileKind.image => Icons.image_outlined,
-                    PostFileKind.video => Icons.movie_outlined,
-                    PostFileKind.audio => Icons.audiotrack_outlined,
                     _ => Icons.picture_as_pdf_outlined,
                   }),
                   title: Text(
@@ -152,7 +150,7 @@ class _NewPostPageState extends ConsumerState<NewPostPage> {
                 ),
               const SizedBox(height: 4),
               Text(
-                'Fotoğraf, video, ses ya da PDF; en çok $_maxFiles dosya, her '
+                'Fotoğraf ya da PDF; en çok $_maxFiles dosya, her '
                 'biri en çok 50 MB. Medresendeki üyeler görür ve indirebilir; '
                 'indirince sana bildirim gelir. Telif hakkı sahibinin izin '
                 'verdiği dosyaları paylaş.',
